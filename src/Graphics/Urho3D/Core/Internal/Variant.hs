@@ -1,0 +1,58 @@
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
+module Graphics.Urho3D.Core.Internal.Variant(
+    Variant
+  , VariantType(..)
+  , variantCntx
+  , sharedVariantPtrCntx
+  , SharedVariant
+  , SharedVariantPtr 
+  ) where
+
+import qualified Language.C.Inline as C
+import qualified Language.C.Inline.Context as C
+import qualified Language.C.Types as C
+import Graphics.Urho3D.Container.Ptr
+import qualified Data.Map as Map
+import GHC.Generics (Generic)
+
+data Variant
+
+variantCntx :: C.Context 
+variantCntx = mempty {
+    C.ctxTypesTable = Map.fromList [
+      (C.TypeName "Variant", [t| Variant |])
+    ]
+  } 
+
+sharedPtrImpl "Variant"
+
+-- | Variant's supported types.
+data VariantType = 
+    VariantNone
+  | VariantInt
+  | VariantBool
+  | VariantFloat
+  | VariantVector2
+  | VariantVector3
+  | VariantVector4
+  | VariantQuaternion
+  | VariantColor
+  | VariantString
+  | VariantBuffer
+  | VariantVoidPtr
+  | VariantResourceRef
+  | VariantResourceRefList
+  | VariantVariantVector
+  | VariantVariantMap
+  | VariantIntRect
+  | VariantIntVector2
+  | VariantPtr
+  | VariantMatrix3
+  | VariantMatrix3x4
+  | VariantMatrix4 
+  | VariantDouble
+  deriving (Show, Generic, Eq, Ord, Bounded, Enum)
+

@@ -16,6 +16,7 @@ import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Createable
 import Control.Monad.IO.Class
 import Data.Monoid
+--import Data.StateVar
 import Foreign 
 
 C.context (C.cppCtx <> applicationCntx <> contextCntx)
@@ -34,3 +35,5 @@ instance Createable Application where
 
   newObject = liftIO . newApplication
   deleteObject = liftIO . deleteApplication
+
+--setStartupParameter :: Ptr Application -> String -> 

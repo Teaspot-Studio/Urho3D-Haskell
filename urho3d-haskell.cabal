@@ -21,12 +21,14 @@ library
                        Graphics.Urho3D.Createable
                        Graphics.Urho3D.Monad
                        Graphics.Urho3D.Core.Context
+                       Graphics.Urho3D.Core.Variant
                        Graphics.Urho3D.Engine.Application
                        Graphics.Urho3D.Scene.Scene
                        Graphics.Urho3D.Scene.Node
                        Graphics.Urho3D.UI.Sprite
 
   other-modules:       Graphics.Urho3D.Core.Internal.Context
+                       Graphics.Urho3D.Core.Internal.Variant
                        Graphics.Urho3D.Scene.Internal.Scene
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Engine.Internal.Application
@@ -34,6 +36,7 @@ library
                        Graphics.Urho3D.Template
 
   c-sources:           src/Graphics/Urho3D/Core/Context.cpp
+                       src/Graphics/Urho3D/Core/Variant.cpp
                        src/Graphics/Urho3D/Engine/Application.cpp
                        src/Graphics/Urho3D/Scene/Scene.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
@@ -49,6 +52,7 @@ library
                       , exceptions
                       , loch-th
                       , template-haskell
+                      , StateVar
 
   default-language:    Haskell2010
   ghc-options:         -Wall -Werror -fPIC
