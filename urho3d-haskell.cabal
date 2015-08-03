@@ -20,15 +20,19 @@ library
   exposed-modules:     Graphics.Urho3D
                        Graphics.Urho3D.Createable
                        Graphics.Urho3D.Monad
+                       Graphics.Urho3D.Container.HashMap
+                       Graphics.Urho3D.Container.Ptr
                        Graphics.Urho3D.Core.Context
                        Graphics.Urho3D.Core.Variant
                        Graphics.Urho3D.Engine.Application
+                       Graphics.Urho3D.Math.StringHash
                        Graphics.Urho3D.Scene.Scene
                        Graphics.Urho3D.Scene.Node
                        Graphics.Urho3D.UI.Sprite
 
   other-modules:       Graphics.Urho3D.Core.Internal.Context
                        Graphics.Urho3D.Core.Internal.Variant
+                       Graphics.Urho3D.Math.Internal.StringHash
                        Graphics.Urho3D.Scene.Internal.Scene
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Engine.Internal.Application
@@ -38,6 +42,7 @@ library
   c-sources:           src/Graphics/Urho3D/Core/Context.cpp
                        src/Graphics/Urho3D/Core/Variant.cpp
                        src/Graphics/Urho3D/Engine/Application.cpp
+                       src/Graphics/Urho3D/Math/StringHash.cpp
                        src/Graphics/Urho3D/Scene/Scene.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
                        src/Graphics/Urho3D/UI/Sprite.cpp

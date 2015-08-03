@@ -2,7 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Core.Variant(
     Variant
@@ -11,6 +11,7 @@ module Graphics.Urho3D.Core.Variant(
   , variantType
   , VariantStorable(..)
   , newVariant
+  , VariantMap
   ) where
 
 import qualified Language.C.Inline as C 
@@ -19,17 +20,19 @@ import qualified Language.C.Inline.Cpp as C
 import Graphics.Urho3D.Core.Internal.Variant
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Container.HashMap
+import Graphics.Urho3D.Math.StringHash
 import Control.Monad.IO.Class
 import Data.Monoid
 import Foreign 
 import Foreign.C.String 
 
-C.context (C.cppCtx <> variantCntx <> contextCntx)
+C.context (C.cppCtx <> variantCntx <> variantMapCntx <> stringHashContext <> contextCntx)
 C.include "<Urho3D/Core/Variant.h>"
 C.using "namespace Urho3D"
 
 variantContext :: C.Context 
-variantContext = variantCntx
+variantContext = variantCntx <> variantMapCntx <> stringHashContext
 
 newEmptyVariant :: IO (Ptr Variant)
 newEmptyVariant = [C.exp| Variant* { new Variant() } |]
@@ -80,3 +83,5 @@ newVariant val = do
   ptr <- newEmptyVariant
   setVariant val ptr
   return ptr 
+
+hashMap "StringHash" "Variant"

@@ -4,6 +4,7 @@ module Graphics.Urho3D.Template(
   , (^::)
   , (^=)
   , mkFunc1
+  , mkFuncN
   ) where
 
 import Language.Haskell.TH as TH
@@ -22,3 +23,8 @@ mkFunc1 :: String -> String -> (Name -> Q Exp) -> Q Dec
 mkFunc1 name par bodyQ = do
   let parName = mkName par 
   funD (mkName name) [clause [varP parName] (normalB $ bodyQ parName) []] 
+
+mkFuncN :: String -> [String] -> ([Name] -> ExpQ ) -> DecQ 
+mkFuncN name ps bodyQ = do
+  let pns = mkName <$> ps
+  funD (mkName name) [clause (varP <$> pns) (normalB $ bodyQ pns) []]
