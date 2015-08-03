@@ -15,13 +15,36 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
+
   exposed-modules:     Graphics.Urho3D
+                       Graphics.Urho3D.Createable
+                       Graphics.Urho3D.Monad
+                       Graphics.Urho3D.Core.Context
                        Graphics.Urho3D.Engine.Application
-  build-depends:       base >= 4.7 && < 5
+
+  other-modules:       Graphics.Urho3D.Core.Internal.Context
+                       Graphics.Urho3D.Engine.Internal.Application
+
+  c-sources:           src/Graphics/Urho3D/Core/Context.cpp
+                       src/Graphics/Urho3D/Engine/Application.cpp
+
+  build-depends:        base
+                      , containers
+                      , inline-c
+                      , inline-c-cpp
+                      , deepseq
+                      , transformers
+                      , mtl
+                      , exceptions
+                      , loch-th
+                      
   default-language:    Haskell2010
+  ghc-options:         -Wall -Werror -fPIC
+  cc-options:          -m64
+  extra-libraries:     Urho3D, stdc++
 
 executable urho3d-haskell-sample01
-  hs-source-dirs:      app/sample01
+  hs-source-dirs:      app/sample01, app/common
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
