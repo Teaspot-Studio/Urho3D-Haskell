@@ -15,18 +15,29 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
+  include-dirs:        src/include
 
   exposed-modules:     Graphics.Urho3D
                        Graphics.Urho3D.Createable
                        Graphics.Urho3D.Monad
                        Graphics.Urho3D.Core.Context
                        Graphics.Urho3D.Engine.Application
+                       Graphics.Urho3D.Scene.Scene
+                       Graphics.Urho3D.Scene.Node
+                       Graphics.Urho3D.UI.Sprite
 
   other-modules:       Graphics.Urho3D.Core.Internal.Context
+                       Graphics.Urho3D.Scene.Internal.Scene
+                       Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Engine.Internal.Application
+                       Graphics.Urho3D.UI.Internal.Sprite
+                       Graphics.Urho3D.Template
 
   c-sources:           src/Graphics/Urho3D/Core/Context.cpp
                        src/Graphics/Urho3D/Engine/Application.cpp
+                       src/Graphics/Urho3D/Scene/Scene.cpp
+                       src/Graphics/Urho3D/Scene/Node.cpp
+                       src/Graphics/Urho3D/UI/Sprite.cpp
 
   build-depends:        base
                       , containers
@@ -37,7 +48,8 @@ library
                       , mtl
                       , exceptions
                       , loch-th
-                      
+                      , template-haskell
+
   default-language:    Haskell2010
   ghc-options:         -Wall -Werror -fPIC
   cc-options:          -m64

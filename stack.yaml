@@ -2,8 +2,8 @@ flags: {}
 packages:
 - '.'
 - location:
-    git: git@github.com:fpco/inline-c.git
-    commit: deaf28b0b6641a44908fb940a122da6c26b243fb
+    git: git@github.com:Teaspot-Studio/inline-c.git
+    commit: 9ded20f555b921e85f9e44c94371c32814346abd
 - location:
     git: git@github.com:fpco/inline-c-cpp.git
     commit: 12319586f19f08f6b32984e2a1f15c76db290e0c

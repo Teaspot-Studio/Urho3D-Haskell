@@ -1,6 +1,10 @@
+{-# LANGUAGE TypeFamilies #-}
 module Sample(
     Sample
   , newSample
+  , deleteSample
+  , sampleStart 
+  , sampleStop 
   ) where 
 
 import Graphics.Urho3D
@@ -15,11 +19,17 @@ data Sample = Sample {
 , sampleScreenJoystickIndex :: Word32
 , sampleScreenSettingsIndex :: Word32
 , samplePaused :: Bool
+, sampleSprite :: SharedSpritePtr
+, sampleScene :: SharedScenePtr
+, sampleCameraNode :: SharedNodePtr
 }
 
 newSample :: Ptr Context -> IO Sample 
 newSample context = do 
-  app <- newApplication context 
+  app <- newObject context 
+  sprite <- newObject nullPtr 
+  scene <- newObject nullPtr
+  camNode <- newObject nullPtr
   return $ Sample {
     sampleApplication = app 
   , sampleYaw = 0
@@ -28,4 +38,23 @@ newSample context = do
   , sampleScreenSettingsIndex = maxBound
   , sampleScreenJoystickIndex = maxBound 
   , samplePaused = False 
+  , sampleSprite = sprite
+  , sampleScene = scene
+  , sampleCameraNode = camNode
   }
+
+deleteSample :: Sample -> IO ()
+deleteSample s = do
+  deleteObject $ sampleApplication s
+  deleteObject $ sampleSprite s 
+  deleteObject $ sampleScene s 
+  deleteObject $ sampleCameraNode s 
+
+sampleSetup :: Sample -> IO ()
+sampleSetup s = undefined
+
+sampleStart :: Sample -> IO ()
+sampleStart s = undefined
+
+sampleStop :: Sample -> IO ()
+sampleStop s = undefined
