@@ -8,6 +8,7 @@ module Graphics.Urho3D.Engine.Application(
     Application
   , applicationContext
   , startupParameter
+  , applicationEngine
   ) where
 
 import qualified Language.C.Inline as C 
@@ -17,6 +18,7 @@ import Graphics.Urho3D.Engine.Internal.Application
 import Graphics.Urho3D.Core.Variant
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Engine.Engine
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -25,7 +27,7 @@ import Text.RawString.QQ
 import Foreign 
 import Foreign.C.String 
 
-C.context (C.cppCtx <> applicationCntx <> contextCntx <> variantContext <> objectContext)
+C.context (C.cppCtx <> applicationCntx <> contextContext <> variantContext <> objectContext <> engineContext)
 C.include "<Urho3D/Engine/Engine.h>"
 C.include "<Urho3D/Engine/Application.h>"
 C.using "namespace Urho3D"
@@ -43,6 +45,10 @@ class ApplicationH : public Application {
 
   void setEngineParameter(const char* name, Variant* value) {
     engineParameters_[name] = *value;
+  }
+
+  SharedPtr<Engine>* getEgine() {
+    return new SharedPtr<Engine>(engine_);
   }
 };
 |]
@@ -78,3 +84,9 @@ setStartupParameter ptr name a = do
 -- | Sets inital values of engine startup configuration by key-value
 startupParameter :: VariantStorable a => Ptr Application -> String -> SettableStateVar a 
 startupParameter ptr name = makeSettableStateVar $ setStartupParameter ptr name
+
+C.verbatim "typedef SharedPtr<Engine> SharedEngine;"
+
+-- | Returns shared reference to inner engine
+applicationEngine :: Ptr Application -> IO SharedEnginePtr
+applicationEngine ptr = [C.exp| SharedEngine* { $(ApplicationH* ptr)->getEgine() } |]

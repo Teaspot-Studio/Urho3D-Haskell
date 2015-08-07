@@ -27,7 +27,7 @@ import Data.Monoid
 import Foreign 
 import Foreign.C.String 
 
-C.context (C.cppCtx <> variantCntx <> variantMapCntx <> stringHashContext <> contextCntx)
+C.context (C.cppCtx <> variantCntx <> variantMapCntx <> stringHashContext <> contextContext)
 C.include "<Urho3D/Core/Variant.h>"
 C.using "namespace Urho3D"
 

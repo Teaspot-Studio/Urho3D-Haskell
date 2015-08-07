@@ -21,7 +21,7 @@ import Control.Monad.IO.Class
 import Data.Monoid
 import Foreign 
 
-C.context (C.cppCtx <> nodeCntx <> sharedNodePtrCntx <> contextCntx)
+C.context (C.cppCtx <> nodeCntx <> sharedNodePtrCntx <> contextContext)
 C.include "<Urho3D/Scene/Node.h>"
 C.using "namespace Urho3D"
 

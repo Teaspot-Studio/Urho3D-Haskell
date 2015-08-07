@@ -26,6 +26,7 @@ library
                        Graphics.Urho3D.Core.Object
                        Graphics.Urho3D.Core.Variant
                        Graphics.Urho3D.Engine.Application
+                       Graphics.Urho3D.Engine.Engine
                        Graphics.Urho3D.IO.FileSystem
                        Graphics.Urho3D.Math.StringHash
                        Graphics.Urho3D.Scene.Scene
@@ -39,6 +40,7 @@ library
                        Graphics.Urho3D.Scene.Internal.Scene
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Engine.Internal.Application
+                       Graphics.Urho3D.Engine.Internal.Engine
                        Graphics.Urho3D.IO.Internal.FileSystem
                        Graphics.Urho3D.UI.Internal.Sprite
                        Graphics.Urho3D.Template
@@ -47,6 +49,7 @@ library
                        src/Graphics/Urho3D/Core/Object.cpp
                        src/Graphics/Urho3D/Core/Variant.cpp
                        src/Graphics/Urho3D/Engine/Application.cpp
+                       src/Graphics/Urho3D/Engine/Engine.cpp
                        src/Graphics/Urho3D/IO/FileSystem.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
                        src/Graphics/Urho3D/Scene/Scene.cpp

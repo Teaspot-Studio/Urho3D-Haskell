@@ -19,7 +19,7 @@ import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 
-C.context (C.cppCtx <> objectCntx <> contextCntx)
+C.context (C.cppCtx <> objectCntx <> contextContext)
 C.include "<Urho3D/Core/Object.h>"
 C.using "namespace Urho3D"
 

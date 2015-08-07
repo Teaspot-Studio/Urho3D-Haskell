@@ -68,4 +68,6 @@ sampleStart :: Sample -> IO ()
 sampleStart s = undefined
 
 sampleStop :: Sample -> IO ()
-sampleStop s = undefined
+sampleStop (Sample{..}) = do 
+  eng <- applicationEngine sampleApplication
+  engineDumpResources eng True

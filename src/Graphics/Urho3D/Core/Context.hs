@@ -4,7 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Core.Context(
     Context
-  , contextCntx
+  , contextContext
   ) where 
 
 import qualified Language.C.Inline as C
@@ -19,6 +19,9 @@ import Foreign
 C.context (C.cppCtx <> contextCntx)
 C.include "<Urho3D/Core/Context.h>"
 C.using "namespace Urho3D"
+
+contextContext :: C.Context 
+contextContext = contextCntx 
 
 newContext :: IO (Ptr Context)
 newContext = [C.exp| Context* { new Context() } |]

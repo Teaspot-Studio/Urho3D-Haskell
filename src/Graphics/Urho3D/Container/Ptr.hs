@@ -13,7 +13,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Context as C
 import qualified Language.C.Types as C
 import Graphics.Urho3D.Createable
-import Control.Monad.IO.Class
+import Graphics.Urho3D.Monad
 import qualified Data.Map as Map
 
 -- | Makes public API of SharedPtr for given type
@@ -21,6 +21,7 @@ import qualified Data.Map as Map
 -- newSharedTPtr
 -- deleteSharedTPtr
 -- instance Createable SharedT
+-- instance Pointer SharedTPtr T 
 --
 -- Depends on symbols from @sharedPtrImpl@.
 --
@@ -39,13 +40,25 @@ sharedPtr tname = do
         quoteExp C.exp ("void { delete $(" ++ sharedT ++ "* "++show ptrName++")}")
     ]
   createable <- [d| 
-      instance Createable $sharedTType where 
-        type CreationOptions $sharedTType = Ptr $tType 
+    instance Createable $sharedTType where 
+      type CreationOptions $sharedTType = Ptr $tType 
 
-        newObject = liftIO . $(varE $ mkName newSharedTPtr)
-        deleteObject = liftIO . $(varE $ mkName deleteSharedTPtr)
-      |]
-  return $ typedef ++ body ++ createable
+      newObject = liftIO . $(varE $ mkName newSharedTPtr)
+      deleteObject = liftIO . $(varE $ mkName deleteSharedTPtr)
+    |]
+
+  pointerCast <- sequence [
+      pointerCastF ^:: [t| $sharedTPtrType -> Ptr $tType|]
+    , mkFunc1 pointerCastF "ptr" $ \ptrName -> 
+        quoteExp C.pure $ tname ++ "* {"++"$("++sharedT++"* "++show ptrName++")->Get()}"
+    ]
+  pointerInst <- [d|
+    instance Pointer $sharedTPtrType $tType where 
+      pointer = $(varE $ mkName pointerCastF)
+    |]
+
+  return $ typedef ++ body ++ createable ++ pointerCast ++ pointerInst
+
   where 
   tType = conT $ mkName tname
   sharedTType = conT $ mkName sharedT 
@@ -55,6 +68,7 @@ sharedPtr tname = do
   deleteSharedTPtr = "deleteShared" ++ tname ++ "Ptr"
   sharedT = "Shared" ++ tname                                 
   sharedTPtr = sharedT ++ "Ptr"
+  pointerCastF = "pointer" ++ sharedT
 
 -- | Makes internal representation of SharedPtr for given type
 -- Makes following symbols:
