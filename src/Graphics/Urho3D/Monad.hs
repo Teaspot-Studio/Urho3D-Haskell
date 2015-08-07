@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 module Graphics.Urho3D.Monad(
     Urho
   , evalUrho
@@ -9,6 +10,7 @@ module Graphics.Urho3D.Monad(
   , checkNullPtr'
   , checkNullPtrWith
   , liftContext
+  , Parent(..)
   , module X
   ) where
 
@@ -66,3 +68,7 @@ checkNullPtrWith err ptr handler = if ptr == nullPtr
 liftContext :: Ptr s -> Urho s a -> Urho s' a 
 liftContext s (Urho m) = Urho $ withReaderT (const s) m
 
+-- | Relation between classes, where a is parent for b
+class Parent a b where
+  castToParent :: Ptr b -> Ptr a 
+  castToChild :: Ptr a -> Maybe (Ptr b)

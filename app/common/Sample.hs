@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies, RecordWildCards #-}
 module Sample(
     Sample
   , newSample
@@ -10,9 +10,12 @@ module Sample(
 import Graphics.Urho3D
 import Data.Word 
 import Foreign
+import Data.StateVar
+import Data.Maybe 
 
 data Sample = Sample {
   sampleApplication :: Ptr Application 
+, sampleName :: String
 , sampleYaw :: Double
 , samplePitch :: Double 
 , sampleTouchEnabled :: Bool
@@ -51,7 +54,15 @@ deleteSample s = do
   deleteObject $ sampleCameraNode s 
 
 sampleSetup :: Sample -> IO ()
-sampleSetup s = undefined
+sampleSetup (Sample{..}) = do
+  startupParameter sampleApplication "WindowTitle" $= sampleName
+
+  fs <- fromJust <$> getSubsystem sampleApplication
+  prefDir <- getAppPreferencesDir fs "urho3d" "logs"
+  startupParameter sampleApplication "LogName" $= prefDir ++ sampleName ++ ".log"
+
+  startupParameter sampleApplication "FullScreen" $= False 
+  startupParameter sampleApplication "Headless" $= False 
 
 sampleStart :: Sample -> IO ()
 sampleStart s = undefined

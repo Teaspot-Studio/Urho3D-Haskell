@@ -1,10 +1,10 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Graphics.Urho3D.Engine.Internal.Application(
-    Application
-  , applicationCntx
-  ) where 
+module Graphics.Urho3D.IO.Internal.FileSystem(
+    FileSystem
+  , fileSystemCntx
+  ) where
 
 import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Context as C
@@ -12,11 +12,11 @@ import qualified Language.C.Types as C
 
 import qualified Data.Map as Map
 
-data Application
+data FileSystem 
 
-applicationCntx :: C.Context 
-applicationCntx = mempty {
+fileSystemCntx :: C.Context 
+fileSystemCntx = mempty {
     C.ctxTypesTable = Map.fromList [
-      (C.TypeName "ApplicationH", [t| Application |])
+      (C.TypeName "FileSystem", [t| FileSystem |])
     ]
-  }
+  } 

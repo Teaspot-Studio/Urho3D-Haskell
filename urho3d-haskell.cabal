@@ -23,25 +23,31 @@ library
                        Graphics.Urho3D.Container.HashMap
                        Graphics.Urho3D.Container.Ptr
                        Graphics.Urho3D.Core.Context
+                       Graphics.Urho3D.Core.Object
                        Graphics.Urho3D.Core.Variant
                        Graphics.Urho3D.Engine.Application
+                       Graphics.Urho3D.IO.FileSystem
                        Graphics.Urho3D.Math.StringHash
                        Graphics.Urho3D.Scene.Scene
                        Graphics.Urho3D.Scene.Node
                        Graphics.Urho3D.UI.Sprite
 
   other-modules:       Graphics.Urho3D.Core.Internal.Context
+                       Graphics.Urho3D.Core.Internal.Object
                        Graphics.Urho3D.Core.Internal.Variant
                        Graphics.Urho3D.Math.Internal.StringHash
                        Graphics.Urho3D.Scene.Internal.Scene
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Engine.Internal.Application
+                       Graphics.Urho3D.IO.Internal.FileSystem
                        Graphics.Urho3D.UI.Internal.Sprite
                        Graphics.Urho3D.Template
 
   c-sources:           src/Graphics/Urho3D/Core/Context.cpp
+                       src/Graphics/Urho3D/Core/Object.cpp
                        src/Graphics/Urho3D/Core/Variant.cpp
                        src/Graphics/Urho3D/Engine/Application.cpp
+                       src/Graphics/Urho3D/IO/FileSystem.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
                        src/Graphics/Urho3D/Scene/Scene.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
@@ -58,6 +64,7 @@ library
                       , loch-th
                       , template-haskell
                       , StateVar
+                      , raw-strings-qq
 
   default-language:    Haskell2010
   ghc-options:         -Wall -Werror -fPIC
@@ -70,6 +77,7 @@ executable urho3d-haskell-sample01
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , urho3d-haskell
+                     , StateVar
   default-language:    Haskell2010
 
 test-suite urho3d-haskell-test
