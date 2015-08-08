@@ -12,6 +12,9 @@ module Graphics.Urho3D.Core.Variant(
   , VariantStorable(..)
   , newVariant
   , VariantMap
+  , HashMapStringHashVariant
+  , variantMapGet
+  , variantMapGet'
   ) where
 
 import qualified Language.C.Inline as C 
@@ -22,10 +25,11 @@ import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Container.HashMap
 import Graphics.Urho3D.Math.StringHash
-import Control.Monad.IO.Class
+import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 import Foreign.C.String 
+import Control.DeepSeq
 
 C.context (C.cppCtx <> variantCntx <> variantMapCntx <> stringHashContext <> contextContext)
 C.include "<Urho3D/Core/Variant.h>"
@@ -77,6 +81,39 @@ instance VariantStorable String where
        return $ Just str
       _ -> return Nothing
 
+instance VariantStorable Int where 
+  setVariant a ptr = [C.exp| void { *$(Variant* ptr) = $(int a') } |]
+    where a' = fromIntegral a 
+  getVariant ptr = do 
+    t <- variantType ptr 
+    case t of 
+      VariantInt -> do 
+       v <- fromIntegral <$> [C.exp| int { $(Variant* ptr)->GetInt() } |]
+       return $ Just v
+      _ -> return Nothing
+
+instance VariantStorable Float where 
+  setVariant a ptr = [C.exp| void { *$(Variant* ptr) = $(float a') } |]
+    where a' = realToFrac a 
+  getVariant ptr = do 
+    t <- variantType ptr 
+    case t of 
+      VariantFloat -> do 
+       v <- realToFrac <$> [C.exp| float { $(Variant* ptr)->GetFloat() } |]
+       return $ Just v
+      _ -> return Nothing
+
+instance VariantStorable Double where 
+  setVariant a ptr = [C.exp| void { *$(Variant* ptr) = $(double a') } |]
+    where a' = realToFrac a 
+  getVariant ptr = do 
+    t <- variantType ptr 
+    case t of 
+      VariantDouble -> do 
+       v <- realToFrac <$> [C.exp| double { $(Variant* ptr)->GetDouble() } |]
+       return $ Just v
+      _ -> return Nothing
+
 -- | Creates new Variant with specified value inside
 newVariant :: VariantStorable a => a -> IO (Ptr Variant)
 newVariant val = do 
@@ -85,3 +122,15 @@ newVariant val = do
   return ptr 
 
 hashMap "StringHash" "Variant"
+
+-- | Wrapper that helps to read values from @VariantMap@
+variantMapGet :: (NFData a, VariantStorable a) => Ptr VariantMap -> String -> IO (Maybe a)
+variantMapGet mp key = withObject' key $ \keyHash -> do
+  variantM <- hashMapLookup keyHash mp
+  join <$> whenJust variantM getVariant
+
+-- | Wrapper that helps to read values from @VariantMap@
+variantMapGet' :: VariantStorable a => Ptr VariantMap -> Ptr StringHash -> IO (Maybe a)
+variantMapGet' mp keyHash = do
+  variantM <- hashMapLookup keyHash mp
+  join <$> whenJust variantM getVariant

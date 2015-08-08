@@ -12,6 +12,7 @@ module Graphics.Urho3D.Monad(
   , liftContext
   , Parent(..)
   , Pointer(..)
+  , whenJust
   , module X
   ) where
 
@@ -77,3 +78,8 @@ class Parent a b where
 -- | Relation between types, where a is pointer for b 
 class Pointer a b | a -> b where 
   pointer :: a -> Ptr b
+
+-- | Like @when@ but operates with Maybe
+whenJust :: Monad m => Maybe a -> (a -> m b) -> m (Maybe b)
+whenJust Nothing _ = return Nothing
+whenJust (Just a) f = Just <$> f a

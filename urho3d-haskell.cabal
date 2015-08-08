@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  include-dirs:        src/include
+  include-dirs:        src
 
   exposed-modules:     Graphics.Urho3D
                        Graphics.Urho3D.Createable
@@ -24,10 +24,13 @@ library
                        Graphics.Urho3D.Container.Ptr
                        Graphics.Urho3D.Core.Context
                        Graphics.Urho3D.Core.Object
+                       Graphics.Urho3D.Core.ProcessUtils
                        Graphics.Urho3D.Core.Variant
                        Graphics.Urho3D.Engine.Application
                        Graphics.Urho3D.Engine.Engine
                        Graphics.Urho3D.IO.FileSystem
+                       Graphics.Urho3D.Input.Events
+                       Graphics.Urho3D.Input.Input
                        Graphics.Urho3D.Math.StringHash
                        Graphics.Urho3D.Scene.Scene
                        Graphics.Urho3D.Scene.Node
@@ -36,6 +39,7 @@ library
   other-modules:       Graphics.Urho3D.Core.Internal.Context
                        Graphics.Urho3D.Core.Internal.Object
                        Graphics.Urho3D.Core.Internal.Variant
+                       Graphics.Urho3D.Input.Internal.Input
                        Graphics.Urho3D.Math.Internal.StringHash
                        Graphics.Urho3D.Scene.Internal.Scene
                        Graphics.Urho3D.Scene.Internal.Node
@@ -47,10 +51,13 @@ library
 
   c-sources:           src/Graphics/Urho3D/Core/Context.cpp
                        src/Graphics/Urho3D/Core/Object.cpp
+                       src/Graphics/Urho3D/Core/ProcessUtils.cpp
                        src/Graphics/Urho3D/Core/Variant.cpp
                        src/Graphics/Urho3D/Engine/Application.cpp
                        src/Graphics/Urho3D/Engine/Engine.cpp
                        src/Graphics/Urho3D/IO/FileSystem.cpp
+                       src/Graphics/Urho3D/Input/Events.cpp
+                       src/Graphics/Urho3D/Input/Input.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
                        src/Graphics/Urho3D/Scene/Scene.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
@@ -72,7 +79,7 @@ library
   default-language:    Haskell2010
   ghc-options:         -Wall -Werror -fPIC
   cc-options:          -m64
-  extra-libraries:     Urho3D, stdc++
+  extra-libraries:     Urho3D, stdc++, SDL
 
 executable urho3d-haskell-sample01
   hs-source-dirs:      app/sample01, app/common

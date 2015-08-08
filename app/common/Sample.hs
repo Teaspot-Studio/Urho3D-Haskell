@@ -65,7 +65,19 @@ sampleSetup (Sample{..}) = do
   startupParameter sampleApplication "Headless" $= False 
 
 sampleStart :: Sample -> IO ()
-sampleStart s = undefined
+sampleStart s@(Sample{..}) = do 
+  if platform == "Android" || platform == "iOS" 
+  then initTouchInput s
+  else do 
+    is <- fromJust <$> getSubsystem sampleApplication
+    jcount <- getNumJoysticks is
+    when (jcount == 0) $ subscribeToEvent sampleApplication EventTouchBegin (const handleTouchBegin)
+
+initTouchInput :: Sample -> IO ()
+initTouchInput = undefined
+
+handleTouchBegin :: IO ()
+handleTouchBegin = undefined
 
 sampleStop :: Sample -> IO ()
 sampleStop (Sample{..}) = do 
