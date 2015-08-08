@@ -114,6 +114,17 @@ instance VariantStorable Double where
        return $ Just v
       _ -> return Nothing
 
+instance VariantStorable (Ptr a) where 
+  setVariant a ptr = [C.exp| void { *$(Variant* ptr) = $(void* a') } |]
+    where a' = castPtr a 
+  getVariant ptr = do 
+    t <- variantType ptr 
+    case t of 
+      VariantPtr -> do 
+        v <- [C.exp| void* { $(Variant* ptr)->GetVoidPtr() } |]
+        return $ Just $ castPtr v 
+      _ -> return Nothing 
+
 -- | Creates new Variant with specified value inside
 newVariant :: VariantStorable a => a -> IO (Ptr Variant)
 newVariant val = do 

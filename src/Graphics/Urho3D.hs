@@ -14,5 +14,6 @@ import Graphics.Urho3D.Input.Input as X
 import Graphics.Urho3D.Monad as X
 import Graphics.Urho3D.Createable as X
 import Graphics.Urho3D.UI.Sprite as X
+import Graphics.Urho3D.Scene.Events as X
 import Graphics.Urho3D.Scene.Scene as X
 import Graphics.Urho3D.Scene.Node as X

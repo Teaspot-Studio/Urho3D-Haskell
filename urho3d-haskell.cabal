@@ -32,6 +32,7 @@ library
                        Graphics.Urho3D.Input.Events
                        Graphics.Urho3D.Input.Input
                        Graphics.Urho3D.Math.StringHash
+                       Graphics.Urho3D.Scene.Events
                        Graphics.Urho3D.Scene.Scene
                        Graphics.Urho3D.Scene.Node
                        Graphics.Urho3D.UI.Sprite
@@ -59,6 +60,7 @@ library
                        src/Graphics/Urho3D/Input/Events.cpp
                        src/Graphics/Urho3D/Input/Input.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
+                       src/Graphics/Urho3D/Scene/Events.cpp
                        src/Graphics/Urho3D/Scene/Scene.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
                        src/Graphics/Urho3D/UI/Sprite.cpp

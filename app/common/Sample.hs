@@ -73,6 +73,13 @@ sampleStart s@(Sample{..}) = do
     jcount <- getNumJoysticks is
     when (jcount == 0) $ subscribeToEvent sampleApplication EventTouchBegin (const handleTouchBegin)
 
+    createLogo s 
+    setWindowTitileAndIcon s 
+    createConsoleAndDebugHud s 
+
+    subscribeToEvent sampleApplication EventKeyDown handleKeyDown 
+    subscribeToEvent sampleApplication EventSceneUpdate handleSceneUpdate
+
 initTouchInput :: Sample -> IO ()
 initTouchInput = undefined
 
@@ -83,3 +90,18 @@ sampleStop :: Sample -> IO ()
 sampleStop (Sample{..}) = do 
   eng <- applicationEngine sampleApplication
   engineDumpResources eng True
+
+createLogo :: Sample -> IO ()
+createLogo = undefined
+
+setWindowTitileAndIcon :: Sample -> IO ()
+setWindowTitileAndIcon = undefined
+
+createConsoleAndDebugHud :: Sample -> IO ()
+createConsoleAndDebugHud = undefined
+
+handleKeyDown :: EventData EventKeyDown -> IO ()
+handleKeyDown = undefined
+
+handleSceneUpdate :: EventData EventSceneUpdate -> IO ()
+handleSceneUpdate = undefined
