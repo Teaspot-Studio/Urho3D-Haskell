@@ -88,5 +88,5 @@ startupParameter ptr name = makeSettableStateVar $ setStartupParameter ptr name
 C.verbatim "typedef SharedPtr<Engine> SharedEngine;"
 
 -- | Returns shared reference to inner engine
-applicationEngine :: Ptr Application -> IO SharedEnginePtr
-applicationEngine ptr = [C.exp| SharedEngine* { $(ApplicationH* ptr)->getEgine() } |]
+applicationEngine :: MonadIO m => Ptr Application -> m SharedEnginePtr
+applicationEngine ptr = liftIO $ [C.exp| SharedEngine* { $(ApplicationH* ptr)->getEgine() } |]

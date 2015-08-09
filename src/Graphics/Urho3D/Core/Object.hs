@@ -37,9 +37,9 @@ class Subsystem a where
   getSubsystemImpl :: Ptr Object -> IO (Ptr a)
 
 -- | Returns specified subsystem from Object Context
-getSubsystem :: (Subsystem a, Parent Object b) => Ptr b -> IO (Maybe (Ptr a))
+getSubsystem :: (MonadIO m, Subsystem a, Parent Object b) => Ptr b -> m (Maybe (Ptr a))
 getSubsystem ptr = do
-  res <- getSubsystemImpl (castToParent ptr)
+  res <- liftIO $ getSubsystemImpl (castToParent ptr)
   checkNullPtr' res return
 
 -- | Describes events in Urho3D engine
@@ -75,14 +75,14 @@ public:
 |]
 
 -- | Binds function to specific event
-subscribeToEvent :: (Event a, Parent Object b) => Ptr b -> a -> (EventData a -> IO ()) -> IO ()
+subscribeToEvent :: (MonadIO m, Event a, Parent Object b) => Ptr b -> a -> (EventData a -> IO ()) -> m ()
 subscribeToEvent obj e fun = do 
   -- Actual handler
   let funImpl vmap = fun =<< loadEventData vmap
 
       objPtr = castToParent obj
       eventType = eventID e
-  [C.block| void {
+  liftIO $ [C.block| void {
     Context* cntx = $(Object* objPtr)->GetContext();
     HaskellHandler* handler = new HaskellHandler(cntx, $fun:(void (*funImpl)(HashMapStringHashVariant* vm)));
     $(Object* objPtr)->SubscribeToEvent(*$(StringHash* eventType)

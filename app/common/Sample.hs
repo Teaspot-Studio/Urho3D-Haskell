@@ -12,20 +12,10 @@ import Data.Word
 import Foreign
 import Data.StateVar
 import Data.Maybe 
+import Control.Monad.State.Strict
+import Control.Lens hiding (Context)
 
-data Sample = Sample {
-  sampleApplication :: Ptr Application 
-, sampleName :: String
-, sampleYaw :: Double
-, samplePitch :: Double 
-, sampleTouchEnabled :: Bool
-, sampleScreenJoystickIndex :: Word32
-, sampleScreenSettingsIndex :: Word32
-, samplePaused :: Bool
-, sampleSprite :: SharedSpritePtr
-, sampleScene :: SharedScenePtr
-, sampleCameraNode :: SharedNodePtr
-}
+import Internal.Sample
 
 newSample :: Ptr Context -> IO Sample 
 newSample context = do 
@@ -34,70 +24,75 @@ newSample context = do
   scene <- newObject nullPtr
   camNode <- newObject nullPtr
   return $ Sample {
-    sampleApplication = app 
-  , sampleYaw = 0
-  , samplePitch = 0
-  , sampleTouchEnabled = False
-  , sampleScreenSettingsIndex = maxBound
-  , sampleScreenJoystickIndex = maxBound 
-  , samplePaused = False 
-  , sampleSprite = sprite
-  , sampleScene = scene
-  , sampleCameraNode = camNode
+    _sampleApplication = app 
+  , _sampleYaw = 0
+  , _samplePitch = 0
+  , _sampleTouchEnabled = False
+  , _sampleScreenSettingsIndex = maxBound
+  , _sampleScreenJoystickIndex = maxBound 
+  , _samplePaused = False 
+  , _sampleSprite = sprite
+  , _sampleScene = scene
+  , _sampleCameraNode = camNode
   }
 
 deleteSample :: Sample -> IO ()
 deleteSample s = do
-  deleteObject $ sampleApplication s
-  deleteObject $ sampleSprite s 
-  deleteObject $ sampleScene s 
-  deleteObject $ sampleCameraNode s 
+  deleteObject $ s ^. sampleApplication
+  deleteObject $ s ^. sampleSprite
+  deleteObject $ s ^. sampleScene
+  deleteObject $ s ^. sampleCameraNode
 
-sampleSetup :: Sample -> IO ()
-sampleSetup (Sample{..}) = do
-  startupParameter sampleApplication "WindowTitle" $= sampleName
+sampleSetup :: StateT Sample IO ()
+sampleSetup = do
+  sName <- use sampleName
+  app <- use sampleApplication
 
-  fs <- fromJust <$> getSubsystem sampleApplication
+  startupParameter app "WindowTitle" $= sName
+
+  fs <- fromJust <$> getSubsystem app
   prefDir <- getAppPreferencesDir fs "urho3d" "logs"
-  startupParameter sampleApplication "LogName" $= prefDir ++ sampleName ++ ".log"
+  startupParameter app "LogName" $= prefDir ++ sName ++ ".log"
 
-  startupParameter sampleApplication "FullScreen" $= False 
-  startupParameter sampleApplication "Headless" $= False 
+  startupParameter app "FullScreen" $= False 
+  startupParameter app "Headless" $= False 
 
-sampleStart :: Sample -> IO ()
-sampleStart s@(Sample{..}) = do 
+sampleStart :: StateT Sample IO ()
+sampleStart = do 
+  app <- use sampleApplication
   if platform == "Android" || platform == "iOS" 
-  then initTouchInput s
+  then initTouchInput
   else do 
-    is <- fromJust <$> getSubsystem sampleApplication
+    is <- fromJust <$> getSubsystem app
     jcount <- getNumJoysticks is
-    when (jcount == 0) $ subscribeToEvent sampleApplication EventTouchBegin (const handleTouchBegin)
+    when (jcount == 0) $ subscribeToEvent app EventTouchBegin (const handleTouchBegin)
 
-    createLogo s 
-    setWindowTitileAndIcon s 
-    createConsoleAndDebugHud s 
+  createLogo
+  setWindowTitileAndIcon
+  createConsoleAndDebugHud
 
-    subscribeToEvent sampleApplication EventKeyDown handleKeyDown 
-    subscribeToEvent sampleApplication EventSceneUpdate handleSceneUpdate
+  subscribeToEvent app EventKeyDown handleKeyDown 
+  subscribeToEvent app EventSceneUpdate handleSceneUpdate
 
-initTouchInput :: Sample -> IO ()
-initTouchInput = undefined
+initTouchInput :: StateT Sample IO ()
+initTouchInput = do 
+  sampleTouchEnabled .= True 
 
 handleTouchBegin :: IO ()
 handleTouchBegin = undefined
 
-sampleStop :: Sample -> IO ()
-sampleStop (Sample{..}) = do 
-  eng <- applicationEngine sampleApplication
+sampleStop :: StateT Sample IO ()
+sampleStop = do 
+  eng <- applicationEngine =<< use sampleApplication
   engineDumpResources eng True
 
-createLogo :: Sample -> IO ()
+createLogo :: StateT Sample IO ()
 createLogo = undefined
 
-setWindowTitileAndIcon :: Sample -> IO ()
+setWindowTitileAndIcon :: StateT Sample IO ()
 setWindowTitileAndIcon = undefined
 
-createConsoleAndDebugHud :: Sample -> IO ()
+createConsoleAndDebugHud :: StateT Sample IO ()
 createConsoleAndDebugHud = undefined
 
 handleKeyDown :: EventData EventKeyDown -> IO ()

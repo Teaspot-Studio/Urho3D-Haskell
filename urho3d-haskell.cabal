@@ -90,6 +90,9 @@ executable urho3d-haskell-sample01
   build-depends:       base
                      , urho3d-haskell
                      , StateVar
+                     , lens
+                     , mtl
+                     
   default-language:    Haskell2010
 
 test-suite urho3d-haskell-test

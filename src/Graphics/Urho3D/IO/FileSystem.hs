@@ -36,8 +36,8 @@ instance Subsystem FileSystem where
   getSubsystemImpl ptr = [C.exp| FileSystem* { $(Object* ptr)->GetSubsystem<FileSystem>() } |]
 
 -- | Returns application preferences directory
-getAppPreferencesDir :: Ptr FileSystem -> String -> String -> IO String 
-getAppPreferencesDir ptr org app = do 
+getAppPreferencesDir :: MonadIO m => Ptr FileSystem -> String -> String -> m String 
+getAppPreferencesDir ptr org app = liftIO $ do 
   org' <- newCString org 
   app' <- newCString app
   res <- [C.exp| const char* { $(FileSystem* ptr)->GetAppPreferencesDir(String($(const char* org')), String($(const char* app'))).CString() } |]

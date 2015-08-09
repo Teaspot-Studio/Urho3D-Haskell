@@ -34,5 +34,5 @@ instance Subsystem Input where
   getSubsystemImpl ptr = [C.exp| Input* { $(Object* ptr)->GetSubsystem<Input>() } |]
 
 -- | Returns number of known joysticks
-getNumJoysticks :: Ptr Input -> IO Int 
-getNumJoysticks ptr = fromIntegral <$> [C.exp| int {$(Input* ptr)->GetNumJoysticks()} |]
+getNumJoysticks :: MonadIO m => Ptr Input -> m Int 
+getNumJoysticks ptr = liftIO $ fromIntegral <$> [C.exp| int {$(Input* ptr)->GetNumJoysticks()} |]

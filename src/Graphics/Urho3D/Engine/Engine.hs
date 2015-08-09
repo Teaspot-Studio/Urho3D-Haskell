@@ -52,10 +52,10 @@ instance Parent Object Engine where
 sharedPtr "Engine"
 
 -- | Prints all resources to log
-engineDumpResources :: Pointer r Engine => r -- ^ Pointer to engine
+engineDumpResources :: (MonadIO m, Pointer r Engine) => r -- ^ Pointer to engine
   -> Bool -- ^ Print also filenames?
-  -> IO ()
-engineDumpResources ref dumpFilenames = [C.exp| void {$(Engine* p)->DumpResources($(int v) != 0)} |]
+  -> m ()
+engineDumpResources ref dumpFilenames = liftIO $ [C.exp| void {$(Engine* p)->DumpResources($(int v) != 0)} |]
   where 
   p = pointer ref
   v = if dumpFilenames then 1 else 0
