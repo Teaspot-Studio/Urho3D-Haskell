@@ -30,6 +30,9 @@ library
                        Graphics.Urho3D.Engine
                        Graphics.Urho3D.Engine.Application
                        Graphics.Urho3D.Engine.Engine
+                       Graphics.Urho3D.Graphics
+                       Graphics.Urho3D.Graphics.Texture
+                       Graphics.Urho3D.Graphics.Texture2D
                        Graphics.Urho3D.Input
                        Graphics.Urho3D.Input.Events
                        Graphics.Urho3D.Input.Input
@@ -47,12 +50,15 @@ library
                        Graphics.Urho3D.UI
                        Graphics.Urho3D.UI.Element
                        Graphics.Urho3D.UI.Sprite
+                       Graphics.Urho3D.UI.UI
 
   other-modules:       Graphics.Urho3D.Core.Internal.Context
                        Graphics.Urho3D.Core.Internal.Object
                        Graphics.Urho3D.Core.Internal.Variant
                        Graphics.Urho3D.Engine.Internal.Application
                        Graphics.Urho3D.Engine.Internal.Engine
+                       Graphics.Urho3D.Graphics.Internal.Texture
+                       Graphics.Urho3D.Graphics.Internal.Texture2D
                        Graphics.Urho3D.Input.Internal.Input
                        Graphics.Urho3D.IO.Internal.FileSystem
                        Graphics.Urho3D.Math.Internal.StringHash
@@ -64,6 +70,7 @@ library
                        Graphics.Urho3D.Template
                        Graphics.Urho3D.UI.Internal.Element
                        Graphics.Urho3D.UI.Internal.Sprite
+                       Graphics.Urho3D.UI.Internal.UI
 
   c-sources:           src/Graphics/Urho3D/Core/Context.cpp
                        src/Graphics/Urho3D/Core/Object.cpp
@@ -71,6 +78,8 @@ library
                        src/Graphics/Urho3D/Core/Variant.cpp
                        src/Graphics/Urho3D/Engine/Application.cpp
                        src/Graphics/Urho3D/Engine/Engine.cpp
+                       src/Graphics/Urho3D/Graphics/Texture.cpp
+                       src/Graphics/Urho3D/Graphics/Texture2D.cpp
                        src/Graphics/Urho3D/Input/Events.cpp
                        src/Graphics/Urho3D/Input/Input.cpp
                        src/Graphics/Urho3D/IO/FileSystem.cpp
@@ -83,6 +92,7 @@ library
                        src/Graphics/Urho3D/Scene/Scene.cpp
                        src/Graphics/Urho3D/UI/Element.cpp
                        src/Graphics/Urho3D/UI/Sprite.cpp
+                       src/Graphics/Urho3D/UI/UI.cpp
 
   build-depends:        base
                       , containers

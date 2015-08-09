@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, RecordWildCards #-}
+{-# LANGUAGE TypeFamilies, RecordWildCards, ScopedTypeVariables #-}
 module Sample(
     Sample
   , newSample
@@ -114,7 +114,27 @@ sampleStop = do
   engineDumpResources eng True
 
 createLogo :: StateT Sample IO ()
-createLogo = undefined
+createLogo = do 
+  app <- use sampleApplication
+  cache <- fromJust <$> getSubsystem app 
+
+  logoTextureM <- cacheGetResource cache "Textures/LogoLarge.png" True
+  case logoTextureM of 
+    Nothing -> return ()
+    Just (logoTexture :: Ptr Texture2D) -> do 
+      ui <- fromJust <$> getSubsystem app
+      sprite <- newObject =<< createChildSimple =<< uiRoot ui 
+      sampleLogo .= sprite
+
+      spriteSetTexture sprite $ parentPointer logoTexture
+      twidth <- textureWidth $ parentPointer logoTexture
+      theight <- textureHeight $ parentPointer logoTexture
+      spriteSetScale sprite $ 256 / fromIntegral twidth
+      uiElementSetSize (parentPointer sprite) twidth theight
+      spriteSetHotSpot sprite 0 theight
+      uiElementSetAlignment (parentPointer sprite) AlignmentLeft AlignmentBottom 
+      uiElementSetOpacity (parentPointer sprite) 0.75
+      uiElementSetPriority (parentPointer sprite) (-100)
 
 setWindowTitileAndIcon :: StateT Sample IO ()
 setWindowTitileAndIcon = undefined
