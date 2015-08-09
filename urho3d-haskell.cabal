@@ -45,6 +45,7 @@ library
                        Graphics.Urho3D.Scene.Node
                        Graphics.Urho3D.Scene.Scene
                        Graphics.Urho3D.UI
+                       Graphics.Urho3D.UI.Element
                        Graphics.Urho3D.UI.Sprite
 
   other-modules:       Graphics.Urho3D.Core.Internal.Context
@@ -61,6 +62,7 @@ library
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Scene.Internal.Scene
                        Graphics.Urho3D.Template
+                       Graphics.Urho3D.UI.Internal.Element
                        Graphics.Urho3D.UI.Internal.Sprite
 
   c-sources:           src/Graphics/Urho3D/Core/Context.cpp
@@ -79,8 +81,9 @@ library
                        src/Graphics/Urho3D/Scene/Events.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
                        src/Graphics/Urho3D/Scene/Scene.cpp
+                       src/Graphics/Urho3D/UI/Element.cpp
                        src/Graphics/Urho3D/UI/Sprite.cpp
-                       
+
   build-depends:        base
                       , containers
                       , inline-c

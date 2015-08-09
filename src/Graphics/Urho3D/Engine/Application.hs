@@ -3,6 +3,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Engine.Application(
     Application
@@ -62,8 +63,8 @@ newApplication ptr = [C.exp| ApplicationH* { new ApplicationH($(Context* ptr)) }
 deleteApplication :: Ptr Application -> IO ()
 deleteApplication ptr = [C.exp| void { delete $(ApplicationH* ptr) } |]
 
-instance Createable Application where 
-  type CreationOptions Application = Ptr Context 
+instance Createable (Ptr Application) where 
+  type CreationOptions (Ptr Application) = Ptr Context 
 
   newObject = liftIO . newApplication
   deleteObject = liftIO . deleteApplication
@@ -88,4 +89,4 @@ C.verbatim "typedef SharedPtr<Engine> SharedEngine;"
 
 -- | Returns shared reference to inner engine
 applicationEngine :: MonadIO m => Ptr Application -> m SharedEnginePtr
-applicationEngine ptr = liftIO $ [C.exp| SharedEngine* { $(ApplicationH* ptr)->getEgine() } |]
+applicationEngine ptr = liftIO $ wrapSharedEnginePtr =<< [C.exp| SharedEngine* { $(ApplicationH* ptr)->getEgine() } |]

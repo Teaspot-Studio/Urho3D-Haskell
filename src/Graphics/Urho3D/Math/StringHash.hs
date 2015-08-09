@@ -2,6 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Math.StringHash(
     StringHash 
@@ -32,8 +33,8 @@ newStringHash str = withCString str $ \cstr -> do
 deleteStringHash :: Ptr StringHash -> IO ()
 deleteStringHash ptr = [C.exp| void { delete $(StringHash* ptr) } |]
 
-instance Createable StringHash where 
-  type CreationOptions StringHash = String
+instance Createable (Ptr StringHash) where 
+  type CreationOptions (Ptr StringHash) = String
 
   newObject = liftIO . newStringHash
   deleteObject = liftIO . deleteStringHash

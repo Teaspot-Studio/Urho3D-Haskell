@@ -37,8 +37,8 @@ newResourceCache ptr = [C.exp| ResourceCache* { new ResourceCache( $(Context* pt
 deleteResourceCache :: Ptr ResourceCache -> IO ()
 deleteResourceCache ptr = [C.exp| void { delete $(ResourceCache* ptr) } |]
 
-instance Createable ResourceCache where 
-  type CreationOptions ResourceCache = Ptr Context 
+instance Createable (Ptr ResourceCache) where 
+  type CreationOptions (Ptr ResourceCache) = Ptr Context 
 
   newObject = liftIO . newResourceCache
   deleteObject = liftIO . deleteResourceCache

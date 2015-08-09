@@ -8,7 +8,8 @@ module Graphics.Urho3D.Engine.Engine(
     Engine
   , engineContext
   , SharedEngine 
-  , SharedEnginePtr
+  , SharedEnginePtr(..)
+  , wrapSharedEnginePtr
   , engineDumpResources
   ) where
 
@@ -37,8 +38,8 @@ newEngine ptr = [C.exp| Engine* {new Engine($(Context* ptr))} |]
 deleteEngine :: Ptr Engine -> IO ()
 deleteEngine ptr = [C.exp| void {delete $(Engine* ptr)} |]
 
-instance Createable Engine where 
-  type CreationOptions Engine = Ptr Context 
+instance Createable (Ptr Engine) where 
+  type CreationOptions (Ptr Engine) = Ptr Context 
 
   newObject = liftIO . newEngine
   deleteObject = liftIO . deleteEngine
@@ -49,7 +50,7 @@ instance Parent Object Engine where
     child = [C.pure| Engine* {(Engine*)$(Object* ptr)} |]
     in if child == nullPtr then Nothing else Just child
 
-sharedPtr "Engine"
+sharedPtr "Engine" 
 
 -- | Prints all resources to log
 engineDumpResources :: (MonadIO m, Pointer r Engine) => r -- ^ Pointer to engine

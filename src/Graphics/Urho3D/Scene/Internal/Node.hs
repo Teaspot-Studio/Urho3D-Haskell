@@ -6,7 +6,7 @@ module Graphics.Urho3D.Scene.Internal.Node(
   , nodeCntx
   , sharedNodePtrCntx
   , SharedNode
-  , SharedNodePtr
+  , SharedNodePtr(..)
   ) where
 
 import qualified Language.C.Inline as C
@@ -24,4 +24,4 @@ nodeCntx = mempty {
     ]
   }
 
-sharedPtrImpl "Node"
+sharedPtrImpl "Node" 

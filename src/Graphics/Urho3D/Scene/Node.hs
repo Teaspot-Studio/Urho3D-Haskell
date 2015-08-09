@@ -24,7 +24,7 @@ import Foreign
 
 C.context (C.cppCtx <> nodeCntx <> sharedNodePtrCntx <> contextContext)
 C.include "<Urho3D/Scene/Node.h>"
-C.using "namespace Urho3D"
+C.using "namespace Urho3D" 
 
 nodeContext :: C.Context 
 nodeContext = sharedNodePtrCntx <> nodeCntx
@@ -35,10 +35,10 @@ newNode ptr = [C.exp| Node* { new Node($(Context* ptr)) } |]
 deleteNode :: Ptr Node -> IO ()
 deleteNode ptr = [C.exp| void { delete $(Node* ptr) } |]
 
-instance Createable Node where 
-  type CreationOptions Node = Ptr Context 
+instance Createable (Ptr Node) where 
+  type CreationOptions (Ptr Node) = Ptr Context 
 
   newObject = liftIO . newNode
   deleteObject = liftIO . deleteNode
 
-sharedPtr "Node"
+sharedPtr "Node" 

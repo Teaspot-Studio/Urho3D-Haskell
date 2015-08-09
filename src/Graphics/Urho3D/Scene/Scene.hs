@@ -35,8 +35,8 @@ newScene ptr = [C.exp| Scene* { new Scene($(Context* ptr)) } |]
 deleteScene :: Ptr Scene -> IO ()
 deleteScene ptr = [C.exp| void { delete $(Scene* ptr) } |]
 
-instance Createable Scene where 
-  type CreationOptions Scene = Ptr Context 
+instance Createable (Ptr Scene) where 
+  type CreationOptions (Ptr Scene) = Ptr Context 
 
   newObject = liftIO . newScene
   deleteObject = liftIO . deleteScene

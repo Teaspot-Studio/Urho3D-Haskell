@@ -1,6 +1,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Core.Context(
     Context
@@ -29,8 +30,8 @@ newContext = [C.exp| Context* { new Context() } |]
 deleteContext :: Ptr Context -> IO ()
 deleteContext ptr = [C.exp| void { delete $(Context* ptr) } |]
 
-instance Createable Context where 
-  type CreationOptions Context = ()
+instance Createable (Ptr Context) where 
+  type CreationOptions (Ptr Context) = ()
 
   newObject _ = liftIO newContext
   deleteObject = liftIO . deleteContext

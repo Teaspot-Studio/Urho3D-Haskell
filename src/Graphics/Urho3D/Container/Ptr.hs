@@ -15,6 +15,7 @@ import qualified Language.C.Types as C
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
 import qualified Data.Map as Map
+import System.IO.Unsafe (unsafePerformIO)
 
 -- | Makes public API of SharedPtr for given type
 -- Makes following symbols:
@@ -22,7 +23,9 @@ import qualified Data.Map as Map
 -- deleteSharedTPtr
 -- instance Createable SharedT
 -- instance Pointer SharedTPtr T 
---
+-- 
+-- wrapSharedTPtr :: Ptr SharedT -> IO SharedTPtr
+-- 
 -- Depends on symbols from @sharedPtrImpl@.
 --
 -- Note: if you get something like 'SharedT isn't defined' check if you added sharedTPtrCntx in your
@@ -30,38 +33,60 @@ import qualified Data.Map as Map
 sharedPtr :: String -> DecsQ 
 sharedPtr tname = do 
   typedef <- C.verbatim $ "typedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
-  body <- sequence [
-      newSharedTPtr ^:: [t| Ptr $tType -> IO $sharedTPtrType |]
-    , mkFunc1 newSharedTPtr "ptr" $ \ptrName -> 
-        quoteExp C.exp (sharedT ++ "* { new " ++ sharedT ++ "($( "++ tname ++ "* "++show ptrName++")) }")
-
-    , deleteSharedTPtr ^:: [t| $sharedTPtrType -> IO () |]
+  deleter <- sequence [
+      deleteSharedTPtr ^:: [t| Ptr $sharedTType -> IO () |]
     , mkFunc1 deleteSharedTPtr "ptr" $ \ptrName -> 
         quoteExp C.exp ("void { delete $(" ++ sharedT ++ "* "++show ptrName++")}")
     ]
+
+  deleterWrapper <- [d|
+    type SharedTDeleter = Ptr $sharedTType -> IO ()
+    foreign import ccall "wrapper"
+      mkSharedTDeleter :: SharedTDeleter -> IO (FunPtr SharedTDeleter)
+    |]
+
+  wrappPointer <- sequence [
+      wrapSharedTPtr ^:: [t| Ptr $sharedTType -> IO $sharedTPtrType |]
+    , mkFunc1 wrapSharedTPtr "ptr" $ \_ -> [e| do
+        finalizerPtr <- $(varE $ mkName "mkSharedTDeleter") $(varE $ mkName deleteSharedTPtr)
+        fptr <- newForeignPtr finalizerPtr $(varE $ mkName "ptr")
+        return $ $(conE $ mkName sharedTPtr) fptr
+      |]
+    ]
+
+  allocator <- sequence [
+      newSharedTPtr ^:: [t| Ptr $tType -> IO $sharedTPtrType |]
+    , mkFunc1 newSharedTPtr "ptr" $ \ptrName -> [e| do
+        sptr <- $(quoteExp C.exp (sharedT ++ "* { new " ++ sharedT ++ "($( "++ tname ++ "* "++show ptrName++")) }")) 
+        $(varE $ mkName wrapSharedTPtr) sptr
+        |]
+    ]
+
   createable <- [d| 
-    instance Createable $sharedTType where 
-      type CreationOptions $sharedTType = Ptr $tType 
+    instance Createable $sharedTPtrType where 
+      type CreationOptions $sharedTPtrType = Ptr $tType 
 
       newObject = liftIO . $(varE $ mkName newSharedTPtr)
-      deleteObject = liftIO . $(varE $ mkName deleteSharedTPtr)
+      deleteObject = liftIO . finalizeForeignPtr . $(varE $ mkName unSharedTPtr)
     |]
 
   pointerCast <- sequence [
       pointerCastF ^:: [t| $sharedTPtrType -> Ptr $tType|]
-    , mkFunc1 pointerCastF "ptr" $ \ptrName -> 
-        quoteExp C.pure $ tname ++ "* {"++"$("++sharedT++"* "++show ptrName++")->Get()}"
+    , mkFunc1Con pointerCastF sharedTPtr "ptr" $ \ptrName -> [e| unsafePerformIO $ withForeignPtr $(varE ptrName) $ \_ptr ->
+        $(quoteExp C.exp $ tname ++ "* {"++"$("++sharedT++"* _ptr)->Get()}") |]
     ]
   pointerInst <- [d|
     instance Pointer $sharedTPtrType $tType where 
       pointer = $(varE $ mkName pointerCastF)
+      isNull ptr = pointer ptr == nullPtr
+      makePointer = unsafePerformIO . $(varE $ mkName newSharedTPtr)
     |]
 
-  return $ typedef ++ body ++ createable ++ pointerCast ++ pointerInst
+  return $ typedef ++ deleter ++ deleterWrapper ++ wrappPointer ++ allocator ++ createable ++ pointerCast ++ pointerInst
 
   where 
   tType = conT $ mkName tname
-  sharedTType = conT $ mkName sharedT 
+  sharedTType = conT $ mkName sharedT
   sharedTPtrType = conT $ mkName sharedTPtr
 
   newSharedTPtr = "newShared" ++ tname ++ "Ptr"
@@ -69,18 +94,19 @@ sharedPtr tname = do
   sharedT = "Shared" ++ tname                                 
   sharedTPtr = sharedT ++ "Ptr"
   pointerCastF = "pointer" ++ sharedT
+  unSharedTPtr = "unShared" ++ tname ++ "Ptr"
+  wrapSharedTPtr = "wrap" ++ sharedTPtr
 
 -- | Makes internal representation of SharedPtr for given type
 -- Makes following symbols:
 -- data SharedT
--- type SharedTPtr = Ptr SharedT
+-- newtype SharedTPtr = SharedTPtr { unSharedTPtr :: ForeignPtr SharedT }
 -- sharedTPtrCntx :: C.Context
 sharedPtrImpl :: String -> DecsQ 
 sharedPtrImpl tname = do 
   sequence [
       return $ DataD [] (mkName sharedT) [] [] []
-    , fmap (TySynD (mkName sharedTPtr) []) [t| Ptr $(return $ ConT $ mkName sharedT) |]
-
+    , mkNewType sharedTPtr [t| ForeignPtr $(return $ ConT $ mkName sharedT) |]
     , sharedTPtrCntx ^:: [t| C.Context |]
     , sharedTPtrCntx ^= [e| mempty { 
         C.ctxTypesTable = Map.fromList [

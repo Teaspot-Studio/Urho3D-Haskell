@@ -33,7 +33,7 @@ newSample context joystickPatch = do
   , _sampleScreenSettingsIndex = maxBound
   , _sampleScreenJoystickIndex = maxBound 
   , _samplePaused = False 
-  , _sampleSprite = sprite
+  , _sampleLogo = sprite
   , _sampleScene = scene
   , _sampleCameraNode = camNode
   , _sampleJoystickPatch = joystickPatch
@@ -42,7 +42,7 @@ newSample context joystickPatch = do
 deleteSample :: Sample -> IO ()
 deleteSample s = do
   deleteObject $ s ^. sampleApplication
-  deleteObject $ s ^. sampleSprite
+  deleteObject $ s ^. sampleLogo
   deleteObject $ s ^. sampleScene
   deleteObject $ s ^. sampleCameraNode
 
@@ -99,6 +99,11 @@ initTouchInput = do
         joystick <- addScreenJoystick input layout defStyle
         setScreenJoystickVisible input joystick True
       return ()
+
+setLogoVisible :: Bool -> StateT Sample IO ()
+setLogoVisible flag = do 
+  ptr <- use sampleLogo 
+  unless (isNull ptr) $ uiElementSetVisible (parentPointer ptr) flag
 
 handleTouchBegin :: IO ()
 handleTouchBegin = undefined

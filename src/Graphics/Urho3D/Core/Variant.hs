@@ -45,8 +45,8 @@ deleteVariant :: Ptr Variant -> IO ()
 deleteVariant ptr = [C.exp| void { delete $(Variant* ptr) } |]
 
 -- | Creates empty variant, for extended API view @VariantStorable@
-instance Createable Variant where 
-  type CreationOptions Variant = ()
+instance Createable (Ptr Variant) where 
+  type CreationOptions (Ptr Variant) = ()
 
   newObject _ = liftIO newEmptyVariant
   deleteObject = liftIO . deleteVariant

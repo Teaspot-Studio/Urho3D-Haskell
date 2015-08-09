@@ -37,8 +37,8 @@ newXMLFile ptr = [C.exp| XMLFile* { new XMLFile( $(Context* ptr) ) } |]
 deleteXMLFile :: Ptr XMLFile -> IO ()
 deleteXMLFile ptr = [C.exp| void { delete $(XMLFile* ptr) } |]
 
-instance Createable XMLFile where 
-  type CreationOptions XMLFile = Ptr Context 
+instance Createable (Ptr XMLFile) where 
+  type CreationOptions (Ptr XMLFile) = Ptr Context 
 
   newObject = liftIO . newXMLFile
   deleteObject = liftIO . deleteXMLFile

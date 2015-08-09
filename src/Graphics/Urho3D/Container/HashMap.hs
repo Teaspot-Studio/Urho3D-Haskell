@@ -47,8 +47,8 @@ hashMap key value = do
         quoteExp C.exp ("void { delete $(" ++ hashMapName ++ "* " ++ show ptrName ++ ")}")
     ]
   createable <- [d| 
-      instance Createable $hashMapType where 
-        type CreationOptions $hashMapType = ()
+      instance Createable (Ptr $hashMapType) where 
+        type CreationOptions (Ptr $hashMapType) = ()
 
         newObject _ = liftIO $(varE $ mkName newHashMapKV)
         deleteObject = liftIO . $(varE $ mkName deleteHashMapKV)

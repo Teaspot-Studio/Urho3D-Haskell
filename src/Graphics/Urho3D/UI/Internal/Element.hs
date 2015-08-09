@@ -1,12 +1,12 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Graphics.Urho3D.Scene.Internal.Scene(
-    Scene
-  , sceneCntx
-  , sharedScenePtrCntx
-  , SharedScene 
-  , SharedScenePtr(..)
+module Graphics.Urho3D.UI.Internal.Element(
+    UIElement 
+  , uiElementCntx
+  , sharedUIElementPtrCntx
+  , SharedUIElement
+  , SharedUIElementPtr(..)
   ) where
 
 import qualified Language.C.Inline as C
@@ -15,13 +15,13 @@ import qualified Language.C.Types as C
 import Graphics.Urho3D.Container.Ptr
 import qualified Data.Map as Map
 
-data Scene
+data UIElement
 
-sceneCntx :: C.Context 
-sceneCntx = mempty {
+uiElementCntx :: C.Context 
+uiElementCntx = mempty {
     C.ctxTypesTable = Map.fromList [
-      (C.TypeName "Scene", [t| Scene |])
+      (C.TypeName "UIElement", [t| UIElement |])
     ]
-  }
+  } 
 
-sharedPtrImpl "Scene"
+sharedPtrImpl "UIElement"

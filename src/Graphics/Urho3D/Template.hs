@@ -4,7 +4,9 @@ module Graphics.Urho3D.Template(
   , (^::)
   , (^=)
   , mkFunc1
+  , mkFunc1Con
   , mkFuncN
+  , mkNewType
   ) where
 
 import Language.Haskell.TH as TH
@@ -28,3 +30,13 @@ mkFuncN :: String -> [String] -> ([Name] -> ExpQ ) -> DecQ
 mkFuncN name ps bodyQ = do
   let pns = mkName <$> ps
   funD (mkName name) [clause (varP <$> pns) (normalB $ bodyQ pns) []]
+
+mkNewType :: String -> TypeQ -> DecQ 
+mkNewType tname t = 
+  newtypeD (return []) (mkName tname) [] (recC (mkName tname) [varStrictType (mkName $ "un"++tname) $ strictType notStrict t]) []
+
+mkFunc1Con :: String -> String -> String -> (Name -> Q Exp) -> Q Dec 
+mkFunc1Con name con par bodyQ = do 
+  let parName = mkName par 
+      conName = mkName con
+  funD (mkName name) [clause [conP conName [varP parName]] (normalB $ bodyQ parName) []] 
