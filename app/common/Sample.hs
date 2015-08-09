@@ -17,8 +17,10 @@ import Control.Lens hiding (Context)
 
 import Internal.Sample
 
-newSample :: Ptr Context -> IO Sample 
-newSample context = do 
+newSample :: Ptr Context 
+  -> String -- ^ Joystick patch string
+  -> IO Sample 
+newSample context joystickPatch = do 
   app <- newObject context 
   sprite <- newObject nullPtr 
   scene <- newObject nullPtr
@@ -34,6 +36,7 @@ newSample context = do
   , _sampleSprite = sprite
   , _sampleScene = scene
   , _sampleCameraNode = camNode
+  , _sampleJoystickPatch = joystickPatch
   }
 
 deleteSample :: Sample -> IO ()
@@ -76,7 +79,26 @@ sampleStart = do
 
 initTouchInput :: StateT Sample IO ()
 initTouchInput = do 
+  app <- use sampleApplication
   sampleTouchEnabled .= True 
+
+  resCache <- fromJust <$> getSubsystem app
+  input <- fromJust <$> getSubsystem app 
+  layoutM <- cacheGetResource resCache "UI/ScreenJoystick_Samples.xml" True 
+  case layoutM of 
+    Nothing -> error "Cannot open UI/ScreenJoystick_Samples.xml"
+    Just layout -> do 
+      joystickPatch <- use sampleJoystickPatch
+      unless (null joystickPatch) $ do 
+        cntx <- getContext app 
+        withObject cntx $ \patchFile -> do 
+          whenM (xmlFileFromString patchFile joystickPatch) $ xmlFilePatch layout patchFile
+
+      defStyleM <- cacheGetResource resCache "UI/DefaultStyle.xml" True
+      _ <- whenJust defStyleM $ \defStyle -> do
+        joystick <- addScreenJoystick input layout defStyle
+        setScreenJoystickVisible input joystick True
+      return ()
 
 handleTouchBegin :: IO ()
 handleTouchBegin = undefined

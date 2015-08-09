@@ -11,6 +11,7 @@ module Graphics.Urho3D.Core.Object(
   , Subsystem(..)
   , Event(..)
   , subscribeToEvent
+  , getContext
   ) where
 
 import qualified Language.C.Inline as C 
@@ -89,3 +90,9 @@ subscribeToEvent obj e fun = do
         , new EventHandlerImpl<HaskellHandler>(handler, &HaskellHandler::runHanlder)
         );
   } |]
+
+-- | Returns inner Urho context of object
+getContext :: (Parent Object a, MonadIO m) => Ptr a -> m (Ptr Context)
+getContext ptr = liftIO $ do 
+  let objPtr = castToParent ptr 
+  [C.exp| Context* { $(Object* objPtr)->GetContext() } |]

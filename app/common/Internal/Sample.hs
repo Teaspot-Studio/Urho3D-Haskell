@@ -18,5 +18,6 @@ data Sample = Sample {
 , _sampleSprite :: SharedSpritePtr
 , _sampleScene :: SharedScenePtr
 , _sampleCameraNode :: SharedNodePtr
+, _sampleJoystickPatch :: String 
 }
 makeLenses ''Sample 

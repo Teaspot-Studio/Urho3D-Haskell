@@ -26,8 +26,7 @@ stringHashContext :: C.Context
 stringHashContext = stringHashCntx
 
 newStringHash :: String -> IO (Ptr StringHash)
-newStringHash str = do
-  cstr <- newCString str
+newStringHash str = withCString str $ \cstr -> do
   [C.exp| StringHash* { new StringHash( $(const char* cstr) ) } |]
 
 deleteStringHash :: Ptr StringHash -> IO ()

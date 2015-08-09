@@ -76,9 +76,8 @@ instance Parent Object Application where
 
 -- | Sets inital values of engine startup configuration by key-value
 setStartupParameter :: VariantStorable a => Ptr Application -> String -> a -> IO ()
-setStartupParameter ptr name a = do 
+setStartupParameter ptr name a = withCString name $ \cname -> do 
   var <- newVariant a 
-  cname <- newCString name
   [C.exp| void { $(ApplicationH* ptr)->setEngineParameter($(char* cname), $(Variant* var)) }|]
 
 -- | Sets inital values of engine startup configuration by key-value

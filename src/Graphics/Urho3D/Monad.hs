@@ -13,6 +13,7 @@ module Graphics.Urho3D.Monad(
   , Parent(..)
   , Pointer(..)
   , whenJust
+  , whenM
   , module X
   ) where
 
@@ -83,3 +84,9 @@ class Pointer a b | a -> b where
 whenJust :: Monad m => Maybe a -> (a -> m b) -> m (Maybe b)
 whenJust Nothing _ = return Nothing
 whenJust (Just a) f = Just <$> f a
+
+-- | Lifted version of @when@
+whenM :: Monad m => m Bool -> m () -> m ()
+whenM cond f = do 
+  v <- cond 
+  when v f

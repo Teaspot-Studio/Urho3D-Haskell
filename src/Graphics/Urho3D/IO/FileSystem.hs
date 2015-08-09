@@ -37,8 +37,6 @@ instance Subsystem FileSystem where
 
 -- | Returns application preferences directory
 getAppPreferencesDir :: MonadIO m => Ptr FileSystem -> String -> String -> m String 
-getAppPreferencesDir ptr org app = liftIO $ do 
-  org' <- newCString org 
-  app' <- newCString app
+getAppPreferencesDir ptr org app = liftIO $ withCString org $ \org' -> withCString app $ \app' -> do 
   res <- [C.exp| const char* { $(FileSystem* ptr)->GetAppPreferencesDir(String($(const char* org')), String($(const char* app'))).CString() } |]
   peekCString res

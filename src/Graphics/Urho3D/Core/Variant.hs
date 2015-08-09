@@ -70,8 +70,7 @@ instance VariantStorable Bool where
       _ -> return Nothing
 
 instance VariantStorable String where 
-  setVariant a ptr = do 
-    str <- newCString a 
+  setVariant a ptr = withCString a $ \str ->
     [C.exp| void { *$(Variant* ptr) = $(char* str) } |]
   getVariant ptr = do 
     t <- variantType ptr 
