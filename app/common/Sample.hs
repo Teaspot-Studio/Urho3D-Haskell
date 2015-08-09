@@ -143,7 +143,23 @@ setWindowTitleAndIcon = do
   graphicsSetWindowTitle graphics "Urho3D Sample"
 
 createConsoleAndDebugHud :: StateT Sample IO ()
-createConsoleAndDebugHud = undefined
+createConsoleAndDebugHud = do 
+  app <- use sampleApplication
+  engine <- applicationEngine app 
+
+  cache <- fromJust <$> getSubsystem app 
+  xmlFileM <- cacheGetResource cache "UI/DefaultStyle.xml" True 
+  _ <- whenJust xmlFileM $ \xmlFile -> do 
+    consoleM <- engineCreateConsole engine
+    whenJust consoleM $ \console -> do 
+      consoleSetDefaultStyle console xmlFile 
+      bg <- consoleGetBackground console 
+      uiElementSetOpacity (parentPointer bg) 0.8 
+
+    debugHud <- engineCreateDebugHud engine 
+    debugHudSetDefaultStyle debugHud xmlFile 
+
+  return ()
 
 handleKeyDown :: EventData EventKeyDown -> IO ()
 handleKeyDown = undefined

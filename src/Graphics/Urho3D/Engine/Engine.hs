@@ -11,12 +11,16 @@ module Graphics.Urho3D.Engine.Engine(
   , SharedEnginePtr(..)
   , wrapSharedEnginePtr
   , engineDumpResources
+  , engineCreateConsole
+  , engineCreateDebugHud
   ) where
 
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Engine.Internal.Engine
+import Graphics.Urho3D.Engine.Console 
+import Graphics.Urho3D.Engine.DebugHud
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Core.Object
@@ -25,7 +29,7 @@ import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 
-C.context (C.cppCtx <> engineCntx <> sharedEnginePtrCntx <> contextContext <> objectContext)
+C.context (C.cppCtx <> engineCntx <> sharedEnginePtrCntx <> contextContext <> objectContext <> consoleContext <> debugHudContext)
 C.include "<Urho3D/Engine/Engine.h>"
 C.using "namespace Urho3D"
 
@@ -60,3 +64,18 @@ engineDumpResources ref dumpFilenames = liftIO $ [C.exp| void {$(Engine* p)->Dum
   where 
   p = pointer ref
   v = if dumpFilenames then 1 else 0
+
+-- | Create the console and return it. May return Nothing if engine configuration does not allow creation (headless mode.)
+engineCreateConsole :: (MonadIO m, Pointer p Engine) => p -- ^ Pointer to engine
+  -> m (Maybe (Ptr Console))
+engineCreateConsole p = liftIO $ do 
+  let ptr = pointer p 
+  cp <- [C.exp| Console* { $(Engine* ptr)->CreateConsole() } |]
+  checkNullPtr' cp return
+
+-- | Create the console and return it. May return Nothing if engine configuration does not allow creation (headless mode.)
+engineCreateDebugHud :: (MonadIO m, Pointer p Engine) => p -- ^ Pointer to engine
+  -> m (Ptr DebugHud)
+engineCreateDebugHud p = liftIO $ do 
+  let ptr = pointer p 
+  [C.exp| DebugHud* { $(Engine* ptr)->CreateDebugHud() } |]

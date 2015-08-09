@@ -29,6 +29,8 @@ library
                        Graphics.Urho3D.Createable
                        Graphics.Urho3D.Engine
                        Graphics.Urho3D.Engine.Application
+                       Graphics.Urho3D.Engine.Console
+                       Graphics.Urho3D.Engine.DebugHud
                        Graphics.Urho3D.Engine.Engine
                        Graphics.Urho3D.Graphics
                        Graphics.Urho3D.Graphics.Graphics
@@ -50,6 +52,7 @@ library
                        Graphics.Urho3D.Scene.Node
                        Graphics.Urho3D.Scene.Scene
                        Graphics.Urho3D.UI
+                       Graphics.Urho3D.UI.BorderImage
                        Graphics.Urho3D.UI.Element
                        Graphics.Urho3D.UI.Sprite
                        Graphics.Urho3D.UI.UI
@@ -58,6 +61,8 @@ library
                        Graphics.Urho3D.Core.Internal.Object
                        Graphics.Urho3D.Core.Internal.Variant
                        Graphics.Urho3D.Engine.Internal.Application
+                       Graphics.Urho3D.Engine.Internal.Console
+                       Graphics.Urho3D.Engine.Internal.DebugHud
                        Graphics.Urho3D.Engine.Internal.Engine
                        Graphics.Urho3D.Graphics.Internal.Graphics
                        Graphics.Urho3D.Graphics.Internal.Texture
@@ -72,6 +77,7 @@ library
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Scene.Internal.Scene
                        Graphics.Urho3D.Template
+                       Graphics.Urho3D.UI.Internal.BorderImage
                        Graphics.Urho3D.UI.Internal.Element
                        Graphics.Urho3D.UI.Internal.Sprite
                        Graphics.Urho3D.UI.Internal.UI
@@ -81,6 +87,8 @@ library
                        src/Graphics/Urho3D/Core/ProcessUtils.cpp
                        src/Graphics/Urho3D/Core/Variant.cpp
                        src/Graphics/Urho3D/Engine/Application.cpp
+                       src/Graphics/Urho3D/Engine/Console.cpp
+                       src/Graphics/Urho3D/Engine/DebugHud.cpp
                        src/Graphics/Urho3D/Engine/Engine.cpp
                        src/Graphics/Urho3D/Graphics/Graphics.cpp
                        src/Graphics/Urho3D/Graphics/Texture.cpp
@@ -96,6 +104,7 @@ library
                        src/Graphics/Urho3D/Scene/Events.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
                        src/Graphics/Urho3D/Scene/Scene.cpp
+                       src/Graphics/Urho3D/UI/BorderImage.cpp
                        src/Graphics/Urho3D/UI/Element.cpp
                        src/Graphics/Urho3D/UI/Sprite.cpp
                        src/Graphics/Urho3D/UI/UI.cpp
