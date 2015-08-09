@@ -38,6 +38,7 @@ library
                        Graphics.Urho3D.Math.StringHash
                        Graphics.Urho3D.Monad
                        Graphics.Urho3D.Resource.Cache
+                       Graphics.Urho3D.Resource.Resource
                        Graphics.Urho3D.Resource.XMLFile
                        Graphics.Urho3D.Scene
                        Graphics.Urho3D.Scene.Events
@@ -55,6 +56,7 @@ library
                        Graphics.Urho3D.IO.Internal.FileSystem
                        Graphics.Urho3D.Math.Internal.StringHash
                        Graphics.Urho3D.Resource.Internal.Cache
+                       Graphics.Urho3D.Resource.Internal.Resource
                        Graphics.Urho3D.Resource.Internal.XMLFile
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Scene.Internal.Scene
@@ -72,6 +74,7 @@ library
                        src/Graphics/Urho3D/IO/FileSystem.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
                        src/Graphics/Urho3D/Resource/Cache.cpp
+                       src/Graphics/Urho3D/Resource/Resource.cpp
                        src/Graphics/Urho3D/Resource/XMLFile.cpp
                        src/Graphics/Urho3D/Scene/Events.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
