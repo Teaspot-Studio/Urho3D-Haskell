@@ -71,7 +71,7 @@ sampleStart = do
     when (jcount == 0) $ subscribeToEvent app EventTouchBegin (const handleTouchBegin)
 
   createLogo
-  setWindowTitileAndIcon
+  setWindowTitleAndIcon
   createConsoleAndDebugHud
 
   subscribeToEvent app EventKeyDown handleKeyDown 
@@ -105,9 +105,6 @@ setLogoVisible flag = do
   ptr <- use sampleLogo 
   unless (isNull ptr) $ uiElementSetVisible (parentPointer ptr) flag
 
-handleTouchBegin :: IO ()
-handleTouchBegin = undefined
-
 sampleStop :: StateT Sample IO ()
 sampleStop = do 
   eng <- applicationEngine =<< use sampleApplication
@@ -136,8 +133,14 @@ createLogo = do
       uiElementSetOpacity (parentPointer sprite) 0.75
       uiElementSetPriority (parentPointer sprite) (-100)
 
-setWindowTitileAndIcon :: StateT Sample IO ()
-setWindowTitileAndIcon = undefined
+setWindowTitleAndIcon :: StateT Sample IO ()
+setWindowTitleAndIcon = do 
+  app <- use sampleApplication
+  cache <- fromJust <$> getSubsystem app 
+  graphics <- fromJust <$> getSubsystem app 
+  iconM <- cacheGetResource cache "Textures/UrhoIcon.png" True 
+  _ <- whenJust iconM $ graphicsSetWindowIcon graphics
+  graphicsSetWindowTitle graphics "Urho3D Sample"
 
 createConsoleAndDebugHud :: StateT Sample IO ()
 createConsoleAndDebugHud = undefined
@@ -147,3 +150,6 @@ handleKeyDown = undefined
 
 handleSceneUpdate :: EventData EventSceneUpdate -> IO ()
 handleSceneUpdate = undefined
+
+handleTouchBegin :: IO ()
+handleTouchBegin = undefined
