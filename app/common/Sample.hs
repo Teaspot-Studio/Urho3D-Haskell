@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, RecordWildCards, ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies, RecordWildCards, ScopedTypeVariables, MultiWayIf #-}
 module Sample(
     Sample
   , newSample
@@ -12,10 +12,13 @@ import Data.Word
 import Foreign
 import Data.StateVar
 import Data.Maybe 
-import Control.Monad.State.Strict
+import Control.Monad.State.Strict as State
 import Control.Lens hiding (Context)
+import Data.IORef 
 
 import Internal.Sample
+import Data.Thyme
+import System.Locale 
 
 newSample :: Ptr Context 
   -> String -- ^ Joystick patch string
@@ -25,14 +28,16 @@ newSample context joystickPatch = do
   sprite <- newObject nullPtr 
   scene <- newObject nullPtr
   camNode <- newObject nullPtr
+  pausedRef <- newIORef False
+  settRef <- newIORef maxBound
   return $ Sample {
     _sampleApplication = app 
   , _sampleYaw = 0
   , _samplePitch = 0
   , _sampleTouchEnabled = False
-  , _sampleScreenSettingsIndex = maxBound
+  , _sampleScreenSettingsIndex = settRef
   , _sampleScreenJoystickIndex = maxBound 
-  , _samplePaused = False 
+  , _samplePaused = pausedRef 
   , _sampleLogo = sprite
   , _sampleScene = scene
   , _sampleCameraNode = camNode
@@ -68,14 +73,15 @@ sampleStart = do
   else do 
     is <- fromJust <$> getSubsystem app
     jcount <- getNumJoysticks is
-    when (jcount == 0) $ subscribeToEvent app EventTouchBegin (const handleTouchBegin)
+    when (jcount == 0) $ subscribeToEvent app handleTouchBegin
 
   createLogo
   setWindowTitleAndIcon
   createConsoleAndDebugHud
 
-  subscribeToEvent app EventKeyDown handleKeyDown 
-  subscribeToEvent app EventSceneUpdate handleSceneUpdate
+  sample <- State.get
+  subscribeToEvent app $ handleKeyDown sample
+  subscribeToEvent app $ handleSceneUpdate sample
 
 initTouchInput :: StateT Sample IO ()
 initTouchInput = do 
@@ -119,7 +125,7 @@ createLogo = do
   case logoTextureM of 
     Nothing -> return ()
     Just (logoTexture :: Ptr Texture2D) -> do 
-      ui <- fromJust <$> getSubsystem app
+      (ui :: Ptr UI) <- fromJust <$> getSubsystem app
       sprite <- newObject =<< createChildSimple =<< uiRoot ui 
       sampleLogo .= sprite
 
@@ -136,8 +142,8 @@ createLogo = do
 setWindowTitleAndIcon :: StateT Sample IO ()
 setWindowTitleAndIcon = do 
   app <- use sampleApplication
-  cache <- fromJust <$> getSubsystem app 
-  graphics <- fromJust <$> getSubsystem app 
+  (cache :: Ptr ResourceCache) <- fromJust <$> getSubsystem app 
+  (graphics :: Ptr Graphics) <- fromJust <$> getSubsystem app 
   iconM <- cacheGetResource cache "Textures/UrhoIcon.png" True 
   _ <- whenJust iconM $ graphicsSetWindowIcon graphics
   graphicsSetWindowTitle graphics "Urho3D Sample"
@@ -161,11 +167,84 @@ createConsoleAndDebugHud = do
 
   return ()
 
-handleKeyDown :: EventData EventKeyDown -> IO ()
-handleKeyDown = undefined
+handleKeyDown :: Sample -> EventKeyDown -> IO ()
+handleKeyDown s (EventKeyDown{..}) = do 
+  let app = s ^. sampleApplication
+      key = pressKey
+  engine <- applicationEngine app 
+  (console :: Ptr Console) <- fromJust <$> getSubsystem app 
+  (debugHud :: Ptr DebugHud) <- fromJust <$> getSubsystem app 
+  (ui :: Ptr UI) <- fromJust <$> getSubsystem app 
+  focusElem <- uiFocusElement ui 
+  (input :: Ptr Input) <- fromJust <$> getSubsystem app 
+  (cache :: Ptr ResourceCache) <- fromJust <$> getSubsystem app 
+  (fs :: Ptr FileSystem) <- fromJust <$> getSubsystem app 
 
-handleSceneUpdate :: EventData EventSceneUpdate -> IO ()
+  if| key == KeyEsc -> do 
+      -- Close console (if open) or exit when ESC is pressed    
+      vis <- consoleIsVisible console 
+      if vis  
+        then consoleSetVisible console False 
+        else engineExit engine 
+    | key == KeyF1 -> consoleToggle console  -- Toggle console with F1
+    | key == KeyF2 -> debugHudToggle debugHud -- Toggle debug HUD with F2
+    | isNothing focusElem -> do -- Common rendering quality controls, only when UI has no focused element
+      (renderer :: Ptr Renderer) <- fromJust <$> getSubsystem app
+
+      -- Preferences / Pause 
+      if | key == KeySelect && s ^. sampleTouchEnabled -> do 
+          modifyIORef' (s ^. samplePaused) not 
+
+          settIndex <- readIORef $ s ^. sampleScreenSettingsIndex
+          if | settIndex == maxBound -> do 
+                -- Lazy initialization
+                layoutM <- cacheGetResource cache "UI/ScreenJoystickSettings_Samples.xml" True 
+                styleM <- cacheGetResource cache "UI/DefaultStyle.xml" True 
+                _ <- whenJust (liftM2 (,) layoutM styleM) $ \(layout, style) -> do
+                  ji <- addScreenJoystick input layout style
+                  writeIORef (s ^. sampleScreenSettingsIndex) ji
+                return ()
+             | otherwise -> setScreenJoystickVisible input settIndex =<< readIORef (s ^. samplePaused)
+         | key == Key1 -> do -- Texture quality
+          quality <- rendererGetTextureQuality renderer
+          rendererSetTextureQuality renderer $ cycleEnum quality
+         | key == Key2 -> do -- Material quality 
+          quality <- rendererGetMaterialQuality renderer 
+          rendererSetMaterialQuality renderer $ cycleEnum quality
+         | key == Key3 -> -- Specular lighting
+          rendererSetSpecularLighting renderer =<< fmap not (rendererGetSpecularLighting renderer)
+         | key == Key4 -> -- Shadow rendering
+          rendererSetDrawShadows renderer =<< fmap not (rendererGetDrawShadows renderer)
+         | key == Key5 -> do -- Shadow map resolution
+          shadowMapSize <- (*2) <$> rendererGetShadowMapSize renderer 
+          rendererSetShadowMapSize renderer $ if shadowMapSize > 2048 then 512 else shadowMapSize
+         | key == Key6 -> do -- Shadow depth and filtering quality
+          quality <- rendererGetShadowQuality renderer
+          rendererSetShadowQuality renderer $ cycleEnum quality
+         | key == Key7 -> do -- Occlusion culling 
+          occlusion <- (0 <) <$> rendererGetMaxOccluderTriangles renderer 
+          rendererSetMaxOccluderTriangles renderer $ if not occlusion then 5000 else 0 
+         | key == Key8 -> -- Instancing
+          rendererSetDynamicInstancing renderer =<< rendererGetDynamicInstancing renderer
+         | key == Key9 -> do -- Take screenshot
+          cntx <- getContext app 
+          withObject cntx $ \screenshot -> do 
+            (graphics :: Ptr Graphics) <- fromJust <$> getSubsystem app
+            graphicsTakeScreenShot graphics screenshot
+            -- Here we save in the Data folder with data and time appended
+            progDir <- getProgramDir fs 
+            timestamp <- formatTime defaultTimeLocale "%Y-%m-%dT%H-%M-%S" <$> getCurrentTime
+            imageSavePNG screenshot $ progDir ++ "Data/Screenshot_" ++ timestamp ++ ".png"
+         | otherwise -> return ()
+    | otherwise -> return ()
+
+cycleEnum :: (Eq a, Enum a, Bounded a) => a -> a 
+cycleEnum a 
+  | a == maxBound = minBound
+  | otherwise = succ a
+
+handleSceneUpdate :: Sample -> EventSceneUpdate -> IO ()
 handleSceneUpdate = undefined
 
-handleTouchBegin :: IO ()
+handleTouchBegin :: EventTouchBegin -> IO ()
 handleTouchBegin = undefined

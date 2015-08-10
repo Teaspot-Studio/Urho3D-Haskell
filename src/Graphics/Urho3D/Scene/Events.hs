@@ -21,19 +21,17 @@ C.include "<Urho3D/Scene/SceneEvents.h>"
 C.using "namespace Urho3D"
 
 -- | Fires within timestep for updating scene
-data EventSceneUpdate = EventSceneUpdate
-
-instance Event EventSceneUpdate where 
-  data EventData EventSceneUpdate = EventSceneUpdateData {
+data EventSceneUpdate = EventSceneUpdate {
     sceneUpdateScene :: Ptr Scene
   , sceneUpdateTimestep :: Float
-  }
+  } deriving (Show)
 
+instance Event EventSceneUpdate where 
   eventID _ = [C.pure| const StringHash* {&E_SCENEUPDATE} |]
   loadEventData vmap = do 
     pscene <- variantMapGet' vmap [C.pure| const StringHash* {&SceneUpdate::P_SCENE} |]
     pt <- variantMapGet' vmap [C.pure| const StringHash* {&SceneUpdate::P_TIMESTEP} |]
-    return $ EventSceneUpdateData {
+    return $ EventSceneUpdate {
       sceneUpdateScene = fromMaybe nullPtr pscene
     , sceneUpdateTimestep = fromMaybe 0 pt 
     }

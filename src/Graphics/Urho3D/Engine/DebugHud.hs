@@ -8,6 +8,7 @@ module Graphics.Urho3D.Engine.DebugHud(
     DebugHud
   , debugHudContext
   , debugHudSetDefaultStyle
+  , debugHudToggle
   ) where
 
 import qualified Language.C.Inline as C 
@@ -47,10 +48,20 @@ instance Parent Object DebugHud where
     child = [C.pure| DebugHud* {(DebugHud*)$(Object* ptr)} |]
     in if child == nullPtr then Nothing else Just child
 
+instance Subsystem DebugHud where 
+  getSubsystemImpl ptr = [C.exp| DebugHud* { $(Object* ptr)->GetSubsystem<DebugHud>() } |]
+
 -- | Set UI elements style from an XML file
-debugHudSetDefaultStyle :: (Pointer p DebugHud, MonadIO m) => p -- ^ DebugHud ptr 
+debugHudSetDefaultStyle :: (Pointer p a, Parent DebugHud a, MonadIO m) => p -- ^ DebugHud ptr 
   -> Ptr XMLFile -- ^ style file
   -> m ()
 debugHudSetDefaultStyle p file = liftIO $ do 
-  let ptr = pointer p 
+  let ptr = parentPointer p 
   [C.exp| void { $(DebugHud* ptr)->SetDefaultStyle($(XMLFile* file)) }|]
+
+-- | Toggles visibility of debug HUD
+debugHudToggle :: (Pointer p a, Parent DebugHud a, MonadIO m) => p -- ^ DebugHud ptr or child
+  -> m ()
+debugHudToggle p = liftIO $ do 
+  let ptr = parentPointer p
+  [C.exp| void { $(DebugHud* ptr)->ToggleAll() } |]

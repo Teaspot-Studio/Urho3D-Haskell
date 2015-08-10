@@ -2,11 +2,12 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, FlexibleContexts, MultiParamTypeClasses #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Resource.Image(
     Image 
   , imageContext
+  , imageSavePNG
   ) where
 
 import qualified Language.C.Inline as C 
@@ -19,6 +20,7 @@ import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
+import Foreign.C.String
 import System.IO.Unsafe (unsafePerformIO)
 
 C.context (C.cppCtx <> imageCntx <> contextContext <> resourceContext)
@@ -45,3 +47,12 @@ instance ResourceType Image where
     static StringHash h = Image::GetTypeStatic(); 
     return &h; 
     } |]
+
+-- | Saves image as PNG
+imageSavePNG :: (Pointer p a, Parent Image a, MonadIO m) => p -- ^ Pointer to image or child
+  -> String -- ^ path to file with extension
+  -> m ()
+imageSavePNG p path = liftIO $ withCString path $ \path' -> do 
+  let ptr = parentPointer p 
+  [C.exp| void {$(Image* ptr)->SavePNG(String($(const char* path')))} |]
+

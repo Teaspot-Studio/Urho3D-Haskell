@@ -13,6 +13,7 @@ module Graphics.Urho3D.Engine.Engine(
   , engineDumpResources
   , engineCreateConsole
   , engineCreateDebugHud
+  , engineExit
   ) where
 
 import qualified Language.C.Inline as C 
@@ -57,25 +58,32 @@ instance Parent Object Engine where
 sharedPtr "Engine" 
 
 -- | Prints all resources to log
-engineDumpResources :: (MonadIO m, Pointer r Engine) => r -- ^ Pointer to engine
+engineDumpResources :: (Pointer p a, Parent Engine a, MonadIO m) => p -- ^ Pointer to engine
   -> Bool -- ^ Print also filenames?
   -> m ()
-engineDumpResources ref dumpFilenames = liftIO $ [C.exp| void {$(Engine* p)->DumpResources($(int v) != 0)} |]
+engineDumpResources p dumpFilenames = liftIO $ [C.exp| void {$(Engine* ptr)->DumpResources($(int v) != 0)} |]
   where 
-  p = pointer ref
+  ptr = parentPointer p
   v = if dumpFilenames then 1 else 0
 
 -- | Create the console and return it. May return Nothing if engine configuration does not allow creation (headless mode.)
-engineCreateConsole :: (MonadIO m, Pointer p Engine) => p -- ^ Pointer to engine
+engineCreateConsole :: (Pointer p a, Parent Engine a, MonadIO m) => p -- ^ Pointer to engine
   -> m (Maybe (Ptr Console))
 engineCreateConsole p = liftIO $ do 
-  let ptr = pointer p 
+  let ptr = parentPointer p 
   cp <- [C.exp| Console* { $(Engine* ptr)->CreateConsole() } |]
   checkNullPtr' cp return
 
 -- | Create the console and return it. May return Nothing if engine configuration does not allow creation (headless mode.)
-engineCreateDebugHud :: (MonadIO m, Pointer p Engine) => p -- ^ Pointer to engine
+engineCreateDebugHud :: (Pointer p a, Parent Engine a, MonadIO m) => p -- ^ Pointer to engine
   -> m (Ptr DebugHud)
 engineCreateDebugHud p = liftIO $ do 
-  let ptr = pointer p 
+  let ptr = parentPointer p 
   [C.exp| DebugHud* { $(Engine* ptr)->CreateDebugHud() } |]
+
+-- | Issues command to engine to exit from application
+engineExit :: (Pointer p a, Parent Engine a, MonadIO m) => p -- ^ Pointer to engine (or child)
+  -> m ()
+engineExit p = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.exp| void{ $(Engine* ptr)->Exit() }|]

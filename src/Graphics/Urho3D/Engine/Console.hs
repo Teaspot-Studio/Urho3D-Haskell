@@ -9,6 +9,9 @@ module Graphics.Urho3D.Engine.Console(
   , consoleContext
   , consoleSetDefaultStyle
   , consoleGetBackground
+  , consoleIsVisible
+  , consoleSetVisible
+  , consoleToggle
   ) where
 
 import qualified Language.C.Inline as C 
@@ -49,17 +52,43 @@ instance Parent Object Console where
     child = [C.pure| Console* {(Console*)$(Object* ptr)} |]
     in if child == nullPtr then Nothing else Just child
 
+instance Subsystem Console where 
+  getSubsystemImpl ptr = [C.exp| Console* { $(Object* ptr)->GetSubsystem<Console>() } |]
+
 -- | Set UI elements style from an XML file
-consoleSetDefaultStyle :: (Pointer p Console, MonadIO m) => p -- ^ Console ptr 
+consoleSetDefaultStyle :: (Pointer p a, Parent Console a, MonadIO m) => p -- ^ Console ptr 
   -> Ptr XMLFile -- ^ style file
   -> m ()
 consoleSetDefaultStyle p file = liftIO $ do 
-  let ptr = pointer p 
+  let ptr = parentPointer p 
   [C.exp| void { $(Console* ptr)->SetDefaultStyle($(XMLFile* file)) }|]
 
 -- | Return the background element.
-consoleGetBackground :: (Pointer p Console, MonadIO m) => p -- ^ Console ptr 
+consoleGetBackground :: (Pointer p a, Parent Console a, MonadIO m) => p -- ^ Console ptr 
   -> m (Ptr BorderImage)
 consoleGetBackground p = liftIO $ do 
-  let ptr = pointer p 
+  let ptr = parentPointer p 
   [C.exp| BorderImage* { $(Console* ptr)->GetBackground() }|]
+
+-- | Returns True if console is visible to user
+consoleIsVisible :: (Pointer p a, Parent Console a, MonadIO m) => p -- ^ Console ptr (or child)
+  -> m Bool
+consoleIsVisible p = liftIO $ do 
+  let ptr = parentPointer p 
+  (/= 0) <$> [C.exp| int { (int)$(Console* ptr)->IsVisible()} |]
+
+-- | Returns True if console is visible to user
+consoleSetVisible :: (Pointer p a, Parent Console a, MonadIO m) => p -- ^ Console ptr (or child)
+  -> Bool -- ^ Flag, True - visible, False - hided
+  -> m ()
+consoleSetVisible p flag = liftIO $ do 
+  let ptr = parentPointer p
+      flag' = if flag then 1 else 0 
+  [C.exp| void { $(Console* ptr)->SetVisible($(int flag') != 0)} |]
+
+-- | Toggles visibility
+consoleToggle :: (Pointer p a, Parent Console a, MonadIO m) => p -- ^ Console ptr (or child)
+  -> m ()
+consoleToggle p = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.exp| void { $(Console* ptr)->Toggle() } |]

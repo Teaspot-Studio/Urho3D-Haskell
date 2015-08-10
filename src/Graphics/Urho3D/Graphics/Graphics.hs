@@ -9,6 +9,7 @@ module Graphics.Urho3D.Graphics.Graphics(
   , graphicsContext
   , graphicsSetWindowIcon
   , graphicsSetWindowTitle
+  , graphicsTakeScreenShot
   ) where
 
 import qualified Language.C.Inline as C 
@@ -39,17 +40,25 @@ instance Subsystem Graphics where
   getSubsystemImpl ptr = [C.exp| Graphics* { $(Object* ptr)->GetSubsystem<Graphics>() } |]
 
 -- | Sets current window icon
-graphicsSetWindowIcon :: (Pointer p Graphics, MonadIO m) => p -- ^ Pointer to graphics system
+graphicsSetWindowIcon :: (Parent Graphics a, Pointer p a, MonadIO m) => p -- ^ Pointer to graphics system or child
   -> Ptr Image -- ^ Pointer to icon resource
   -> m ()
 graphicsSetWindowIcon ptr icon = liftIO $ do 
-  let ptr' = pointer ptr 
+  let ptr' = parentPointer ptr 
   [C.exp| void { $(Graphics* ptr')->SetWindowIcon($(Image* icon)) }|]
 
 -- | Sets current window title
-graphicsSetWindowTitle :: (Pointer p Graphics, MonadIO m) => p -- ^ Pointer to graphics system
+graphicsSetWindowTitle :: (Parent Graphics a, Pointer p a, MonadIO m) => p -- ^ Pointer to graphics system or child
   -> String -- ^ Title
   -> m ()
 graphicsSetWindowTitle ptr str = liftIO $ withCString str $ \str' -> do 
-  let ptr' = pointer ptr 
+  let ptr' = parentPointer ptr 
   [C.exp| void { $(Graphics* ptr')->SetWindowTitle(String($(const char* str'))) }|]
+
+-- | Takes screenshot and writes data in image
+graphicsTakeScreenShot :: (Parent Graphics a, Pointer p a, MonadIO m) => p -- ^ Pointer to graphics system or child
+  -> Ptr Image -- ^ Pointer to image where to save data
+  -> m ()
+graphicsTakeScreenShot p img = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.exp| void { $(Graphics* ptr)->TakeScreenShot(*$(Image* img)) } |]

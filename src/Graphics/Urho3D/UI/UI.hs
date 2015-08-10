@@ -8,6 +8,7 @@ module Graphics.Urho3D.UI.UI(
     UI
   , uiContext
   , uiRoot
+  , uiFocusElement
   ) where
 
 import qualified Language.C.Inline as C 
@@ -37,7 +38,14 @@ instance Subsystem UI where
   getSubsystemImpl ptr = [C.exp| UI* { $(Object* ptr)->GetSubsystem<UI>() } |]
 
 -- | Returns root UI element
-uiRoot :: (Pointer p UI, MonadIO m) => p -> m (Ptr UIElement)
+uiRoot :: (Pointer p a, Parent UI a, MonadIO m) => p -> m (Ptr UIElement)
 uiRoot ptr = liftIO $ do 
-  let ptr' = pointer ptr 
+  let ptr' = parentPointer ptr 
   [C.exp| UIElement* { $(UI* ptr')->GetRoot() } |]
+
+-- | Returns current element in focus
+uiFocusElement :: (Pointer p a, Parent UI a, MonadIO m) => p -> m (Maybe (Ptr UIElement))
+uiFocusElement ptr = liftIO $ do 
+  let ptr' = parentPointer ptr 
+  fe <- [C.exp| UIElement* { $(UI* ptr')->GetFocusElement() } |]
+  checkNullPtr' fe return

@@ -7,6 +7,7 @@ module Graphics.Urho3D.IO.FileSystem(
     FileSystem
   , fileSystemContext
   , getAppPreferencesDir
+  , getProgramDir
   ) where
 
 import qualified Language.C.Inline as C 
@@ -39,4 +40,10 @@ instance Subsystem FileSystem where
 getAppPreferencesDir :: MonadIO m => Ptr FileSystem -> String -> String -> m String 
 getAppPreferencesDir ptr org app = liftIO $ withCString org $ \org' -> withCString app $ \app' -> do 
   res <- [C.exp| const char* { $(FileSystem* ptr)->GetAppPreferencesDir(String($(const char* org')), String($(const char* app'))).CString() } |]
+  peekCString res
+
+-- | Returns application executable directory
+getProgramDir :: MonadIO m => Ptr FileSystem -> m String 
+getProgramDir ptr = liftIO $ do 
+  res <- [C.exp| const char* { $(FileSystem* ptr)->GetProgramDir().CString() } |]
   peekCString res

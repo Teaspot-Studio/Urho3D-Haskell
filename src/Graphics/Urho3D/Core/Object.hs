@@ -2,7 +2,8 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+-- {-# LANGUAGE  #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Core.Object(
     Object
@@ -25,6 +26,7 @@ import Graphics.Urho3D.Monad
 import Text.RawString.QQ
 import Data.Monoid
 import Foreign 
+import Data.Proxy
 
 C.context (C.cppCtx <> C.funCtx <> objectCntx <> contextContext <> stringHashContext <> variantContext)
 C.include "<Urho3D/Core/Object.h>"
@@ -44,14 +46,11 @@ getSubsystem ptr = do
   checkNullPtr' res return
 
 -- | Describes events in Urho3D engine
-class Event a where 
-  -- | Actual data that is binded to event when it fires
-  data EventData a :: * 
-
+class Event event where 
   -- | Returns id of event for binding to it
-  eventID :: Event a => a -> Ptr StringHash
+  eventID :: Proxy event -> Ptr StringHash
   -- | How to extract event data from C++ side to Haskell
-  loadEventData :: Ptr VariantMap -> IO (EventData a)
+  loadEventData :: Ptr VariantMap -> IO event
 
 C.verbatim [r|
 
@@ -76,13 +75,13 @@ public:
 |]
 
 -- | Binds function to specific event
-subscribeToEvent :: (MonadIO m, Event a, Parent Object b) => Ptr b -> a -> (EventData a -> IO ()) -> m ()
-subscribeToEvent obj e fun = do 
+subscribeToEvent :: forall m event a . (MonadIO m, Event event, Parent Object a) => Ptr a -> (event -> IO ()) -> m ()
+subscribeToEvent obj fun = do 
   -- Actual handler
   let funImpl vmap = fun =<< loadEventData vmap
 
       objPtr = castToParent obj
-      eventType = eventID e
+      eventType = eventID (Proxy :: Proxy event)
   liftIO $ [C.block| void {
     Context* cntx = $(Object* objPtr)->GetContext();
     HaskellHandler* handler = new HaskellHandler(cntx, $fun:(void (*funImpl)(HashMapStringHashVariant* vm)));

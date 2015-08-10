@@ -79,6 +79,19 @@ class Parent parent child where
   castToParent :: Ptr child -> Ptr parent 
   castToChild :: Ptr parent -> Maybe (Ptr child)
 
+instance Parent a a where 
+  castToParent = id 
+  castToChild = Just 
+
+{-
+instance (Parent a b, Parent b c) => Parent a c where 
+  castToParent = (castToParent :: Ptr b -> Ptr a) . (castToParent :: Ptr c -> Ptr b)
+  castToChild a = do 
+    b <- castToChild a :: Maybe (Ptr b)
+    c <- castToChild b :: Maybe (Ptr c)
+    return c 
+-}
+
 -- | Relation between types, where a is pointer for b 
 class Pointer pointer ptype | pointer -> ptype where 
   pointer :: pointer -> Ptr ptype
