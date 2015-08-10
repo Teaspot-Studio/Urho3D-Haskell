@@ -12,6 +12,7 @@ module Graphics.Urho3D.Core.Object(
   , Subsystem(..)
   , Event(..)
   , subscribeToEvent
+  , unsubscribeFromEvent
   , getContext
   ) where
 
@@ -75,12 +76,11 @@ public:
 |]
 
 -- | Binds function to specific event
-subscribeToEvent :: forall m event a . (MonadIO m, Event event, Parent Object a) => Ptr a -> (event -> IO ()) -> m ()
+subscribeToEvent :: forall m event a p . (Parent Object a, Pointer p a, MonadIO m, Event event) => p -> (event -> IO ()) -> m ()
 subscribeToEvent obj fun = do 
   -- Actual handler
   let funImpl vmap = fun =<< loadEventData vmap
-
-      objPtr = castToParent obj
+      objPtr = parentPointer obj 
       eventType = eventID (Proxy :: Proxy event)
   liftIO $ [C.block| void {
     Context* cntx = $(Object* objPtr)->GetContext();
@@ -89,6 +89,15 @@ subscribeToEvent obj fun = do
         , new EventHandlerImpl<HaskellHandler>(handler, &HaskellHandler::runHanlder)
         );
   } |]
+
+-- | Unbinds function from specific event
+unsubscribeFromEvent :: (Parent Object a, Pointer p a, Event event, MonadIO m) => p -- ^ Pointer to object or child
+  -> Proxy event -- ^ Event type
+  -> m ()
+unsubscribeFromEvent p event = liftIO $ do 
+  let ptr = parentPointer p 
+      eventType = eventID event
+  [C.exp| void { $(Object* ptr)->UnsubscribeFromEvent(*$(StringHash* eventType)) }|]
 
 -- | Returns inner Urho context of object
 getContext :: (Parent Object a, MonadIO m) => Ptr a -> m (Ptr Context)

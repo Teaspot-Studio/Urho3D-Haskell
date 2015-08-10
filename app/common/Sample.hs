@@ -12,14 +12,15 @@ import Data.Word
 import Foreign
 import Data.StateVar
 import Data.Maybe 
+import Data.IORef 
+import Data.Thyme
+import Data.Proxy
+import Control.Monad as Monad 
 import Control.Monad.State.Strict as State
 import Control.Lens hiding (Context)
-import Data.IORef 
+import System.Locale 
 
 import Internal.Sample
-import Data.Thyme
-import System.Locale 
-import Control.Monad as Monad 
 
 touchSensitivity :: Float 
 touchSensitivity = 2.0
@@ -37,12 +38,13 @@ newSample context name joystickPatch = do
   settRef <- newIORef maxBound
   yawRef <- newIORef 0
   pitchRef <- newIORef 0
+  touchEnabledRef <- newIORef False
   return $ Sample {
     _sampleApplication = app 
   , _sampleName = name
   , _sampleYaw = yawRef
   , _samplePitch = pitchRef
-  , _sampleTouchEnabled = False
+  , _sampleTouchEnabled = touchEnabledRef
   , _sampleScreenSettingsIndex = settRef
   , _sampleScreenJoystickIndex = maxBound 
   , _samplePaused = pausedRef 
@@ -76,25 +78,28 @@ sampleSetup = do
 sampleStart :: StateT Sample IO ()
 sampleStart = do 
   app <- use sampleApplication
+  sample <- State.get
+
   if platform == "Android" || platform == "iOS" 
   then initTouchInput
   else do 
     is <- fromJust <$> getSubsystem app
     jcount <- getNumJoysticks is
-    when (jcount == 0) $ subscribeToEvent app handleTouchBegin
+    when (jcount == 0) $ subscribeToEvent app $ handleTouchBegin sample
 
   createLogo
   setWindowTitleAndIcon
   createConsoleAndDebugHud
 
-  sample <- State.get
   subscribeToEvent app $ handleKeyDown sample
   subscribeToEvent app $ handleSceneUpdate sample
 
 initTouchInput :: StateT Sample IO ()
 initTouchInput = do 
   app <- use sampleApplication
-  sampleTouchEnabled .= True 
+
+  touchRef <- use sampleTouchEnabled
+  liftIO $ writeIORef touchRef True 
 
   resCache <- fromJust <$> getSubsystem app
   input <- fromJust <$> getSubsystem app 
@@ -200,7 +205,8 @@ handleKeyDown s (EventKeyDown{..}) = do
       (renderer :: Ptr Renderer) <- fromJust <$> getSubsystem app
 
       -- Preferences / Pause 
-      if | key == KeySelect && s ^. sampleTouchEnabled -> do 
+      touchEnabled <- readIORef (s ^. sampleTouchEnabled)
+      if | key == KeySelect && touchEnabled -> do 
           modifyIORef' (s ^. samplePaused) not 
 
           settIndex <- readIORef $ s ^. sampleScreenSettingsIndex
@@ -253,9 +259,9 @@ cycleEnum a
 
 handleSceneUpdate :: Sample -> EventSceneUpdate -> IO ()
 handleSceneUpdate s _ = do 
-  let touchEnabled = s ^. sampleTouchEnabled
-      cameraNode = s ^. sampleCameraNode
+  let cameraNode = s ^. sampleCameraNode
       app = s ^. sampleApplication
+  touchEnabled <- readIORef (s ^. sampleTouchEnabled)
 
   -- Move the camera by touch, if the camera node is initialized by descendant sample class
   when (touchEnabled && not (isNull cameraNode)) $ do 
@@ -284,5 +290,9 @@ handleSceneUpdate s _ = do
           cursor <- uiCursor ui 
           whenM (uiElementIsVisible cursor) $ uiElementSetPosition cursor $ state^.touchPosition
   
-handleTouchBegin :: EventTouchBegin -> IO ()
-handleTouchBegin = undefined
+handleTouchBegin :: Sample -> EventTouchBegin -> IO ()
+handleTouchBegin s _ = flip evalStateT s $ do 
+  -- On some platforms like Windows the presence of touch input can only be detected dynamically
+  initTouchInput
+  app <- use sampleApplication
+  unsubscribeFromEvent app (Proxy :: Proxy EventTouchBegin)

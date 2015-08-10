@@ -12,7 +12,7 @@ data Sample = Sample {
 , _sampleName :: String
 , _sampleYaw :: IORef Float
 , _samplePitch :: IORef Float 
-, _sampleTouchEnabled :: Bool
+, _sampleTouchEnabled :: IORef Bool
 , _sampleScreenJoystickIndex :: Int32
 , _sampleScreenSettingsIndex :: IORef Int32
 , _samplePaused :: IORef Bool
