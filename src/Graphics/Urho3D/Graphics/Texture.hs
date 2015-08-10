@@ -34,10 +34,10 @@ instance ResourceType Texture where
     return &h; 
     } |]
 
-textureWidth, textureHeight :: (Pointer p Texture, MonadIO m) => p -> m Int 
+textureWidth, textureHeight :: (Parent Texture a, Pointer p a, MonadIO m) => p -> m Int 
 textureWidth ptr = liftIO $ do 
-  let ptr' = pointer ptr
+  let ptr' = parentPointer ptr
   fromIntegral <$> [C.exp| int { $(Texture* ptr')->GetWidth() } |]
 textureHeight ptr = liftIO $ do 
-  let ptr' = pointer ptr
+  let ptr' = parentPointer ptr
   fromIntegral <$> [C.exp| int { $(Texture* ptr')->GetHeight() } |]

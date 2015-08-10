@@ -10,8 +10,8 @@ import Data.IORef
 data Sample = Sample {
   _sampleApplication :: Ptr Application 
 , _sampleName :: String
-, _sampleYaw :: Double
-, _samplePitch :: Double 
+, _sampleYaw :: IORef Float
+, _samplePitch :: IORef Float 
 , _sampleTouchEnabled :: Bool
 , _sampleScreenJoystickIndex :: Int32
 , _sampleScreenSettingsIndex :: IORef Int32

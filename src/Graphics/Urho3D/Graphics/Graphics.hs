@@ -10,6 +10,8 @@ module Graphics.Urho3D.Graphics.Graphics(
   , graphicsSetWindowIcon
   , graphicsSetWindowTitle
   , graphicsTakeScreenShot
+  , graphicsGetHeight
+  , graphicsGetWidth
   ) where
 
 import qualified Language.C.Inline as C 
@@ -62,3 +64,17 @@ graphicsTakeScreenShot :: (Parent Graphics a, Pointer p a, MonadIO m) => p -- ^ 
 graphicsTakeScreenShot p img = liftIO $ do 
   let ptr = parentPointer p 
   [C.exp| void { $(Graphics* ptr)->TakeScreenShot(*$(Image* img)) } |]
+
+-- | Returns window height
+graphicsGetHeight :: (Parent Graphics a, Pointer p a, MonadIO m) => p -- ^ Pointer to graphics system or child
+  -> m Int 
+graphicsGetHeight p = liftIO $ do 
+  let ptr = parentPointer p
+  fromIntegral <$> [C.exp| int { $(Graphics* ptr)->GetHeight() } |]
+
+-- | Returns window width
+graphicsGetWidth :: (Parent Graphics a, Pointer p a, MonadIO m) => p -- ^ Pointer to graphics system or child
+  -> m Int 
+graphicsGetWidth p = liftIO $ do 
+  let ptr = parentPointer p
+  fromIntegral <$> [C.exp| int { $(Graphics* ptr)->GetWidth() } |]

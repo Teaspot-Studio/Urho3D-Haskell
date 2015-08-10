@@ -11,10 +11,12 @@ module Graphics.Urho3D.UI.Element(
   , SharedUIElement
   , SharedUIElementPtr 
   , uiElementSetVisible
+  , uiElementIsVisible
   , UIElem(..)
   , createChild
   , createChildSimple
   , uiElementSetSize
+  , uiElementSetPosition
   , HorizontalAlignment(..)
   , VerticalAlignment(..)
   , uiElementSetAlignment
@@ -28,13 +30,14 @@ import qualified Language.C.Inline.Cpp as C
 import Graphics.Urho3D.UI.Internal.Element
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
+import Graphics.Urho3D.Math.Vector2
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 import Foreign.C.String 
 import Data.Proxy 
 
-C.context (C.cppCtx <> sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext)
+C.context (C.cppCtx <> sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context)
 C.include "<Urho3D/UI/UIElement.h>"
 C.using "namespace Urho3D"
 
@@ -43,23 +46,30 @@ uiElementContext = sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext
 
 sharedPtr "UIElement" 
 
+-- | Returns ui element visiblitity
+uiElementIsVisible :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
+  -> m Bool 
+uiElementIsVisible p = liftIO $ do 
+  let ptr = parentPointer p 
+  toBool <$> [C.exp| int { $(UIElement* ptr)->IsVisible() } |]
+
 -- | Hides or shows UI element
-uiElementSetVisible :: (Pointer p UIElement, MonadIO m) => p -- ^ Pointer to UI element
+uiElementSetVisible :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
   -> Bool -- ^ Flag of visibility, True - visible, False - hided
   -> m ()
 uiElementSetVisible ptr flag = liftIO $ do 
-  let ptr' = pointer ptr 
+  let ptr' = parentPointer ptr 
       flag' = if flag then 1 else 0
   [C.exp| void { $(UIElement* ptr')->SetVisible($(int flag') != 0) } |]
 
 -- | Create and add a child element and return it.
-uiElementCreateChild :: (Pointer p UIElement, MonadIO m) => p -- ^ Pointer to UI element
+uiElementCreateChild :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
   -> Ptr StringHash -- ^ Element type
   -> String -- ^ Name
   -> Int -- ^ Index
   -> m (Ptr UIElement)
 uiElementCreateChild ptr hash name index = liftIO $ withCString name $ \name' -> do 
-  let ptr' = pointer ptr 
+  let ptr' = parentPointer ptr 
       index' = fromIntegral index
   [C.exp| UIElement* { $(UIElement* ptr')->CreateChild(*$(StringHash* hash), String($(const char* name')), $(int index')) } |]
 
@@ -68,7 +78,7 @@ class UIElem a where
   -- | Getting hash id of the element kind
   uiElemType :: Proxy a -> Ptr StringHash 
 
-createChild :: forall p m e . (Pointer p UIElement, MonadIO m, UIElem e) 
+createChild :: forall a p m e . (Parent UIElement a, Pointer p a, MonadIO m, UIElem e) 
   => p -- ^ Pointer to UI element
   -> String -- ^ Name
   -> Int -- ^ Index
@@ -77,17 +87,17 @@ createChild ptr name index = do
   eptr <- uiElementCreateChild ptr (uiElemType (Proxy :: Proxy e)) name index 
   return $ castPtr eptr
 
-createChildSimple :: (Pointer p UIElement, MonadIO m, UIElem e) => p -- ^ Pointer to UI element
+createChildSimple :: (Parent UIElement a, Pointer p a, MonadIO m, UIElem e) => p -- ^ Pointer to UI element
   -> m (Ptr e) 
 createChildSimple ptr = createChild ptr "" (fromIntegral (maxBound :: Word32))
 
 -- | Changes physical size of element
-uiElementSetSize :: (Pointer p UIElement, MonadIO m) => p -- ^ Pointer to UI element
+uiElementSetSize :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
   -> Int -- ^ Width
   -> Int -- ^ Height
   -> m ()
 uiElementSetSize ptr width height = liftIO $ do 
-  let ptr' = pointer ptr 
+  let ptr' = parentPointer ptr 
       width' = fromIntegral width 
       height' = fromIntegral height
   [C.exp| void { $(UIElement* ptr')->SetSize($(int width'), $(int height')) } |]
@@ -105,30 +115,38 @@ data VerticalAlignment =
   deriving (Eq, Ord, Show, Enum)
 
 -- | Changes element alignment behavior
-uiElementSetAlignment :: (Pointer p UIElement, MonadIO m) => p -- ^ Pointer to UI element
+uiElementSetAlignment :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
   -> HorizontalAlignment -- ^ Horizontal behavior
   -> VerticalAlignment -- ^ Vertical behaivor
   -> m ()
 uiElementSetAlignment ptr ha va = liftIO $ do 
-  let ptr' = pointer ptr 
+  let ptr' = parentPointer ptr 
       ha' = fromIntegral $ fromEnum ha 
       va' = fromIntegral $ fromEnum va
   [C.exp| void { $(UIElement* ptr')->SetAlignment((HorizontalAlignment)$(int ha'), (VerticalAlignment)$(int va')) } |]
 
 -- | Changes element opacity (inverse of alpha)
-uiElementSetOpacity :: (Pointer p UIElement, MonadIO m) => p -- ^ Pointer to UI element
+uiElementSetOpacity :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
   -> Float -- ^ Opacity
   -> m ()
 uiElementSetOpacity ptr opacity = liftIO $ do 
-  let ptr' = pointer ptr 
+  let ptr' = parentPointer ptr 
       opacity' = realToFrac $ opacity
   [C.exp| void { $(UIElement* ptr')->SetOpacity($(float opacity')) } |]
 
 -- | Changes element priority (controls overlaying with other elements)
-uiElementSetPriority :: (Pointer p UIElement, MonadIO m) => p -- ^ Pointer to UI element
+uiElementSetPriority :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
   -> Int -- ^ Priority (could be negative)
   -> m ()
 uiElementSetPriority ptr p = liftIO $ do 
-  let ptr' = pointer ptr 
+  let ptr' = parentPointer ptr 
       p' = fromIntegral $ p
   [C.exp| void { $(UIElement* ptr')->SetPriority($(int p')) } |]
+
+-- | Changes element position in screen coordinates
+uiElementSetPosition :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
+  -> IntVector2 -- ^ Position
+  -> m ()
+uiElementSetPosition p v = liftIO $ with v $ \v' -> do 
+  let ptr = parentPointer p 
+  [C.exp| void { $(UIElement* ptr)->SetPosition(*$(IntVector2* v'))} |]

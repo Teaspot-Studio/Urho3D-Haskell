@@ -33,6 +33,7 @@ library
                        Graphics.Urho3D.Engine.DebugHud
                        Graphics.Urho3D.Engine.Engine
                        Graphics.Urho3D.Graphics
+                       Graphics.Urho3D.Graphics.Camera
                        Graphics.Urho3D.Graphics.Graphics
                        Graphics.Urho3D.Graphics.Renderer
                        Graphics.Urho3D.Graphics.Texture
@@ -42,18 +43,22 @@ library
                        Graphics.Urho3D.Input.Input
                        Graphics.Urho3D.IO
                        Graphics.Urho3D.IO.FileSystem
+                       Graphics.Urho3D.Math.Quaternion
                        Graphics.Urho3D.Math.StringHash
+                       Graphics.Urho3D.Math.Vector2 
                        Graphics.Urho3D.Monad
                        Graphics.Urho3D.Resource.Cache
                        Graphics.Urho3D.Resource.Image
                        Graphics.Urho3D.Resource.Resource
                        Graphics.Urho3D.Resource.XMLFile
                        Graphics.Urho3D.Scene
+                       Graphics.Urho3D.Scene.Component
                        Graphics.Urho3D.Scene.Events
                        Graphics.Urho3D.Scene.Node
                        Graphics.Urho3D.Scene.Scene
                        Graphics.Urho3D.UI
                        Graphics.Urho3D.UI.BorderImage
+                       Graphics.Urho3D.UI.Cursor
                        Graphics.Urho3D.UI.Element
                        Graphics.Urho3D.UI.Sprite
                        Graphics.Urho3D.UI.UI
@@ -65,21 +70,26 @@ library
                        Graphics.Urho3D.Engine.Internal.Console
                        Graphics.Urho3D.Engine.Internal.DebugHud
                        Graphics.Urho3D.Engine.Internal.Engine
+                       Graphics.Urho3D.Graphics.Internal.Camera
                        Graphics.Urho3D.Graphics.Internal.Graphics
                        Graphics.Urho3D.Graphics.Internal.Renderer
                        Graphics.Urho3D.Graphics.Internal.Texture
                        Graphics.Urho3D.Graphics.Internal.Texture2D
                        Graphics.Urho3D.Input.Internal.Input
                        Graphics.Urho3D.IO.Internal.FileSystem
+                       Graphics.Urho3D.Math.Internal.Quaternion
                        Graphics.Urho3D.Math.Internal.StringHash
+                       Graphics.Urho3D.Math.Internal.Vector2 
                        Graphics.Urho3D.Resource.Internal.Cache
                        Graphics.Urho3D.Resource.Internal.Image
                        Graphics.Urho3D.Resource.Internal.Resource
                        Graphics.Urho3D.Resource.Internal.XMLFile
+                       Graphics.Urho3D.Scene.Internal.Component
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Scene.Internal.Scene
                        Graphics.Urho3D.Template
                        Graphics.Urho3D.UI.Internal.BorderImage
+                       Graphics.Urho3D.UI.Internal.Cursor
                        Graphics.Urho3D.UI.Internal.Element
                        Graphics.Urho3D.UI.Internal.Sprite
                        Graphics.Urho3D.UI.Internal.UI
@@ -92,6 +102,7 @@ library
                        src/Graphics/Urho3D/Engine/Console.cpp
                        src/Graphics/Urho3D/Engine/DebugHud.cpp
                        src/Graphics/Urho3D/Engine/Engine.cpp
+                       src/Graphics/Urho3D/Graphics/Camera.cpp
                        src/Graphics/Urho3D/Graphics/Graphics.cpp
                        src/Graphics/Urho3D/Graphics/Renderer.cpp
                        src/Graphics/Urho3D/Graphics/Texture.cpp
@@ -99,15 +110,19 @@ library
                        src/Graphics/Urho3D/Input/Events.cpp
                        src/Graphics/Urho3D/Input/Input.cpp
                        src/Graphics/Urho3D/IO/FileSystem.cpp
+                       src/Graphics/Urho3D/Math/Quaternion.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
+                       src/Graphics/Urho3D/Math/Vector2.cpp
                        src/Graphics/Urho3D/Resource/Cache.cpp
                        src/Graphics/Urho3D/Resource/Image.cpp
                        src/Graphics/Urho3D/Resource/Resource.cpp
                        src/Graphics/Urho3D/Resource/XMLFile.cpp
                        src/Graphics/Urho3D/Scene/Events.cpp
+                       src/Graphics/Urho3D/Scene/Component.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
                        src/Graphics/Urho3D/Scene/Scene.cpp
                        src/Graphics/Urho3D/UI/BorderImage.cpp
+                       src/Graphics/Urho3D/UI/Cursor.cpp
                        src/Graphics/Urho3D/UI/Element.cpp
                        src/Graphics/Urho3D/UI/Sprite.cpp
                        src/Graphics/Urho3D/UI/UI.cpp
@@ -124,7 +139,8 @@ library
                       , template-haskell
                       , StateVar
                       , raw-strings-qq
-
+                      , lens
+                      
   default-language:    Haskell2010
   ghc-options:         -Wall -Werror -fPIC
   cc-options:          -m64

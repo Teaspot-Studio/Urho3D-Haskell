@@ -19,21 +19,29 @@ import Data.IORef
 import Internal.Sample
 import Data.Thyme
 import System.Locale 
+import Control.Monad as Monad 
+
+touchSensitivity :: Float 
+touchSensitivity = 2.0
 
 newSample :: Ptr Context 
+  -> String -- ^ Sample name
   -> String -- ^ Joystick patch string
   -> IO Sample 
-newSample context joystickPatch = do 
+newSample context name joystickPatch = do 
   app <- newObject context 
   sprite <- newObject nullPtr 
   scene <- newObject nullPtr
   camNode <- newObject nullPtr
   pausedRef <- newIORef False
   settRef <- newIORef maxBound
+  yawRef <- newIORef 0
+  pitchRef <- newIORef 0
   return $ Sample {
     _sampleApplication = app 
-  , _sampleYaw = 0
-  , _samplePitch = 0
+  , _sampleName = name
+  , _sampleYaw = yawRef
+  , _samplePitch = pitchRef
   , _sampleTouchEnabled = False
   , _sampleScreenSettingsIndex = settRef
   , _sampleScreenJoystickIndex = maxBound 
@@ -109,7 +117,7 @@ initTouchInput = do
 setLogoVisible :: Bool -> StateT Sample IO ()
 setLogoVisible flag = do 
   ptr <- use sampleLogo 
-  unless (isNull ptr) $ uiElementSetVisible (parentPointer ptr) flag
+  unless (isNull ptr) $ uiElementSetVisible ptr flag
 
 sampleStop :: StateT Sample IO ()
 sampleStop = do 
@@ -129,15 +137,15 @@ createLogo = do
       sprite <- newObject =<< createChildSimple =<< uiRoot ui 
       sampleLogo .= sprite
 
-      spriteSetTexture sprite $ parentPointer logoTexture
-      twidth <- textureWidth $ parentPointer logoTexture
-      theight <- textureHeight $ parentPointer logoTexture
+      spriteSetTexture sprite logoTexture
+      twidth <- textureWidth logoTexture
+      theight <- textureHeight logoTexture
       spriteSetScale sprite $ 256 / fromIntegral twidth
-      uiElementSetSize (parentPointer sprite) twidth theight
+      uiElementSetSize sprite twidth theight
       spriteSetHotSpot sprite 0 theight
-      uiElementSetAlignment (parentPointer sprite) AlignmentLeft AlignmentBottom 
-      uiElementSetOpacity (parentPointer sprite) 0.75
-      uiElementSetPriority (parentPointer sprite) (-100)
+      uiElementSetAlignment sprite AlignmentLeft AlignmentBottom 
+      uiElementSetOpacity sprite 0.75
+      uiElementSetPriority sprite (-100)
 
 setWindowTitleAndIcon :: StateT Sample IO ()
 setWindowTitleAndIcon = do 
@@ -160,7 +168,7 @@ createConsoleAndDebugHud = do
     whenJust consoleM $ \console -> do 
       consoleSetDefaultStyle console xmlFile 
       bg <- consoleGetBackground console 
-      uiElementSetOpacity (parentPointer bg) 0.8 
+      uiElementSetOpacity bg 0.8 
 
     debugHud <- engineCreateDebugHud engine 
     debugHudSetDefaultStyle debugHud xmlFile 
@@ -244,7 +252,37 @@ cycleEnum a
   | otherwise = succ a
 
 handleSceneUpdate :: Sample -> EventSceneUpdate -> IO ()
-handleSceneUpdate = undefined
+handleSceneUpdate s _ = do 
+  let touchEnabled = s ^. sampleTouchEnabled
+      cameraNode = s ^. sampleCameraNode
+      app = s ^. sampleApplication
 
+  -- Move the camera by touch, if the camera node is initialized by descendant sample class
+  when (touchEnabled && not (isNull cameraNode)) $ do 
+    (input :: Ptr Input) <- fromJust <$> getSubsystem app 
+    ni <- inputGetNumTouches input 
+    forM_ [0 .. ni] $ \i -> do 
+      state <- fromJust <$> inputGetTouch input i 
+      unless (isNothing $ state ^. touchedElement) $ do -- touch on empty space
+        if state^.touchDelta.x /= 0 || state^.touchDelta.y /= 0 then do 
+          mcam <- nodeGetComponent cameraNode
+          Monad.void $ whenJust mcam $ \(camera :: Ptr Camera) -> do 
+            (graphics :: Ptr Graphics) <- fromJust <$> getSubsystem app 
+
+            fov <- cameraGetFov camera 
+            height <- fromIntegral <$> graphicsGetHeight graphics
+
+            modifyIORef (s ^. sampleYaw) $ (+ ( touchSensitivity * fov / height * (fromIntegral $ state^.touchDelta.x)) )
+            modifyIORef (s ^. samplePitch) $ (+ ( touchSensitivity * fov / height * (fromIntegral $ state^.touchDelta.y)) )
+        
+            -- Construct new orientation for the camera scene node from yaw and pitch; roll is fixed to zero
+            yaw <- readIORef $ s^.sampleYaw
+            pitch <- readIORef $ s^.samplePitch
+            nodeSetRotation cameraNode $ quaternionFromEuler pitch yaw 0
+        else do -- Move the cursor to the touch position
+          (ui :: Ptr UI) <- fromJust <$> getSubsystem app
+          cursor <- uiCursor ui 
+          whenM (uiElementIsVisible cursor) $ uiElementSetPosition cursor $ state^.touchPosition
+  
 handleTouchBegin :: EventTouchBegin -> IO ()
 handleTouchBegin = undefined

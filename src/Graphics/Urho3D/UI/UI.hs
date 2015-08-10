@@ -9,6 +9,7 @@ module Graphics.Urho3D.UI.UI(
   , uiContext
   , uiRoot
   , uiFocusElement
+  , uiCursor
   ) where
 
 import qualified Language.C.Inline as C 
@@ -16,12 +17,13 @@ import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.UI.Internal.UI
 import Graphics.Urho3D.UI.Element
+import Graphics.Urho3D.UI.Cursor
 import Graphics.Urho3D.Core.Object 
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 
-C.context (C.cppCtx <> uiCntx <> objectContext <> uiElementContext)
+C.context (C.cppCtx <> uiCntx <> objectContext <> uiElementContext <> cursorContext)
 C.include "<Urho3D/UI/UI.h>"
 C.using "namespace Urho3D"
 
@@ -49,3 +51,9 @@ uiFocusElement ptr = liftIO $ do
   let ptr' = parentPointer ptr 
   fe <- [C.exp| UIElement* { $(UI* ptr')->GetFocusElement() } |]
   checkNullPtr' fe return
+
+-- | Returns ui cursor
+uiCursor :: (Pointer p a, Parent UI a, MonadIO m) => p -> m (Ptr Cursor)
+uiCursor p = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.exp| Cursor* { $(UI* ptr)->GetCursor() } |]

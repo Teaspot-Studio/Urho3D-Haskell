@@ -49,10 +49,10 @@ instance Event EventKeyDown where
 
 -- | Fires when user touches the screen
 data EventTouchBegin = EventTouchBegin {
-    touchId :: Int 
-  , touchX :: Int 
-  , touchY :: Int 
-  , touchPressure :: Float
+    eventTouchId :: Int 
+  , eventTouchX :: Int 
+  , eventTouchY :: Int 
+  , eventTouchPressure :: Float
   } deriving (Show)
 
 instance Event EventTouchBegin where 
@@ -63,10 +63,10 @@ instance Event EventTouchBegin where
     ty <- variantMapGet' vmap [C.pure| const StringHash* {&TouchBegin::P_Y} |]
     tp <- variantMapGet' vmap [C.pure| const StringHash* {&TouchBegin::P_PRESSURE} |] 
     return $ EventTouchBegin {
-      touchId = fromMaybe 0 tid 
-    , touchX = fromMaybe 0 tx
-    , touchY = fromMaybe 0 ty 
-    , touchPressure = fromMaybe 0 tp
+      eventTouchId = fromMaybe 0 tid 
+    , eventTouchX = fromMaybe 0 tx
+    , eventTouchY = fromMaybe 0 ty 
+    , eventTouchPressure = fromMaybe 0 tp
     }
 
 data Key = 

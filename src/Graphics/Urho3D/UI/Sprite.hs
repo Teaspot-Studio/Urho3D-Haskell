@@ -62,24 +62,25 @@ instance UIElem Sprite where
 
 sharedPtr "Sprite"
 
-spriteSetTexture :: (Pointer p Sprite, MonadIO m) => p -> Ptr Texture -> m ()
+spriteSetTexture :: (Parent Sprite a, Pointer p a, Parent Texture t, Pointer pt t, MonadIO m) => p -> pt -> m ()
 spriteSetTexture ptr tex = liftIO $ do 
-  let ptr' = pointer ptr 
-  [C.exp| void { $(Sprite* ptr')->SetTexture($(Texture* tex)) } |]
+  let ptr' = parentPointer ptr 
+      tex' = parentPointer tex
+  [C.exp| void { $(Sprite* ptr')->SetTexture($(Texture* tex')) } |]
 
-spriteSetScale :: (Pointer p Sprite, MonadIO m) => p -> Float -> m ()
+spriteSetScale :: (Parent Sprite a, Pointer p a, MonadIO m) => p -> Float -> m ()
 spriteSetScale ptr v = liftIO $ do 
-  let ptr' = pointer ptr 
+  let ptr' = parentPointer ptr 
       v' = realToFrac v
   [C.exp| void { $(Sprite* ptr')->SetScale($(float v')) }|]
 
 -- | Set hotspot for positioning and rotation
-spriteSetHotSpot :: (Pointer p Sprite, MonadIO m) => p -- ^ Pointer to sprite
+spriteSetHotSpot :: (Parent Sprite a, Pointer p a, MonadIO m) => p -- ^ Pointer to sprite
   -> Int -- ^ X 
   -> Int  -- ^ Y 
   -> m ()
 spriteSetHotSpot ptr x y = liftIO $ do 
-  let ptr' = pointer ptr 
+  let ptr' = parentPointer ptr 
       x' = fromIntegral x 
       y' = fromIntegral y
   [C.exp| void { $(Sprite* ptr')->SetHotSpot($(int x'), $(int y')) }|]
