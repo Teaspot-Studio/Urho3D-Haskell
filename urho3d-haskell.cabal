@@ -150,6 +150,8 @@ executable urho3d-haskell-sample01
   hs-source-dirs:      app/sample01, app/common
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  other-modules:       Sample
+                       Internal.Sample
   build-depends:       base
                      , urho3d-haskell
                      , StateVar

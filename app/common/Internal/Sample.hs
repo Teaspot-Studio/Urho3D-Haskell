@@ -10,12 +10,12 @@ import Data.IORef
 data Sample = Sample {
   _sampleApplication :: Ptr Application 
 , _sampleName :: String
-, _sampleYaw :: IORef Float
-, _samplePitch :: IORef Float 
-, _sampleTouchEnabled :: IORef Bool
+, _sampleYaw :: Float
+, _samplePitch :: Float 
+, _sampleTouchEnabled :: Bool
 , _sampleScreenJoystickIndex :: Int32
-, _sampleScreenSettingsIndex :: IORef Int32
-, _samplePaused :: IORef Bool
+, _sampleScreenSettingsIndex :: Int32
+, _samplePaused :: Bool
 , _sampleLogo :: SharedSpritePtr
 , _sampleScene :: SharedScenePtr
 , _sampleCameraNode :: SharedNodePtr

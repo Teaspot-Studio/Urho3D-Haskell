@@ -1,11 +1,10 @@
 {-# LANGUAGE TypeFamilies, RecordWildCards, ScopedTypeVariables, MultiWayIf #-}
 module Sample(
     Sample
+  , SampleRef
   , newSample
   , deleteSample
-  , sampleSetup
-  , sampleStart 
-  , sampleStop 
+  , runSample
   -- | Lenses
   , sampleApplication
   , sampleName
@@ -30,98 +29,116 @@ import Data.IORef
 import Data.Thyme
 import Data.Proxy
 import Control.Monad as Monad 
-import Control.Monad.State.Strict as State
 import Control.Lens hiding (Context)
 import System.Locale 
 
 import Internal.Sample
 
+type SampleRef = IORef Sample 
+
 touchSensitivity :: Float 
 touchSensitivity = 2.0
+
+runSample :: SampleRef -> IO ()
+runSample sr = do
+  s <- readIORef sr
+  checkNullPtr (s ^. sampleApplication) applicationRun
 
 newSample :: Ptr Context 
   -> String -- ^ Sample name
   -> String -- ^ Joystick patch string
-  -> IO Sample 
-newSample context name joystickPatch = do 
-  app <- newObject context 
+  -> (SampleRef -> IO ()) -- ^ Custom start function 
+  -> IO SampleRef
+newSample context name joystickPatch customStart = do 
+  putStrLn "Creating Sample"
+  sampleRef <- newIORef undefined
+  app <- newObject (context
+    , sampleSetup sampleRef
+    , sampleStart sampleRef >> customStart sampleRef
+    , sampleStop sampleRef)
+
   sprite <- newObject nullPtr 
   scene <- newObject nullPtr
   camNode <- newObject nullPtr
-  pausedRef <- newIORef False
-  settRef <- newIORef maxBound
-  yawRef <- newIORef 0
-  pitchRef <- newIORef 0
-  touchEnabledRef <- newIORef False
-  return $ Sample {
+  let s = Sample {
     _sampleApplication = app 
   , _sampleName = name
-  , _sampleYaw = yawRef
-  , _samplePitch = pitchRef
-  , _sampleTouchEnabled = touchEnabledRef
-  , _sampleScreenSettingsIndex = settRef
+  , _sampleYaw = 0
+  , _samplePitch = 0
+  , _sampleTouchEnabled = False
+  , _sampleScreenSettingsIndex = maxBound
   , _sampleScreenJoystickIndex = maxBound 
-  , _samplePaused = pausedRef 
+  , _samplePaused = False 
   , _sampleLogo = sprite
   , _sampleScene = scene
   , _sampleCameraNode = camNode
   , _sampleJoystickPatch = joystickPatch
   }
+  writeIORef sampleRef s
+  putStrLn "Sample created"
+  return sampleRef
 
-deleteSample :: Sample -> IO ()
-deleteSample s = do
+deleteSample :: SampleRef -> IO ()
+deleteSample sr = do
+  putStrLn "Sample delete"
+  s <- readIORef sr
   deleteObject $ s ^. sampleApplication
   deleteObject $ s ^. sampleLogo
   deleteObject $ s ^. sampleScene
   deleteObject $ s ^. sampleCameraNode
 
-sampleSetup :: Sample -> IO ()
-sampleSetup s = flip evalStateT s $ do
-  sName <- use sampleName
-  app <- use sampleApplication
+fromJustTrace :: String -> Maybe a -> a 
+fromJustTrace _ (Just a) = a 
+fromJustTrace msg Nothing = error $ "fromJust: " ++ msg
 
-  startupParameter app "WindowTitle" $= sName
+sampleSetup :: SampleRef -> IO ()
+sampleSetup sr = do
+  putStrLn "Sample setup"
+  s <- readIORef sr
+  let app = s^.sampleApplication
 
-  fs <- fromJust <$> getSubsystem app
+  startupParameter app "WindowTitle" $= s^.sampleName
+
+  fs <- fromJustTrace "sampleSetup:FileSystem" <$> getSubsystem app
   prefDir <- getAppPreferencesDir fs "urho3d" "logs"
-  startupParameter app "LogName" $= prefDir ++ sName ++ ".log"
+  startupParameter app "LogName" $= prefDir ++ s^.sampleName ++ ".log"
 
   startupParameter app "FullScreen" $= False 
   startupParameter app "Headless" $= False 
 
-sampleStart :: Sample -> IO ()
-sampleStart s = flip evalStateT s $ do 
-  app <- use sampleApplication
-  sample <- State.get
+sampleStart :: SampleRef -> IO ()
+sampleStart sr = do 
+  s <- readIORef sr
+  let app = s^.sampleApplication
 
   if platform == "Android" || platform == "iOS" 
-  then initTouchInput
+  then initTouchInput sr
   else do 
-    is <- fromJust <$> getSubsystem app
+    is <- fromJustTrace "sampleStart:InputSystem" <$> getSubsystem app
     jcount <- getNumJoysticks is
-    when (jcount == 0) $ subscribeToEvent app $ handleTouchBegin sample
+    when (jcount == 0) $ subscribeToEvent app $ handleTouchBegin sr
 
-  createLogo
-  setWindowTitleAndIcon
-  createConsoleAndDebugHud
+  createLogo sr
+  setWindowTitleAndIcon sr
+  createConsoleAndDebugHud sr
 
-  subscribeToEvent app $ handleKeyDown sample
-  subscribeToEvent app $ handleSceneUpdate sample
+  subscribeToEvent app $ handleKeyDown sr
+  subscribeToEvent app $ handleSceneUpdate sr
 
-initTouchInput :: StateT Sample IO ()
-initTouchInput = do 
-  app <- use sampleApplication
+initTouchInput :: SampleRef -> IO ()
+initTouchInput sr = do 
+  s <- readIORef sr
+  let app = s^.sampleApplication
 
-  touchRef <- use sampleTouchEnabled
-  liftIO $ writeIORef touchRef True 
+  liftIO $ modifyIORef' sr (set sampleTouchEnabled True)
 
-  resCache <- fromJust <$> getSubsystem app
-  input <- fromJust <$> getSubsystem app 
+  resCache <- fromJustTrace "initTouchInput:ResourceCache" <$> getSubsystem app
+  input <- fromJustTrace "initTouchInput:InputSystem" <$> getSubsystem app 
   layoutM <- cacheGetResource resCache "UI/ScreenJoystick_Samples.xml" True 
   case layoutM of 
     Nothing -> error "Cannot open UI/ScreenJoystick_Samples.xml"
     Just layout -> do 
-      joystickPatch <- use sampleJoystickPatch
+      let joystickPatch = s ^. sampleJoystickPatch
       unless (null joystickPatch) $ do 
         cntx <- getContext app 
         withObject cntx $ \patchFile -> do 
@@ -133,28 +150,31 @@ initTouchInput = do
         setScreenJoystickVisible input joystick True
       return ()
 
-setLogoVisible :: Bool -> StateT Sample IO ()
-setLogoVisible flag = do 
-  ptr <- use sampleLogo 
+setLogoVisible :: SampleRef -> Bool -> IO ()
+setLogoVisible sr flag = do
+  s <- readIORef sr 
+  let ptr = s ^. sampleLogo 
   unless (isNull ptr) $ uiElementSetVisible ptr flag
 
-sampleStop :: Sample -> IO ()
-sampleStop s = flip evalStateT s $ do 
-  eng <- applicationEngine =<< use sampleApplication
+sampleStop :: SampleRef -> IO ()
+sampleStop sr = do 
+  s <- readIORef sr
+  eng <- applicationEngine $ s ^. sampleApplication
   engineDumpResources eng True
 
-createLogo :: StateT Sample IO ()
-createLogo = do 
-  app <- use sampleApplication
-  cache <- fromJust <$> getSubsystem app 
+createLogo :: SampleRef -> IO ()
+createLogo sr = do 
+  s <- readIORef sr
+  let app = s ^. sampleApplication
+  cache <- fromJustTrace "createLogo:ResourceCache" <$> getSubsystem app 
 
   logoTextureM <- cacheGetResource cache "Textures/LogoLarge.png" True
   case logoTextureM of 
     Nothing -> return ()
     Just (logoTexture :: Ptr Texture2D) -> do 
-      (ui :: Ptr UI) <- fromJust <$> getSubsystem app
+      (ui :: Ptr UI) <- fromJustTrace "createLogo:UI" <$> getSubsystem app
       sprite <- newObject =<< createChildSimple =<< uiRoot ui 
-      sampleLogo .= sprite
+      liftIO $ modifyIORef' sr $ set sampleLogo sprite
 
       spriteSetTexture sprite logoTexture
       twidth <- textureWidth logoTexture
@@ -166,21 +186,23 @@ createLogo = do
       uiElementSetOpacity sprite 0.75
       uiElementSetPriority sprite (-100)
 
-setWindowTitleAndIcon :: StateT Sample IO ()
-setWindowTitleAndIcon = do 
-  app <- use sampleApplication
-  (cache :: Ptr ResourceCache) <- fromJust <$> getSubsystem app 
-  (graphics :: Ptr Graphics) <- fromJust <$> getSubsystem app 
+setWindowTitleAndIcon :: SampleRef -> IO ()
+setWindowTitleAndIcon sr = do 
+  s <- readIORef sr
+  let app = s ^. sampleApplication
+  (cache :: Ptr ResourceCache) <- fromJustTrace "setWindowTitleAndIcon:ResourceCache" <$> getSubsystem app 
+  (graphics :: Ptr Graphics) <- fromJustTrace "setWindowTitleAndIcon:Graphics" <$> getSubsystem app 
   iconM <- cacheGetResource cache "Textures/UrhoIcon.png" True 
   _ <- whenJust iconM $ graphicsSetWindowIcon graphics
   graphicsSetWindowTitle graphics "Urho3D Sample"
 
-createConsoleAndDebugHud :: StateT Sample IO ()
-createConsoleAndDebugHud = do 
-  app <- use sampleApplication
+createConsoleAndDebugHud :: SampleRef -> IO ()
+createConsoleAndDebugHud sr = do 
+  s <- readIORef sr
+  let app = s ^. sampleApplication
   engine <- applicationEngine app 
 
-  cache <- fromJust <$> getSubsystem app 
+  cache <- fromJustTrace "createConsoleAndDebugHud:ResourceCache" <$> getSubsystem app 
   xmlFileM <- cacheGetResource cache "UI/DefaultStyle.xml" True 
   _ <- whenJust xmlFileM $ \xmlFile -> do 
     consoleM <- engineCreateConsole engine
@@ -194,18 +216,19 @@ createConsoleAndDebugHud = do
 
   return ()
 
-handleKeyDown :: Sample -> EventKeyDown -> IO ()
-handleKeyDown s (EventKeyDown{..}) = do 
+handleKeyDown :: SampleRef -> EventKeyDown -> IO ()
+handleKeyDown sr (EventKeyDown{..}) = do 
+  s <- readIORef sr
   let app = s ^. sampleApplication
       key = pressKey
   engine <- applicationEngine app 
-  (console :: Ptr Console) <- fromJust <$> getSubsystem app 
-  (debugHud :: Ptr DebugHud) <- fromJust <$> getSubsystem app 
-  (ui :: Ptr UI) <- fromJust <$> getSubsystem app 
+  (console :: Ptr Console) <- fromJustTrace "handleKeyDown:Console" <$> getSubsystem app 
+  (debugHud :: Ptr DebugHud) <- fromJustTrace "handleKeyDown:DebugHud" <$> getSubsystem app 
+  (ui :: Ptr UI) <- fromJustTrace "handleKeyDown:UI" <$> getSubsystem app 
   focusElem <- uiFocusElement ui 
-  (input :: Ptr Input) <- fromJust <$> getSubsystem app 
-  (cache :: Ptr ResourceCache) <- fromJust <$> getSubsystem app 
-  (fs :: Ptr FileSystem) <- fromJust <$> getSubsystem app 
+  (input :: Ptr Input) <- fromJustTrace "handleKeyDown:InputSystem" <$> getSubsystem app 
+  (cache :: Ptr ResourceCache) <- fromJustTrace "handleKeyDown:ResourceCache" <$> getSubsystem app 
+  (fs :: Ptr FileSystem) <- fromJustTrace "handleKeyDown:FileSystem" <$> getSubsystem app 
 
   if| key == KeyEsc -> do 
       -- Close console (if open) or exit when ESC is pressed    
@@ -216,23 +239,23 @@ handleKeyDown s (EventKeyDown{..}) = do
     | key == KeyF1 -> consoleToggle console  -- Toggle console with F1
     | key == KeyF2 -> debugHudToggle debugHud -- Toggle debug HUD with F2
     | isNothing focusElem -> do -- Common rendering quality controls, only when UI has no focused element
-      (renderer :: Ptr Renderer) <- fromJust <$> getSubsystem app
+      (renderer :: Ptr Renderer) <- fromJustTrace "handleKeyDown:Renderer" <$> getSubsystem app
 
       -- Preferences / Pause 
-      touchEnabled <- readIORef (s ^. sampleTouchEnabled)
+      let touchEnabled = s ^. sampleTouchEnabled
       if | key == KeySelect && touchEnabled -> do 
-          modifyIORef' (s ^. samplePaused) not 
+          modifyIORef' sr $ over samplePaused not 
 
-          settIndex <- readIORef $ s ^. sampleScreenSettingsIndex
+          let settIndex = s ^. sampleScreenSettingsIndex
           if | settIndex == maxBound -> do 
                 -- Lazy initialization
                 layoutM <- cacheGetResource cache "UI/ScreenJoystickSettings_Samples.xml" True 
                 styleM <- cacheGetResource cache "UI/DefaultStyle.xml" True 
                 _ <- whenJust (liftM2 (,) layoutM styleM) $ \(layout, style) -> do
                   ji <- addScreenJoystick input layout style
-                  writeIORef (s ^. sampleScreenSettingsIndex) ji
+                  modifyIORef' sr $ set sampleScreenSettingsIndex ji
                 return ()
-             | otherwise -> setScreenJoystickVisible input settIndex =<< readIORef (s ^. samplePaused)
+             | otherwise -> setScreenJoystickVisible input settIndex $ s ^. samplePaused
          | key == Key1 -> do -- Texture quality
           quality <- rendererGetTextureQuality renderer
           rendererSetTextureQuality renderer $ cycleEnum quality
@@ -257,7 +280,7 @@ handleKeyDown s (EventKeyDown{..}) = do
          | key == Key9 -> do -- Take screenshot
           cntx <- getContext app 
           withObject cntx $ \screenshot -> do 
-            (graphics :: Ptr Graphics) <- fromJust <$> getSubsystem app
+            (graphics :: Ptr Graphics) <- fromJustTrace "handleKeyDown:Graphics" <$> getSubsystem app
             graphicsTakeScreenShot graphics screenshot
             -- Here we save in the Data folder with data and time appended
             progDir <- getProgramDir fs 
@@ -271,42 +294,44 @@ cycleEnum a
   | a == maxBound = minBound
   | otherwise = succ a
 
-handleSceneUpdate :: Sample -> EventSceneUpdate -> IO ()
-handleSceneUpdate s _ = do 
+handleSceneUpdate :: SampleRef -> EventSceneUpdate -> IO ()
+handleSceneUpdate sr _ = do 
+  s <- readIORef sr
   let cameraNode = s ^. sampleCameraNode
       app = s ^. sampleApplication
-  touchEnabled <- readIORef (s ^. sampleTouchEnabled)
+  let touchEnabled = s ^. sampleTouchEnabled
 
   -- Move the camera by touch, if the camera node is initialized by descendant sample class
   when (touchEnabled && not (isNull cameraNode)) $ do 
-    (input :: Ptr Input) <- fromJust <$> getSubsystem app 
+    (input :: Ptr Input) <- fromJustTrace "handleSceneUpdate:InputSystem" <$> getSubsystem app 
     ni <- inputGetNumTouches input 
     forM_ [0 .. ni] $ \i -> do 
-      state <- fromJust <$> inputGetTouch input i 
+      state <- fromJustTrace "handleSceneUpdate:TouchState" <$> inputGetTouch input i 
       unless (isNothing $ state ^. touchedElement) $ do -- touch on empty space
         if state^.touchDelta.x /= 0 || state^.touchDelta.y /= 0 then do 
           mcam <- nodeGetComponent cameraNode
           Monad.void $ whenJust mcam $ \(camera :: Ptr Camera) -> do 
-            (graphics :: Ptr Graphics) <- fromJust <$> getSubsystem app 
+            (graphics :: Ptr Graphics) <- fromJustTrace "handleSceneUpdate:Graphics" <$> getSubsystem app 
 
             fov <- cameraGetFov camera 
             height <- fromIntegral <$> graphicsGetHeight graphics
 
-            modifyIORef (s ^. sampleYaw) $ (+ ( touchSensitivity * fov / height * (fromIntegral $ state^.touchDelta.x)) )
-            modifyIORef (s ^. samplePitch) $ (+ ( touchSensitivity * fov / height * (fromIntegral $ state^.touchDelta.y)) )
+            modifyIORef' sr $ over sampleYaw (+ ( touchSensitivity * fov / height * (fromIntegral $ state^.touchDelta.x)) )
+            modifyIORef' sr $ over samplePitch (+ ( touchSensitivity * fov / height * (fromIntegral $ state^.touchDelta.y)) )
         
             -- Construct new orientation for the camera scene node from yaw and pitch; roll is fixed to zero
-            yaw <- readIORef $ s^.sampleYaw
-            pitch <- readIORef $ s^.samplePitch
+            let yaw = s^.sampleYaw
+            let pitch = s^.samplePitch
             nodeSetRotation cameraNode $ quaternionFromEuler pitch yaw 0
         else do -- Move the cursor to the touch position
-          (ui :: Ptr UI) <- fromJust <$> getSubsystem app
+          (ui :: Ptr UI) <- fromJustTrace "handleSceneUpdate:UI" <$> getSubsystem app
           cursor <- uiCursor ui 
           whenM (uiElementIsVisible cursor) $ uiElementSetPosition cursor $ state^.touchPosition
   
-handleTouchBegin :: Sample -> EventTouchBegin -> IO ()
-handleTouchBegin s _ = flip evalStateT s $ do 
+handleTouchBegin :: SampleRef -> EventTouchBegin -> IO ()
+handleTouchBegin sr _ = do 
   -- On some platforms like Windows the presence of touch input can only be detected dynamically
-  initTouchInput
-  app <- use sampleApplication
+  s <- readIORef sr
+  initTouchInput sr
+  let app = s ^. sampleApplication
   unsubscribeFromEvent app (Proxy :: Proxy EventTouchBegin)

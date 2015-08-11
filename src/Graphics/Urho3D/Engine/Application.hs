@@ -30,19 +30,30 @@ import Text.RawString.QQ
 import Foreign 
 import Foreign.C.String 
 
-C.context (C.cppCtx <> applicationCntx <> contextContext <> variantContext <> objectContext <> engineContext)
+C.context (C.cppCtx <> C.funConstCtx <> applicationCntx <> contextContext <> variantContext <> objectContext <> engineContext)
 C.include "<Urho3D/Engine/Engine.h>"
 C.include "<Urho3D/Engine/Application.h>"
+C.include "<iostream>"
 C.using "namespace Urho3D"
 
 C.verbatim [r|
+extern "C" typedef void (*haskellIOFunc)();
+
 class ApplicationH : public Application {
 
   OBJECT(ApplicationH);
 
   public:
 
-  ApplicationH(Context* context) : Application(context) {
+  ApplicationH(Context* context
+    , haskellIOFunc setupFunc_
+    , haskellIOFunc startFunc_
+    , haskellIOFunc stopFunc_ ) : 
+      Application(context)
+    , setupFunc(setupFunc_)
+    , startFunc(startFunc_)
+    , stopFunc(stopFunc_)
+  {
 
   }
 
@@ -53,22 +64,49 @@ class ApplicationH : public Application {
   SharedPtr<Engine>* getEgine() {
     return new SharedPtr<Engine>(engine_);
   }
+
+  void Setup() {
+    if (setupFunc) setupFunc();
+  }
+
+  void Start() {
+    if (startFunc) startFunc();
+  }
+
+  void Stop() {
+    if (stopFunc) stopFunc();
+  }
+
+  private:
+  haskellIOFunc setupFunc = NULL;
+  haskellIOFunc startFunc = NULL;
+  haskellIOFunc stopFunc = NULL;
 };
 |]
 
 applicationContext :: C.Context 
 applicationContext = applicationCntx <> objectContext
 
-newApplication :: Ptr Context -> IO (Ptr Application)
-newApplication ptr = [C.exp| ApplicationH* { new ApplicationH($(Context* ptr)) } |]
+newApplication :: Ptr Context
+  -> IO () -- ^ Setup function
+  -> IO () -- ^ Start function
+  -> IO () -- ^ Stop function
+  -> IO (Ptr Application)
+newApplication ptr setupFunc startFunc stopFunc = do 
+  [C.exp| ApplicationH* { 
+    new ApplicationH($(Context* ptr)
+      , $funConst:(void (*setupFunc)())
+      , $funConst:(void (*startFunc)())
+      , $funConst:(void (*stopFunc)()) )
+  } |]
 
 deleteApplication :: Ptr Application -> IO ()
 deleteApplication ptr = [C.exp| void { delete $(ApplicationH* ptr) } |]
 
 instance Createable (Ptr Application) where 
-  type CreationOptions (Ptr Application) = Ptr Context 
+  type CreationOptions (Ptr Application) = (Ptr Context, IO (), IO (), IO ())
 
-  newObject = liftIO . newApplication
+  newObject (cntx, setup, start, stop) = liftIO $ newApplication cntx setup start stop
   deleteObject = liftIO . deleteApplication
 
 instance Parent Object Application where 
@@ -98,5 +136,5 @@ applicationEngine p = liftIO $ do
 -- | Runs application loop, doesn't exit until call to engineExit
 applicationRun :: (Parent Application a, Pointer p a, MonadIO m) => p -> m ()
 applicationRun p = liftIO $ do 
-  let ptr = parentPointer p 
+  let ptr = parentPointer p
   [C.block| void { $(ApplicationH* ptr)->Run(); } |]

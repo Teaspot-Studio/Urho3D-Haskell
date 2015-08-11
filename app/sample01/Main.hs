@@ -20,14 +20,9 @@ joysticPatch = [r|
 
 main :: IO ()
 main = withObject () $ \cntx -> do 
-  sample <- newSample cntx "HelloWorld" joysticPatch
+  bracket (newSample cntx "HelloWorld" joysticPatch customStart) 
+    deleteSample runSample
 
-  sampleSetup sample 
-  sampleStart sample 
-  customStart sample
-  applicationRun $ sample^.sampleApplication
-  sampleStop sample 
-  deleteSample sample 
-
-customStart :: Sample -> IO ()
-customStart = undefined
+customStart :: SampleRef -> IO ()
+customStart sr = do 
+  putStrLn "Hello!"

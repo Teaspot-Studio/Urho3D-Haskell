@@ -8,6 +8,7 @@ import Graphics.Urho3D.Template
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
 import Foreign
+import Foreign.Concurrent as FC 
 
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Context as C
@@ -39,17 +40,10 @@ sharedPtr tname = do
         quoteExp C.exp ("void { delete $(" ++ sharedT ++ "* "++show ptrName++")}")
     ]
 
-  deleterWrapper <- [d|
-    type SharedTDeleter = Ptr $sharedTType -> IO ()
-    foreign import ccall "wrapper"
-      mkSharedTDeleter :: SharedTDeleter -> IO (FunPtr SharedTDeleter)
-    |]
-
   wrappPointer <- sequence [
       wrapSharedTPtr ^:: [t| Ptr $sharedTType -> IO $sharedTPtrType |]
     , mkFunc1 wrapSharedTPtr "ptr" $ \_ -> [e| do
-        finalizerPtr <- $(varE $ mkName "mkSharedTDeleter") $(varE $ mkName deleteSharedTPtr)
-        fptr <- newForeignPtr finalizerPtr $(varE $ mkName "ptr")
+        fptr <- FC.newForeignPtr $(varE $ mkName "ptr") $ $(varE $ mkName deleteSharedTPtr) $(varE $ mkName "ptr")
         return $ $(conE $ mkName sharedTPtr) fptr
       |]
     ]
@@ -82,7 +76,7 @@ sharedPtr tname = do
       makePointer = unsafePerformIO . $(varE $ mkName newSharedTPtr)
     |]
 
-  return $ typedef ++ deleter ++ deleterWrapper ++ wrappPointer ++ allocator ++ createable ++ pointerCast ++ pointerInst
+  return $ typedef ++ deleter ++ wrappPointer ++ allocator ++ createable ++ pointerCast ++ pointerInst
 
   where 
   tType = conT $ mkName tname
