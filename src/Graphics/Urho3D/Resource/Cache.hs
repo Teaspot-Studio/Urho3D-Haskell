@@ -21,6 +21,7 @@ import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
 import Data.Monoid
+import Data.Proxy
 import Foreign 
 import Foreign.C.String
 
@@ -52,7 +53,7 @@ cacheGetResource :: forall a m . (ResourceType a, MonadIO m) => Ptr ResourceCach
   -> Bool -- ^ send event on failure?
   -> m (Maybe (Ptr a)) -- ^ pointer to resource
 cacheGetResource ptr name sendEvent = liftIO $ withCString name $ \name' -> do 
-  let rest = resourceType (undefined :: a)
+  let rest = resourceType (Proxy :: Proxy a)
   let sendEvent' = if sendEvent then 1 else 0 
   resPtr <- [C.exp| Resource* { $(ResourceCache* ptr)->GetResource(*$(StringHash* rest), String($(const char* name')), $(int sendEvent') != 0) } |]
   checkNullPtr' resPtr (return.castPtr)

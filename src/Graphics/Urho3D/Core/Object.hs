@@ -29,7 +29,7 @@ import Data.Monoid
 import Foreign 
 import Data.Proxy
 
-C.context (C.cppCtx <> C.funCtx <> objectCntx <> contextContext <> stringHashContext <> variantContext)
+C.context (C.cppCtx <> C.funConstCtx <> objectCntx <> contextContext <> stringHashContext <> variantContext)
 C.include "<Urho3D/Core/Object.h>"
 C.using "namespace Urho3D"
 
@@ -56,11 +56,11 @@ class Event event where
 C.verbatim [r|
 
 typedef HashMap<StringHash, Variant> HashMapStringHashVariant;
+extern "C" typedef void (*Handler)(HashMapStringHashVariant*);
 
 class HaskellHandler : public Object {
   OBJECT(HaskellHandler);
 
-  typedef void (*Handler)(HashMapStringHashVariant*);
   Handler handler_;
 public:
   HaskellHandler(Context* cntx, Handler handler) : 
@@ -84,7 +84,7 @@ subscribeToEvent obj fun = do
       eventType = eventID (Proxy :: Proxy event)
   liftIO $ [C.block| void {
     Context* cntx = $(Object* objPtr)->GetContext();
-    HaskellHandler* handler = new HaskellHandler(cntx, $fun:(void (*funImpl)(HashMapStringHashVariant* vm)));
+    HaskellHandler* handler = new HaskellHandler(cntx, $funConst:(void (*funImpl)(HashMapStringHashVariant* vm)));
     $(Object* objPtr)->SubscribeToEvent(*$(StringHash* eventType)
         , new EventHandlerImpl<HaskellHandler>(handler, &HaskellHandler::runHanlder)
         );

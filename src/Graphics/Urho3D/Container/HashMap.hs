@@ -16,7 +16,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Context as C
 import qualified Language.C.Types as C
 import Graphics.Urho3D.Createable
-import Control.Monad.IO.Class
+import Graphics.Urho3D.Monad
 import qualified Data.Map as Map
 
 -- | Operations that all templated hash maps should support
@@ -34,7 +34,6 @@ class HashMap m k v | m -> k, m -> v where
 --
 -- Note: if you get something like 'HashMapKV isn't defined' check if you added hashMapImpl in your
 -- local context.
--- TODO: Generation of @hashMapLookup@
 hashMap :: String -> String -> DecsQ
 hashMap key value = do 
   typedef <- C.verbatim $ "typedef HashMap< " ++ key ++ ", " ++ value ++ " >" ++ hashMapName ++ ";"
@@ -56,7 +55,9 @@ hashMap key value = do
   hashMapClass <- [d|
       instance HashMap $hashMapType (Ptr $keyType) (Ptr $valueType) where
         hashMapInsert _k _v _m = $(quoteExp C.exp ("void { $(" ++ hashMapName ++ "* _m)->Insert(" ++ pairKV ++ "(*$(" ++ key ++ "* _k), *$(" ++ value ++ "* _v))) }"))
-        hashMapLookup _ _ = undefined
+        hashMapLookup _k _m = do
+          _v <- $(quoteExp C.exp (value ++ "* { $(" ++ hashMapName ++ "* _m)->Contains(*$(" ++ key ++ "* _k)) ? &(*$(" ++ hashMapName ++ "* _m))[*$(" ++ key ++ "* _k)] : NULL }"))
+          checkNullPtr' _v return
       |]
   return $ typedef ++ body ++ createable ++ hashMapClass
   where 

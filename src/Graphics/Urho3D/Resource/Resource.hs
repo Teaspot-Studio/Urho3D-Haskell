@@ -16,6 +16,7 @@ import qualified Language.C.Inline.Cpp as C
 import Graphics.Urho3D.Resource.Internal.Resource
 import Graphics.Urho3D.Math.StringHash
 import Data.Monoid
+import Data.Proxy
 import Foreign 
 
 C.context (C.cppCtx <> resourceCntx <> stringHashContext)
@@ -27,4 +28,4 @@ resourceContext = resourceCntx <> stringHashContext
 
 -- | Types that could be loaded via resource cache
 class ResourceType a where 
-  resourceType :: a -> Ptr StringHash
+  resourceType :: Proxy a -> Ptr StringHash

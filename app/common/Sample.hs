@@ -50,7 +50,6 @@ newSample :: Ptr Context
   -> (SampleRef -> IO ()) -- ^ Custom start function 
   -> IO SampleRef
 newSample context name joystickPatch customStart = do 
-  putStrLn "Creating Sample"
   sampleRef <- newIORef undefined
   app <- newObject (context
     , sampleSetup sampleRef
@@ -75,12 +74,10 @@ newSample context name joystickPatch customStart = do
   , _sampleJoystickPatch = joystickPatch
   }
   writeIORef sampleRef s
-  putStrLn "Sample created"
   return sampleRef
 
 deleteSample :: SampleRef -> IO ()
 deleteSample sr = do
-  putStrLn "Sample delete"
   s <- readIORef sr
   deleteObject $ s ^. sampleApplication
   deleteObject $ s ^. sampleLogo
@@ -93,7 +90,6 @@ fromJustTrace msg Nothing = error $ "fromJust: " ++ msg
 
 sampleSetup :: SampleRef -> IO ()
 sampleSetup sr = do
-  putStrLn "Sample setup"
   s <- readIORef sr
   let app = s^.sampleApplication
 

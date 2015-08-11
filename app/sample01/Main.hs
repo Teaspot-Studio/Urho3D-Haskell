@@ -24,5 +24,4 @@ main = withObject () $ \cntx -> do
     deleteSample runSample
 
 customStart :: SampleRef -> IO ()
-customStart sr = do 
-  putStrLn "Hello!"
+customStart sr = return ()
