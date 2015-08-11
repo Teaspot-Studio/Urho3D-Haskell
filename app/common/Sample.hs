@@ -3,8 +3,22 @@ module Sample(
     Sample
   , newSample
   , deleteSample
+  , sampleSetup
   , sampleStart 
   , sampleStop 
+  -- | Lenses
+  , sampleApplication
+  , sampleName
+  , sampleYaw
+  , samplePitch
+  , sampleTouchEnabled
+  , sampleScreenJoystickIndex
+  , sampleScreenSettingsIndex
+  , samplePaused
+  , sampleLogo
+  , sampleScene
+  , sampleCameraNode
+  , sampleJoystickPatch
   ) where 
 
 import Graphics.Urho3D
@@ -61,8 +75,8 @@ deleteSample s = do
   deleteObject $ s ^. sampleScene
   deleteObject $ s ^. sampleCameraNode
 
-sampleSetup :: StateT Sample IO ()
-sampleSetup = do
+sampleSetup :: Sample -> IO ()
+sampleSetup s = flip evalStateT s $ do
   sName <- use sampleName
   app <- use sampleApplication
 
@@ -75,8 +89,8 @@ sampleSetup = do
   startupParameter app "FullScreen" $= False 
   startupParameter app "Headless" $= False 
 
-sampleStart :: StateT Sample IO ()
-sampleStart = do 
+sampleStart :: Sample -> IO ()
+sampleStart s = flip evalStateT s $ do 
   app <- use sampleApplication
   sample <- State.get
 
@@ -124,8 +138,8 @@ setLogoVisible flag = do
   ptr <- use sampleLogo 
   unless (isNull ptr) $ uiElementSetVisible ptr flag
 
-sampleStop :: StateT Sample IO ()
-sampleStop = do 
+sampleStop :: Sample -> IO ()
+sampleStop s = flip evalStateT s $ do 
   eng <- applicationEngine =<< use sampleApplication
   engineDumpResources eng True
 

@@ -4,12 +4,14 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Engine.Application(
     Application
   , applicationContext
   , startupParameter
   , applicationEngine
+  , applicationRun
   ) where
 
 import qualified Language.C.Inline as C 
@@ -88,5 +90,13 @@ startupParameter ptr name = makeSettableStateVar $ setStartupParameter ptr name
 C.verbatim "typedef SharedPtr<Engine> SharedEngine;"
 
 -- | Returns shared reference to inner engine
-applicationEngine :: MonadIO m => Ptr Application -> m SharedEnginePtr
-applicationEngine ptr = liftIO $ wrapSharedEnginePtr =<< [C.exp| SharedEngine* { $(ApplicationH* ptr)->getEgine() } |]
+applicationEngine :: (Parent Application a, Pointer p a, MonadIO m) => p -> m SharedEnginePtr
+applicationEngine p = liftIO $ do
+  let ptr = parentPointer p
+  wrapSharedEnginePtr =<< [C.exp| SharedEngine* { $(ApplicationH* ptr)->getEgine() } |]
+
+-- | Runs application loop, doesn't exit until call to engineExit
+applicationRun :: (Parent Application a, Pointer p a, MonadIO m) => p -> m ()
+applicationRun p = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.block| void { $(ApplicationH* ptr)->Run(); } |]
