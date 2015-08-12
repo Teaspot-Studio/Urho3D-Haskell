@@ -24,6 +24,12 @@ module Graphics.Urho3D.UI.Element(
   , uiElementSetPriority
   , uiElementAddChild
   , uiElementSetDefaultStyle
+  , uiElementSetName
+  , uiElementSetMinWidth
+  , uiElementSetMinHeight
+  , uiElementSetMinSize
+  , uiElementSetStyleAuto
+  , uiElementSetStyleAutoDefault
   ) where
 
 import qualified Language.C.Inline as C 
@@ -181,3 +187,56 @@ uiElementSetDefaultStyle p s = liftIO $ do
   let ptr = parentPointer p 
       style = parentPointer s 
   [C.exp| void { $(UIElement* ptr)->SetDefaultStyle($(XMLFile* style))} |]
+
+-- | Set name.
+uiElementSetName :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
+  -> String -- ^ Name
+  -> m ()
+uiElementSetName p s = liftIO $ withCString s $ \str -> do 
+  let ptr = parentPointer p 
+  [C.exp| void { $(UIElement* ptr)->SetName($(const char* str)) } |]
+
+-- | Set minimum width.
+uiElementSetMinWidth :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
+  -> Int -- ^ Width value
+  -> m ()
+uiElementSetMinWidth p w = liftIO $ do 
+  let ptr = parentPointer p 
+      w' = fromIntegral w
+  [C.exp| void { $(UIElement* ptr)->SetMinWidth($(int w')) } |]
+
+-- | Set minimum height.
+uiElementSetMinHeight :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
+  -> Int -- ^ Height value
+  -> m ()
+uiElementSetMinHeight p h = liftIO $ do 
+  let ptr = parentPointer p 
+      h' = fromIntegral h
+  [C.exp| void { $(UIElement* ptr)->SetMinHeight($(int h')) } |]
+
+-- | Set minimum height.
+uiElementSetMinSize :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
+  -> IntVector2 -- ^ Width and Height
+  -> m ()
+uiElementSetMinSize p v = liftIO $ with v $ \v' -> do 
+  let ptr = parentPointer p
+  [C.exp| void { $(UIElement* ptr)->SetMinSize(*$(IntVector2* v')) } |]
+
+-- | Set style from an XML file. Find the style element automatically. 
+-- If the style file is not explicitly provided, use the default style from parental chain. 
+-- Return true if the style is applied successfully.
+uiElementSetStyleAuto :: (Parent UIElement a, Pointer p a, Parent XMLFile b, Pointer xmlFile b, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> xmlFile -- ^ Pointer to style file, or @nullPtr@ for defult sytle
+  -> m Bool 
+uiElementSetStyleAuto p xml = liftIO $ do 
+  let ptr = parentPointer p
+      xml' = parentPointer xml 
+  toBool <$> [C.exp| int { (int)$(UIElement* ptr)->SetStyleAuto($(XMLFile* xml')) } |]
+
+-- | Set style from the default style from parental chain. Find the style element automatically.  
+-- Return true if the style is applied successfully.
+uiElementSetStyleAutoDefault :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> m Bool 
+uiElementSetStyleAutoDefault p = uiElementSetStyleAuto p (nullPtr :: Ptr XMLFile)

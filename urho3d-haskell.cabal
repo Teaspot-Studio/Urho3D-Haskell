@@ -59,12 +59,16 @@ library
                        Graphics.Urho3D.Scene.Scene
                        Graphics.Urho3D.UI
                        Graphics.Urho3D.UI.BorderImage
+                       Graphics.Urho3D.UI.Button
+                       Graphics.Urho3D.UI.CheckBox
                        Graphics.Urho3D.UI.Cursor
                        Graphics.Urho3D.UI.Element
                        Graphics.Urho3D.UI.Font
+                       Graphics.Urho3D.UI.LineEdit
                        Graphics.Urho3D.UI.Sprite
                        Graphics.Urho3D.UI.Text
                        Graphics.Urho3D.UI.UI
+                       Graphics.Urho3D.UI.Window
 
   other-modules:       Graphics.Urho3D.Core.Internal.Context
                        Graphics.Urho3D.Core.Internal.Object
@@ -92,12 +96,16 @@ library
                        Graphics.Urho3D.Scene.Internal.Scene
                        Graphics.Urho3D.Template
                        Graphics.Urho3D.UI.Internal.BorderImage
+                       Graphics.Urho3D.UI.Internal.Button
+                       Graphics.Urho3D.UI.Internal.CheckBox
                        Graphics.Urho3D.UI.Internal.Cursor
                        Graphics.Urho3D.UI.Internal.Element
                        Graphics.Urho3D.UI.Internal.Font
+                       Graphics.Urho3D.UI.Internal.LineEdit
                        Graphics.Urho3D.UI.Internal.Sprite
                        Graphics.Urho3D.UI.Internal.Text
                        Graphics.Urho3D.UI.Internal.UI
+                       Graphics.Urho3D.UI.Internal.Window
 
   c-sources:           src/Graphics/Urho3D/Core/Context.cpp
                        src/Graphics/Urho3D/Core/Events.cpp
@@ -128,13 +136,17 @@ library
                        src/Graphics/Urho3D/Scene/Node.cpp
                        src/Graphics/Urho3D/Scene/Scene.cpp
                        src/Graphics/Urho3D/UI/BorderImage.cpp
+                       src/Graphics/Urho3D/UI/Button.cpp
+                       src/Graphics/Urho3D/UI/CheckBox.cpp
                        src/Graphics/Urho3D/UI/Cursor.cpp
                        src/Graphics/Urho3D/UI/Element.cpp
                        src/Graphics/Urho3D/UI/Font.cpp
+                       src/Graphics/Urho3D/UI/LineEdit.cpp
                        src/Graphics/Urho3D/UI/Sprite.cpp
                        src/Graphics/Urho3D/UI/Text.cpp
                        src/Graphics/Urho3D/UI/UI.cpp
-
+                       src/Graphics/Urho3D/UI/Window.cpp
+                       
   build-depends:        base
                       , containers
                       , inline-c

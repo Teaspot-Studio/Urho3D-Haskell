@@ -90,22 +90,48 @@ customStart sr = do
   uiElementSetDefaultStyle root style 
 
   -- Initialize window
-  initWindow
+  window <- initWindow
 
   -- Create and add some controls to the window
-  initControls 
+  initControls app window
 
   -- Create a draggable Fish 
   createDraggableFish
 
 -- | Create and initialize a Window control.
-initWindow :: IO ()
+initWindow :: IO SharedWindowPtr
 initWindow = undefined
 
 -- | Create and add various common controls for demonstration purposes.
-initControls :: IO ()
-initControls = undefined
+initControls :: SharedApplicationPtr -> SharedWindowPtr -> IO ()
+initControls app window = do 
+  cntx <- getContext app 
 
+  -- Create a CheckBox
+  (checkBox :: SharedCheckBoxPtr) <- newSharedObject cntx 
+  uiElementSetName checkBox "CheckBox"
+
+  -- Create a Button
+  (button :: SharedButtonPtr) <- newSharedObject cntx 
+  uiElementSetName button "Button"
+  uiElementSetMinHeight button 24
+
+  -- Create a LineEdit
+  (lineEdit :: SharedLineEditPtr) <- newSharedObject cntx 
+  uiElementSetName lineEdit "LineEdit"
+  uiElementSetMinHeight lineEdit 24 
+
+  -- Add controls to Window 
+  uiElementAddChild window checkBox
+  uiElementAddChild window button 
+  uiElementAddChild window lineEdit
+
+  -- Apply previously set default style
+  _ <- uiElementSetStyleAutoDefault checkBox
+  _ <- uiElementSetStyleAutoDefault button
+  _ <- uiElementSetStyleAutoDefault lineEdit
+  return ()
+  
 -- | Create a draggable fish button.
 createDraggableFish :: IO ()
 createDraggableFish = undefined
