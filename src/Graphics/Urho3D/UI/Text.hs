@@ -1,0 +1,81 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+module Graphics.Urho3D.UI.Text(
+    Text 
+  , textContext
+  , SharedText
+  , SharedTextPtr 
+  , textSetText
+  , defaultFontSize
+  , textSetFont
+  ) where
+
+import qualified Language.C.Inline as C 
+import qualified Language.C.Inline.Cpp as C
+import qualified Data.Text as T 
+
+import Graphics.Urho3D.UI.Internal.Text
+import Graphics.Urho3D.UI.Element
+import Graphics.Urho3D.UI.Font
+import Graphics.Urho3D.Core.Context 
+import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Monad
+import Data.Monoid
+import Foreign 
+import Foreign.C.Types
+import System.IO.Unsafe (unsafePerformIO)
+
+C.context (C.cppCtx <> sharedTextPtrCntx <> textCntx <> contextContext <> uiElementContext <> fontContext)
+C.include "<Urho3D/UI/Text.h>"
+C.using "namespace Urho3D"
+
+textContext :: C.Context 
+textContext = sharedTextPtrCntx <> textCntx
+
+instance Createable (Ptr Text) where 
+  type CreationOptions (Ptr Text) = Ptr Context 
+
+  newObject ptr = liftIO $ [C.exp| Text* { new Text( $(Context* ptr) ) } |]
+  deleteObject ptr = liftIO $ [C.exp| void { delete $(Text* ptr) } |]
+
+instance Parent UIElement Text  where 
+  castToParent ptr = [C.pure| UIElement* {(UIElement*)$(Text* ptr)} |]
+  castToChild ptr = let
+    child = [C.pure| Text* {(Text*)$(UIElement* ptr)} |]
+    in if child == nullPtr then Nothing else Just child
+
+instance UIElem Text where 
+  uiElemType _ = unsafePerformIO $ [C.block| StringHash* { 
+      static StringHash h = Text::GetTypeStatic();  
+      return &h;
+    } |]
+
+sharedPtr "Text"
+
+-- | Sets Text contents
+textSetText :: (Parent Text a, Pointer p a, MonadIO m) => p -- ^ Pointer to Text object
+  -> T.Text -- ^ Text contents
+  -> m ()
+textSetText p str = liftIO $ textAsPtrW32 str $ \str' -> do 
+  let ptr = parentPointer p 
+  [C.exp| void { $(Text* ptr)->SetText(String($(wchar_t* str'))) } |]
+
+defaultFontSize :: Int 
+defaultFontSize = 12 
+
+textSetFont :: (Parent Text text, Pointer pText text, Parent Font font, Pointer pFont font, MonadIO m) 
+  => pText -- ^ Pointer to Text object
+  -> pFont -- ^ Pointer to Font object
+  -> Int -- ^ Font size
+  -> m ()
+textSetFont pText pFont fsize = liftIO $ do 
+  let ptrText = parentPointer pText
+      ptrFont = parentPointer pFont 
+      fsize' = fromIntegral fsize
+  [C.exp| void { $(Text* ptrText)->SetFont($(Font* ptrFont), $(int fsize')) } |]

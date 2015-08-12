@@ -1,7 +1,9 @@
 {-# LANGUAGE QuasiQuotes, TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, FlexibleContexts #-}
 module Graphics.Urho3D.Container.Ptr(
     sharedPtr 
   , sharedPtrImpl 
+  , SharedPointer(..)
   ) where
 
 import Graphics.Urho3D.Template
@@ -17,6 +19,12 @@ import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
 import qualified Data.Map as Map
 import System.IO.Unsafe (unsafePerformIO)
+
+-- | Common operations with shared pointers. 
+class (Pointer pointer element, Createable (Ptr element)) => SharedPointer pointer element | pointer -> element where 
+  -- | Creates new object and wraps it to shared pointer. Pointer is garbage collected. The created object
+  -- will be destroyed as soon as there is no shared pointers pointed to it.
+  newSharedObject :: CreationOptions (Ptr element) -> IO pointer
 
 -- | Makes public API of SharedPtr for given type
 -- Makes following symbols:
@@ -37,7 +45,8 @@ sharedPtr tname = do
   deleter <- sequence [
       deleteSharedTPtr ^:: [t| Ptr $sharedTType -> IO () |]
     , mkFunc1 deleteSharedTPtr "ptr" $ \ptrName -> 
-        quoteExp C.exp ("void { delete $(" ++ sharedT ++ "* "++show ptrName++")}")
+        let inlinePtr = "$(" ++ sharedT ++ "* "++show ptrName++")"
+        in quoteExp C.exp ("void { if ("++inlinePtr++") { delete "++inlinePtr++"; } }")
     ]
 
   wrappPointer <- sequence [
@@ -76,7 +85,12 @@ sharedPtr tname = do
       makePointer = unsafePerformIO . $(varE $ mkName newSharedTPtr)
     |]
 
-  return $ typedef ++ deleter ++ wrappPointer ++ allocator ++ createable ++ pointerCast ++ pointerInst
+  sharedPointerIns <- [d|
+    instance SharedPointer $sharedTPtrType $tType where 
+      newSharedObject opts = newObject opts >>= $(varE $ mkName newSharedTPtr)
+    |]
+
+  return $ typedef ++ deleter ++ wrappPointer ++ allocator ++ createable ++ pointerCast ++ pointerInst ++ sharedPointerIns
 
   where 
   tType = conT $ mkName tname

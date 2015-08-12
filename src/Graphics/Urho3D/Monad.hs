@@ -18,14 +18,21 @@ module Graphics.Urho3D.Monad(
   , module X
   , parentPointer
   , mkParentPointer
+  -- | Foreign utils
+  , textAsPtrW32
   ) where
 
+import qualified Data.Text as T 
+
 import Foreign
+import Foreign.C.Types
 import Control.Monad
 import Control.Monad.Catch as X
 import Control.Monad.Reader as X
 
 import Data.Typeable
+import Data.Text.Encoding (encodeUtf32LE)
+import Data.ByteString.Unsafe (unsafeUseAsCString)
 
 -- | Describes monad with context @s@
 newtype Urho s a = Urho { unUrho :: ReaderT (Ptr s) IO a}
@@ -121,3 +128,7 @@ whenM :: Monad m => m Bool -> m () -> m ()
 whenM cond f = do 
   v <- cond 
   when v f
+
+-- | Converts text to UTF32 and then passes a copy to handler
+textAsPtrW32 :: T.Text -> (Ptr CWchar -> IO a) -> IO a
+textAsPtrW32 t = unsafeUseAsCString (encodeUtf32LE $ t `T.snoc` '\0') . (. castPtr)

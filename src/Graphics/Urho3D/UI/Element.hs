@@ -22,22 +22,25 @@ module Graphics.Urho3D.UI.Element(
   , uiElementSetAlignment
   , uiElementSetOpacity
   , uiElementSetPriority
+  , uiElementAddChild
   ) where
 
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.UI.Internal.Element
+import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector2
+import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 import Foreign.C.String 
 import Data.Proxy 
 
-C.context (C.cppCtx <> sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context)
+C.context (C.cppCtx <> sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context <> contextContext)
 C.include "<Urho3D/UI/UIElement.h>"
 C.using "namespace Urho3D"
 
@@ -45,6 +48,12 @@ uiElementContext :: C.Context
 uiElementContext = sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext
 
 sharedPtr "UIElement" 
+
+instance Createable (Ptr UIElement) where 
+  type CreationOptions (Ptr UIElement) = Ptr Context 
+
+  newObject ptr = liftIO $ [C.exp| UIElement* { new UIElement($(Context* ptr)) } |]
+  deleteObject ptr = liftIO $ [C.exp| void { delete $(UIElement* ptr) } |]
 
 -- | Returns ui element visiblitity
 uiElementIsVisible :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
@@ -150,3 +159,13 @@ uiElementSetPosition :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ P
 uiElementSetPosition p v = liftIO $ with v $ \v' -> do 
   let ptr = parentPointer p 
   [C.exp| void { $(UIElement* ptr)->SetPosition(*$(IntVector2* v'))} |]
+
+-- | Adds child to the element
+uiElementAddChild :: (Parent UIElement a, Pointer p1 a, Parent UIElement b, Pointer p2 b, MonadIO m) 
+  => p1 -- ^ Pointer to UI element
+  -> p2 -- ^ Pointer to child UIElement
+  -> m ()
+uiElementAddChild p1 p2 = liftIO $ do 
+  let ptr1 = parentPointer p1 
+      ptr2 = parentPointer p2 
+  [C.exp| void { $(UIElement* ptr1)->AddChild($(UIElement* ptr2)) } |]

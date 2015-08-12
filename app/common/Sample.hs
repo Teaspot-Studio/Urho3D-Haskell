@@ -3,7 +3,6 @@ module Sample(
     Sample
   , SampleRef
   , newSample
-  , deleteSample
   , runSample
   -- | Lenses
   , sampleApplication
@@ -42,7 +41,7 @@ touchSensitivity = 2.0
 runSample :: SampleRef -> IO ()
 runSample sr = do
   s <- readIORef sr
-  checkNullPtr (s ^. sampleApplication) applicationRun
+  applicationRun $ s ^. sampleApplication
 
 newSample :: Ptr Context 
   -> String -- ^ Sample name
@@ -51,14 +50,10 @@ newSample :: Ptr Context
   -> IO SampleRef
 newSample context name joystickPatch customStart = do 
   sampleRef <- newIORef undefined
-  app <- newObject (context
+  app <- newSharedObject (context
     , sampleSetup sampleRef
     , sampleStart sampleRef >> customStart sampleRef
     , sampleStop sampleRef)
-
-  sprite <- newObject nullPtr 
-  scene <- newObject nullPtr
-  camNode <- newObject nullPtr
   let s = Sample {
     _sampleApplication = app 
   , _sampleName = name
@@ -68,21 +63,13 @@ newSample context name joystickPatch customStart = do
   , _sampleScreenSettingsIndex = maxBound
   , _sampleScreenJoystickIndex = maxBound 
   , _samplePaused = False 
-  , _sampleLogo = sprite
-  , _sampleScene = scene
-  , _sampleCameraNode = camNode
+  , _sampleLogo = makePointer nullPtr
+  , _sampleScene = makePointer nullPtr
+  , _sampleCameraNode = makePointer nullPtr
   , _sampleJoystickPatch = joystickPatch
   }
   writeIORef sampleRef s
   return sampleRef
-
-deleteSample :: SampleRef -> IO ()
-deleteSample sr = do
-  s <- readIORef sr
-  deleteObject $ s ^. sampleApplication
-  deleteObject $ s ^. sampleLogo
-  deleteObject $ s ^. sampleScene
-  deleteObject $ s ^. sampleCameraNode
 
 fromJustTrace :: String -> Maybe a -> a 
 fromJustTrace _ (Just a) = a 

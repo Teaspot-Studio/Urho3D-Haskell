@@ -8,6 +8,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Engine.Application(
     Application
+  , SharedApplication
+  , SharedApplicationPtr
   , applicationContext
   , startupParameter
   , applicationEngine
@@ -21,6 +23,7 @@ import Graphics.Urho3D.Engine.Internal.Application
 import Graphics.Urho3D.Core.Variant
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Engine.Engine
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
@@ -30,11 +33,14 @@ import Text.RawString.QQ
 import Foreign 
 import Foreign.C.String 
 
-C.context (C.cppCtx <> C.funConstCtx <> applicationCntx <> contextContext <> variantContext <> objectContext <> engineContext)
+C.context (C.cppCtx <> C.funConstCtx <> applicationCntx <> sharedApplicationHPtrCntx <> contextContext <> variantContext <> objectContext <> engineContext)
 C.include "<Urho3D/Engine/Engine.h>"
 C.include "<Urho3D/Engine/Application.h>"
 C.include "<iostream>"
 C.using "namespace Urho3D"
+
+type SharedApplication = SharedApplicationH
+type SharedApplicationPtr = SharedApplicationHPtr
 
 C.verbatim [r|
 extern "C" typedef void (*haskellIOFunc)();
@@ -85,7 +91,7 @@ class ApplicationH : public Application {
 |]
 
 applicationContext :: C.Context 
-applicationContext = applicationCntx <> objectContext
+applicationContext = applicationCntx <> sharedApplicationHPtrCntx <> objectContext
 
 newApplication :: Ptr Context
   -> IO () -- ^ Setup function
@@ -115,14 +121,21 @@ instance Parent Object Application where
     child = [C.pure| ApplicationH* {(ApplicationH*)$(Object* ptr)} |]
     in if child == nullPtr then Nothing else Just child 
 
+sharedPtr "ApplicationH"
+
 -- | Sets inital values of engine startup configuration by key-value
-setStartupParameter :: VariantStorable a => Ptr Application -> String -> a -> IO ()
-setStartupParameter ptr name a = withCString name $ \cname -> do 
+setStartupParameter :: (Parent Application app, Pointer p app, VariantStorable a) 
+  => p -- ^ Pointer to application or child
+  -> String -- ^ Name of parameter
+  -> a -- ^ Value of parameter
+  -> IO ()
+setStartupParameter p name a = withCString name $ \cname -> do 
   var <- newVariant a 
+  let ptr = parentPointer p
   [C.exp| void { $(ApplicationH* ptr)->setEngineParameter($(char* cname), $(Variant* var)) }|]
 
 -- | Sets inital values of engine startup configuration by key-value
-startupParameter :: VariantStorable a => Ptr Application -> String -> SettableStateVar a 
+startupParameter :: (Parent Application app, Pointer p app, VariantStorable a) => p -> String -> SettableStateVar a 
 startupParameter ptr name = makeSettableStateVar $ setStartupParameter ptr name
 
 C.verbatim "typedef SharedPtr<Engine> SharedEngine;"

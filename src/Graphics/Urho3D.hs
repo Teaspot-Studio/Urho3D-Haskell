@@ -3,6 +3,7 @@ module Graphics.Urho3D(
   ) where
 
 import Graphics.Urho3D.Core as X
+import Graphics.Urho3D.Container as X
 import Graphics.Urho3D.Createable as X
 import Graphics.Urho3D.Engine as X
 import Graphics.Urho3D.Graphics as X

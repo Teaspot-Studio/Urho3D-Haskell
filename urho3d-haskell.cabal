@@ -23,6 +23,7 @@ library
                        Graphics.Urho3D.Container.Ptr
                        Graphics.Urho3D.Core
                        Graphics.Urho3D.Core.Context
+                       Graphics.Urho3D.Core.Events
                        Graphics.Urho3D.Core.Object
                        Graphics.Urho3D.Core.ProcessUtils
                        Graphics.Urho3D.Core.Variant
@@ -60,7 +61,9 @@ library
                        Graphics.Urho3D.UI.BorderImage
                        Graphics.Urho3D.UI.Cursor
                        Graphics.Urho3D.UI.Element
+                       Graphics.Urho3D.UI.Font
                        Graphics.Urho3D.UI.Sprite
+                       Graphics.Urho3D.UI.Text
                        Graphics.Urho3D.UI.UI
 
   other-modules:       Graphics.Urho3D.Core.Internal.Context
@@ -91,10 +94,13 @@ library
                        Graphics.Urho3D.UI.Internal.BorderImage
                        Graphics.Urho3D.UI.Internal.Cursor
                        Graphics.Urho3D.UI.Internal.Element
+                       Graphics.Urho3D.UI.Internal.Font
                        Graphics.Urho3D.UI.Internal.Sprite
+                       Graphics.Urho3D.UI.Internal.Text
                        Graphics.Urho3D.UI.Internal.UI
 
   c-sources:           src/Graphics/Urho3D/Core/Context.cpp
+                       src/Graphics/Urho3D/Core/Events.cpp
                        src/Graphics/Urho3D/Core/Object.cpp
                        src/Graphics/Urho3D/Core/ProcessUtils.cpp
                        src/Graphics/Urho3D/Core/Variant.cpp
@@ -124,7 +130,9 @@ library
                        src/Graphics/Urho3D/UI/BorderImage.cpp
                        src/Graphics/Urho3D/UI/Cursor.cpp
                        src/Graphics/Urho3D/UI/Element.cpp
+                       src/Graphics/Urho3D/UI/Font.cpp
                        src/Graphics/Urho3D/UI/Sprite.cpp
+                       src/Graphics/Urho3D/UI/Text.cpp
                        src/Graphics/Urho3D/UI/UI.cpp
 
   build-depends:        base
@@ -140,6 +148,8 @@ library
                       , StateVar
                       , raw-strings-qq
                       , lens
+                      , text 
+                      , bytestring
                       
   default-language:    Haskell2010
   ghc-options:         -Wall -Werror -fPIC
@@ -160,7 +170,7 @@ executable urho3d-haskell-sample01
                      , thyme
                      , old-locale
                      , raw-strings-qq
-                     
+
   default-language:    Haskell2010
 
 test-suite urho3d-haskell-test

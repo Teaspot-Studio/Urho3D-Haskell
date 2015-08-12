@@ -8,7 +8,7 @@ import Control.Lens
 import Data.IORef
 
 data Sample = Sample {
-  _sampleApplication :: Ptr Application 
+  _sampleApplication :: SharedApplicationPtr
 , _sampleName :: String
 , _sampleYaw :: Float
 , _samplePitch :: Float 

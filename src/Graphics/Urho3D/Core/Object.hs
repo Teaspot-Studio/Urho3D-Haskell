@@ -41,9 +41,9 @@ class Subsystem a where
   getSubsystemImpl :: Ptr Object -> IO (Ptr a)
 
 -- | Returns specified subsystem from Object Context
-getSubsystem :: (MonadIO m, Subsystem a, Parent Object b) => Ptr b -> m (Maybe (Ptr a))
+getSubsystem :: (MonadIO m, Subsystem a, Parent Object b, Pointer p b) => p -> m (Maybe (Ptr a))
 getSubsystem ptr = do
-  res <- liftIO $ getSubsystemImpl (castToParent ptr)
+  res <- liftIO $ getSubsystemImpl (parentPointer ptr)
   checkNullPtr' res return
 
 -- | Describes events in Urho3D engine
@@ -100,7 +100,7 @@ unsubscribeFromEvent p event = liftIO $ do
   [C.exp| void { $(Object* ptr)->UnsubscribeFromEvent(*$(StringHash* eventType)) }|]
 
 -- | Returns inner Urho context of object
-getContext :: (Parent Object a, MonadIO m) => Ptr a -> m (Ptr Context)
+getContext :: (Parent Object a, Pointer p a, MonadIO m) => p -> m (Ptr Context)
 getContext ptr = liftIO $ do 
-  let objPtr = castToParent ptr 
+  let objPtr = parentPointer ptr 
   [C.exp| Context* { $(Object* objPtr)->GetContext() } |]
