@@ -20,6 +20,7 @@ module Graphics.Urho3D.Input.Input(
   , setScreenJoystickVisible
   , inputGetNumTouches
   , inputGetTouch
+  , inputSetMouseVisible
   ) where
 
 import qualified Language.C.Inline as C 
@@ -140,3 +141,12 @@ inputGetTouch p i = liftIO $ do
       i' = fromIntegral i 
   ts <- [C.exp| TouchState* {$(Input* ptr)->GetTouch($(int i'))} |]
   checkNullPtr' ts peek
+
+-- | Setting visibility of mouse
+inputSetMouseVisible :: (Parent Input a, Pointer p a, MonadIO m) => p 
+  -> Bool -- ^ Flag of visibility for mouse
+  -> m () 
+inputSetMouseVisible p flag = liftIO $ do 
+  let ptr = parentPointer p 
+      flag' = fromBool flag
+  [C.exp| void { $(Input* ptr)->SetMouseVisible($(int flag')) } |]

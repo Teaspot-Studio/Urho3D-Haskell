@@ -23,6 +23,7 @@ module Graphics.Urho3D.UI.Element(
   , uiElementSetOpacity
   , uiElementSetPriority
   , uiElementAddChild
+  , uiElementSetDefaultStyle
   ) where
 
 import qualified Language.C.Inline as C 
@@ -34,13 +35,14 @@ import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector2
 import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Resource.XMLFile 
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 import Foreign.C.String 
 import Data.Proxy 
 
-C.context (C.cppCtx <> sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context <> contextContext)
+C.context (C.cppCtx <> sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context <> contextContext <> xmlFileContext)
 C.include "<Urho3D/UI/UIElement.h>"
 C.using "namespace Urho3D"
 
@@ -169,3 +171,13 @@ uiElementAddChild p1 p2 = liftIO $ do
   let ptr1 = parentPointer p1 
       ptr2 = parentPointer p2 
   [C.exp| void { $(UIElement* ptr1)->AddChild($(UIElement* ptr2)) } |]
+
+-- | Set default style file for later use by children elements.
+uiElementSetDefaultStyle :: (Parent UIElement a, Pointer p a, Parent XMLFile b, Pointer xmlFile b, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> xmlFile -- ^ Pointer to XMLFile that stores UI style info
+  -> m ()
+uiElementSetDefaultStyle p s = liftIO $ do 
+  let ptr = parentPointer p 
+      style = parentPointer s 
+  [C.exp| void { $(UIElement* ptr)->SetDefaultStyle($(XMLFile* style))} |]
