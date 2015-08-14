@@ -45,6 +45,7 @@ library
                        Graphics.Urho3D.IO
                        Graphics.Urho3D.IO.FileSystem
                        Graphics.Urho3D.Math.Quaternion
+                       Graphics.Urho3D.Math.Rect
                        Graphics.Urho3D.Math.StringHash
                        Graphics.Urho3D.Math.Vector2 
                        Graphics.Urho3D.Monad
@@ -63,6 +64,7 @@ library
                        Graphics.Urho3D.UI.CheckBox
                        Graphics.Urho3D.UI.Cursor
                        Graphics.Urho3D.UI.Element
+                       Graphics.Urho3D.UI.Events
                        Graphics.Urho3D.UI.Font
                        Graphics.Urho3D.UI.LineEdit
                        Graphics.Urho3D.UI.Sprite
@@ -85,6 +87,7 @@ library
                        Graphics.Urho3D.Input.Internal.Input
                        Graphics.Urho3D.IO.Internal.FileSystem
                        Graphics.Urho3D.Math.Internal.Quaternion
+                       Graphics.Urho3D.Math.Internal.Rect
                        Graphics.Urho3D.Math.Internal.StringHash
                        Graphics.Urho3D.Math.Internal.Vector2 
                        Graphics.Urho3D.Resource.Internal.Cache
@@ -125,6 +128,7 @@ library
                        src/Graphics/Urho3D/Input/Input.cpp
                        src/Graphics/Urho3D/IO/FileSystem.cpp
                        src/Graphics/Urho3D/Math/Quaternion.cpp
+                       src/Graphics/Urho3D/Math/Rect.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
                        src/Graphics/Urho3D/Math/Vector2.cpp
                        src/Graphics/Urho3D/Resource/Cache.cpp
@@ -140,6 +144,7 @@ library
                        src/Graphics/Urho3D/UI/CheckBox.cpp
                        src/Graphics/Urho3D/UI/Cursor.cpp
                        src/Graphics/Urho3D/UI/Element.cpp
+                       src/Graphics/Urho3D/UI/Events.cpp
                        src/Graphics/Urho3D/UI/Font.cpp
                        src/Graphics/Urho3D/UI/LineEdit.cpp
                        src/Graphics/Urho3D/UI/Sprite.cpp
@@ -162,7 +167,10 @@ library
                       , lens
                       , text 
                       , bytestring
-                      
+                      , stm 
+                      , hashable
+                      , unordered-containers
+
   default-language:    Haskell2010
   ghc-options:         -Wall -Werror -fPIC
   cc-options:          -m64

@@ -7,6 +7,7 @@ import Graphics.Urho3D.UI.Button as X
 import Graphics.Urho3D.UI.CheckBox as X
 import Graphics.Urho3D.UI.Cursor as X
 import Graphics.Urho3D.UI.Element as X
+import Graphics.Urho3D.UI.Events as X
 import Graphics.Urho3D.UI.Font as X
 import Graphics.Urho3D.UI.LineEdit as X
 import Graphics.Urho3D.UI.Sprite as X

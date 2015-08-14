@@ -20,6 +20,8 @@ module Graphics.Urho3D.UI.Element(
   , HorizontalAlignment(..)
   , VerticalAlignment(..)
   , uiElementSetAlignment
+  , uiElementSetHorizontalAlignment
+  , uiElementSetVerticalAlignment
   , uiElementSetOpacity
   , uiElementSetPriority
   , uiElementAddChild
@@ -30,6 +32,14 @@ module Graphics.Urho3D.UI.Element(
   , uiElementSetMinSize
   , uiElementSetStyleAuto
   , uiElementSetStyleAutoDefault
+  , uiElementSetStyle
+  , uiElementSetStyleDefault
+  , LayoutMode(..)
+  , uiElementSetLayout
+  , uiElementSetLayoutMode
+  , uiElementSetLayoutSpacing
+  , uiElementSetLayoutBorder
+  , uiElementSetLayoutFlexScale
   ) where
 
 import qualified Language.C.Inline as C 
@@ -40,6 +50,7 @@ import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector2
+import Graphics.Urho3D.Math.Rect
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Resource.XMLFile 
 import Graphics.Urho3D.Monad
@@ -48,7 +59,7 @@ import Foreign
 import Foreign.C.String 
 import Data.Proxy 
 
-C.context (C.cppCtx <> sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context <> contextContext <> xmlFileContext)
+C.context (C.cppCtx <> sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context <> rectContext <> contextContext <> xmlFileContext)
 C.include "<Urho3D/UI/UIElement.h>"
 C.using "namespace Urho3D"
 
@@ -141,6 +152,24 @@ uiElementSetAlignment ptr ha va = liftIO $ do
       ha' = fromIntegral $ fromEnum ha 
       va' = fromIntegral $ fromEnum va
   [C.exp| void { $(UIElement* ptr')->SetAlignment((HorizontalAlignment)$(int ha'), (VerticalAlignment)$(int va')) } |]
+
+-- | Changes element alignment behavior
+uiElementSetHorizontalAlignment :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
+  -> HorizontalAlignment -- ^ Horizontal behavior
+  -> m ()
+uiElementSetHorizontalAlignment ptr ha = liftIO $ do 
+  let ptr' = parentPointer ptr 
+      ha' = fromIntegral $ fromEnum ha 
+  [C.exp| void { $(UIElement* ptr')->SetHorizontalAlignment((HorizontalAlignment)$(int ha')) } |]
+
+-- | Changes element alignment behavior
+uiElementSetVerticalAlignment :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
+  -> VerticalAlignment -- ^ Vertical behaivor
+  -> m ()
+uiElementSetVerticalAlignment ptr  va = liftIO $ do 
+  let ptr' = parentPointer ptr 
+      va' = fromIntegral $ fromEnum va
+  [C.exp| void { $(UIElement* ptr')->SetVerticalAlignment((VerticalAlignment)$(int va')) } |]
 
 -- | Changes element opacity (inverse of alpha)
 uiElementSetOpacity :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
@@ -240,3 +269,85 @@ uiElementSetStyleAutoDefault :: (Parent UIElement a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to UI element
   -> m Bool 
 uiElementSetStyleAutoDefault p = uiElementSetStyleAuto p (nullPtr :: Ptr XMLFile)
+
+-- | Set style from an XML file. Find the style element by name. 
+-- If the style file is not explicitly provided, use the default style from parental chain. 
+-- Return true if the style is applied successfully.
+uiElementSetStyle :: (Parent UIElement a, Pointer p a, Parent XMLFile b, Pointer xmlFile b, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> String -- ^ Style name
+  -> xmlFile -- ^ xml file with style, if nullPtr then will find style in default settings
+  -> m Bool
+uiElementSetStyle p str xml = liftIO $ withCString str $ \str' -> do 
+  let ptr = parentPointer p 
+      xml' = parentPointer xml
+  toBool <$> [C.exp| int { $(UIElement* ptr)->SetStyle(String($(const char* str')), $(XMLFile* xml')) } |]
+
+-- | Set style from the default style from parental chain. Find the style element by name. 
+-- Return true if the style is applied successfully.
+uiElementSetStyleDefault :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> String -- ^ Style name
+  -> m Bool 
+uiElementSetStyleDefault p str = uiElementSetStyle p str (nullPtr :: Ptr XMLFile)
+
+-- | Layout operation mode.
+data LayoutMode = 
+    -- | No layout operations will be performed
+    LayoutFree
+    -- |  Layout child elements horizontally and resize them to fit. Resize element if necessary.
+  | LayoutHorizontal
+    -- | Layout child elements vertically and resize them to fit. Resize element if necessary.
+  | LayoutVertical
+  deriving (Eq, Ord, Show, Enum)
+
+-- | Set layout.
+uiElementSetLayout :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> LayoutMode 
+  -> Int -- ^ spacing
+  -> IntRect -- ^ border margin
+  -> m ()
+uiElementSetLayout p mode spacing border = liftIO $ with border $ \border' -> do 
+  let ptr = parentPointer p
+      mode' = fromIntegral $ fromEnum mode 
+      spacing' = fromIntegral spacing 
+  [C.exp| void { $(UIElement* ptr)->SetLayout((LayoutMode)$(int mode'), $(int spacing'), *$(IntRect* border')) } |]
+
+-- | Set layout mode only.
+uiElementSetLayoutMode :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> LayoutMode 
+  -> m ()
+uiElementSetLayoutMode p mode = liftIO $ do 
+  let ptr = parentPointer p 
+      mode' = fromIntegral $ fromEnum mode 
+  [C.exp| void { $(UIElement* ptr)->SetLayoutMode((LayoutMode)$(int mode')) } |]
+
+-- | Set layout mode only.
+uiElementSetLayoutSpacing :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> Int -- ^ spacing in pixels 
+  -> m ()
+uiElementSetLayoutSpacing p spacing = liftIO $ do 
+  let ptr = parentPointer p 
+      spacing' = fromIntegral spacing 
+  [C.exp| void { $(UIElement* ptr)->SetLayoutSpacing($(int spacing')) } |]
+
+-- | Set layout border only.
+uiElementSetLayoutBorder :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> IntRect -- ^ border margin
+  -> m ()
+uiElementSetLayoutBorder p border = liftIO $ with border $ \border' -> do 
+  let ptr = parentPointer p 
+  [C.exp| void { $(UIElement* ptr)->SetLayoutBorder(*$(IntRect* border')) } |]
+
+-- | Set layout flex scale.
+uiElementSetLayoutFlexScale :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> Vector2 -- ^ scale 
+  -> m ()
+uiElementSetLayoutFlexScale p scale = liftIO $ with scale $ \scale' -> do 
+  let ptr = parentPointer p 
+  [C.exp| void { $(UIElement* ptr)->SetLayoutFlexScale(*$(Vector2* scale')) } |]

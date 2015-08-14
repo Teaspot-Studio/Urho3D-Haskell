@@ -19,6 +19,7 @@ import Graphics.Urho3D.UI.Internal.Button
 import Graphics.Urho3D.UI.Element
 import Graphics.Urho3D.UI.BorderImage
 import Graphics.Urho3D.Core.Context 
+import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Monad
@@ -26,7 +27,7 @@ import Data.Monoid
 import Foreign 
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> sharedButtonPtrCntx <> buttonCntx <> contextContext <> uiElementContext <> borderImageContext)
+C.context (C.cppCtx <> sharedButtonPtrCntx <> buttonCntx <> contextContext <> uiElementContext <> borderImageContext <> objectContext)
 C.include "<Urho3D/UI/Button.h>"
 C.using "namespace Urho3D"
 
@@ -49,6 +50,12 @@ instance Parent BorderImage Button  where
   castToParent ptr = [C.pure| BorderImage* {(BorderImage*)$(Button* ptr)} |]
   castToChild ptr = let
     child = [C.pure| Button* {(Button*)$(BorderImage* ptr)} |]
+    in if child == nullPtr then Nothing else Just child
+
+instance Parent Object Button  where 
+  castToParent ptr = [C.pure| Object* {(Object*)$(Button* ptr)} |]
+  castToChild ptr = let
+    child = [C.pure| Button* {(Button*)$(Object* ptr)} |]
     in if child == nullPtr then Nothing else Just child
 
 instance UIElem Button where 

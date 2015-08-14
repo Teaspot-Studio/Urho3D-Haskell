@@ -90,7 +90,7 @@ customStart sr = do
   uiElementSetDefaultStyle root style 
 
   -- Initialize window
-  window <- initWindow
+  window <- initWindow app root
 
   -- Create and add some controls to the window
   initControls app window
@@ -99,9 +99,54 @@ customStart sr = do
   createDraggableFish
 
 -- | Create and initialize a Window control.
-initWindow :: IO SharedWindowPtr
-initWindow = undefined
+initWindow :: SharedApplicationPtr -> Ptr UIElement -> IO SharedWindowPtr
+initWindow app root = do 
+  cntx <- getContext app 
 
+  -- Create the windwo and add it to the UI's root node
+  (window :: SharedWindowPtr) <- newSharedObject cntx 
+  uiElementAddChild root window
+
+  -- Set Window size and layout settings
+  uiElementSetMinSize window $ IntVector2 384 192
+  uiElementSetLayout window LayoutVertical 6 $ IntRect 6 6 6 6 
+  uiElementSetAlignment window  AlignmentHorizontalCenter AlignmentVerticalCenter
+  uiElementSetName window "Window"
+
+  -- Create Window 'titleBar' container
+  (titleBar :: SharedUIElementPtr) <- newSharedObject cntx 
+  uiElementSetMinSize titleBar $ IntVector2 0 24 
+  uiElementSetVerticalAlignment titleBar AlignmentTop 
+  uiElementSetLayoutMode titleBar LayoutHorizontal
+
+  -- Create the Window title Text 
+  (windowTitle :: SharedTextPtr) <- newSharedObject cntx 
+  uiElementSetName windowTitle "WindowTitle"
+  textSetText windowTitle "Hello GUI!"
+
+  -- Create the Window's close button
+  (buttonClose :: SharedButtonPtr) <- newSharedObject cntx 
+  uiElementSetName buttonClose "CloseButton"
+
+  -- Add the controls to the title bar 
+  uiElementAddChild titleBar windowTitle
+  uiElementAddChild titleBar buttonClose
+
+  -- Add the title bar to the Window
+  uiElementAddChild window titleBar
+
+  -- Apply sytles
+  _ <- uiElementSetStyleAutoDefault window 
+  _ <- uiElementSetStyleAutoDefault windowTitle
+  uiElementSetStyleDefault buttonClose "CloseButton"
+
+  -- Subscride to buttonClose release (following a 'press') events
+  subscribeToEventSpecific app buttonClose handleClosePressed
+
+  -- Subscride also to all UI mouse clicks just to see where we have clicked
+  subscribeToEvent app handleControlClicked
+  return window
+  
 -- | Create and add various common controls for demonstration purposes.
 initControls :: SharedApplicationPtr -> SharedWindowPtr -> IO ()
 initControls app window = do 
@@ -131,7 +176,7 @@ initControls app window = do
   _ <- uiElementSetStyleAutoDefault button
   _ <- uiElementSetStyleAutoDefault lineEdit
   return ()
-  
+
 -- | Create a draggable fish button.
 createDraggableFish :: IO ()
 createDraggableFish = undefined
@@ -149,10 +194,10 @@ handleDragEnd :: IO ()
 handleDragEnd =  undefined
 
 -- | Handle any UI control being clicked.
-handleControlClicked :: IO ()
+handleControlClicked :: EventUIMouseClick -> IO ()
 handleControlClicked = undefined
 
 -- | Handle close button pressed and released.
-handleClosePressed :: IO ()
+handleClosePressed :: EventReleased -> IO ()
 handleClosePressed = undefined
 
