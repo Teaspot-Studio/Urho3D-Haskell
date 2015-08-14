@@ -82,7 +82,7 @@ sampleSetup sr = do
 
   startupParameter app "WindowTitle" $= s^.sampleName
 
-  fs <- fromJustTrace "sampleSetup:FileSystem" <$> getSubsystem app
+  (fs :: Ptr FileSystem) <- fromJustTrace "sampleSetup:FileSystem" <$> getSubsystem app
   prefDir <- getAppPreferencesDir fs "urho3d" "logs"
   startupParameter app "LogName" $= prefDir ++ s^.sampleName ++ ".log"
 
