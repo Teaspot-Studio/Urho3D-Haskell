@@ -36,6 +36,7 @@ library
                        Graphics.Urho3D.Engine.Engine
                        Graphics.Urho3D.Graphics
                        Graphics.Urho3D.Graphics.Camera
+                       Graphics.Urho3D.Graphics.Defs
                        Graphics.Urho3D.Graphics.Graphics
                        Graphics.Urho3D.Graphics.Renderer
                        Graphics.Urho3D.Graphics.Texture
@@ -49,6 +50,7 @@ library
                        Graphics.Urho3D.Math.Rect
                        Graphics.Urho3D.Math.StringHash
                        Graphics.Urho3D.Math.Vector2 
+                       Graphics.Urho3D.Math.Vector3
                        Graphics.Urho3D.Monad
                        Graphics.Urho3D.Resource.Cache
                        Graphics.Urho3D.Resource.Image
@@ -70,6 +72,7 @@ library
                        Graphics.Urho3D.UI.LineEdit
                        Graphics.Urho3D.UI.Sprite
                        Graphics.Urho3D.UI.Text
+                       Graphics.Urho3D.UI.ToolTip
                        Graphics.Urho3D.UI.UI
                        Graphics.Urho3D.UI.Window
 
@@ -92,6 +95,7 @@ library
                        Graphics.Urho3D.Math.Internal.Rect
                        Graphics.Urho3D.Math.Internal.StringHash
                        Graphics.Urho3D.Math.Internal.Vector2 
+                       Graphics.Urho3D.Math.Internal.Vector3
                        Graphics.Urho3D.Resource.Internal.Cache
                        Graphics.Urho3D.Resource.Internal.Image
                        Graphics.Urho3D.Resource.Internal.Resource
@@ -109,6 +113,7 @@ library
                        Graphics.Urho3D.UI.Internal.LineEdit
                        Graphics.Urho3D.UI.Internal.Sprite
                        Graphics.Urho3D.UI.Internal.Text
+                       Graphics.Urho3D.UI.Internal.ToolTip
                        Graphics.Urho3D.UI.Internal.UI
                        Graphics.Urho3D.UI.Internal.Window
 
@@ -123,6 +128,7 @@ library
                        src/Graphics/Urho3D/Engine/DebugHud.cpp
                        src/Graphics/Urho3D/Engine/Engine.cpp
                        src/Graphics/Urho3D/Graphics/Camera.cpp
+                       src/Graphics/Urho3D/Graphics/Defs.cpp
                        src/Graphics/Urho3D/Graphics/Graphics.cpp
                        src/Graphics/Urho3D/Graphics/Renderer.cpp
                        src/Graphics/Urho3D/Graphics/Texture.cpp
@@ -134,6 +140,7 @@ library
                        src/Graphics/Urho3D/Math/Rect.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
                        src/Graphics/Urho3D/Math/Vector2.cpp
+                       src/Graphics/Urho3D/Math/Vector3.cpp
                        src/Graphics/Urho3D/Resource/Cache.cpp
                        src/Graphics/Urho3D/Resource/Image.cpp
                        src/Graphics/Urho3D/Resource/Resource.cpp
@@ -152,6 +159,7 @@ library
                        src/Graphics/Urho3D/UI/LineEdit.cpp
                        src/Graphics/Urho3D/UI/Sprite.cpp
                        src/Graphics/Urho3D/UI/Text.cpp
+                       src/Graphics/Urho3D/UI/ToolTip.cpp
                        src/Graphics/Urho3D/UI/UI.cpp
                        src/Graphics/Urho3D/UI/Window.cpp
                        

@@ -53,15 +53,6 @@ joysticPatch = [r|
 </patch>
 |]
 
-{- TODO:
-    /// The Window.
-    SharedPtr<Window> window_;
-    /// The UI's root UIElement.
-    SharedPtr<UIElement> uiRoot_;
-    /// Remembered drag begin position.
-    IntVector2 dragBeginPosition_;
--}
-
 main :: IO ()
 main = withObject () $ \cntx -> do 
   newSample cntx "HelloWorld" joysticPatch customStart >>= runSample
@@ -95,16 +86,16 @@ customStart sr = do
   -- Create and add some controls to the window
   initControls app window
 
-  -- Create a draggable Fish 
-  createDraggableFish
+  -- Create a draggable Fish
+  createDraggableFish app root
 
 -- | Create and initialize a Window control.
-initWindow :: SharedApplicationPtr -> Ptr UIElement -> IO SharedWindowPtr
+initWindow :: SharedApplicationPtr -> Ptr UIElement -> IO (Ptr Window)
 initWindow app root = do 
   cntx <- getContext app 
 
   -- Create the windwo and add it to the UI's root node
-  (window :: SharedWindowPtr) <- newSharedObject cntx 
+  (window :: Ptr Window) <- newObject cntx 
   uiElementAddChild root window
 
   -- Set Window size and layout settings
@@ -114,18 +105,18 @@ initWindow app root = do
   uiElementSetName window "Window"
 
   -- Create Window 'titleBar' container
-  (titleBar :: SharedUIElementPtr) <- newSharedObject cntx 
+  (titleBar :: Ptr UIElement) <- newObject cntx 
   uiElementSetMinSize titleBar $ IntVector2 0 24 
   uiElementSetVerticalAlignment titleBar AlignmentTop 
   uiElementSetLayoutMode titleBar LayoutHorizontal
 
   -- Create the Window title Text 
-  (windowTitle :: SharedTextPtr) <- newSharedObject cntx 
+  (windowTitle :: Ptr Text) <- newObject cntx 
   uiElementSetName windowTitle "WindowTitle"
   textSetText windowTitle "Hello GUI!"
 
   -- Create the Window's close button
-  (buttonClose :: SharedButtonPtr) <- newSharedObject cntx 
+  (buttonClose :: Ptr Button) <- newObject cntx 
   uiElementSetName buttonClose "CloseButton"
 
   -- Add the controls to the title bar 
@@ -148,21 +139,21 @@ initWindow app root = do
   return window
 
 -- | Create and add various common controls for demonstration purposes.
-initControls :: SharedApplicationPtr -> SharedWindowPtr -> IO ()
+initControls :: SharedApplicationPtr -> Ptr Window -> IO ()
 initControls app window = do 
   cntx <- getContext app 
 
   -- Create a CheckBox
-  (checkBox :: SharedCheckBoxPtr) <- newSharedObject cntx 
+  (checkBox :: Ptr CheckBox) <- newObject cntx 
   uiElementSetName checkBox "CheckBox"
 
   -- Create a Button
-  (button :: SharedButtonPtr) <- newSharedObject cntx 
+  (button :: Ptr Button) <- newObject cntx 
   uiElementSetName button "Button"
   uiElementSetMinHeight button 24
 
   -- Create a LineEdit
-  (lineEdit :: SharedLineEditPtr) <- newSharedObject cntx 
+  (lineEdit :: Ptr LineEdit) <- newObject cntx 
   uiElementSetName lineEdit "LineEdit"
   uiElementSetMinHeight lineEdit 24 
 
@@ -178,19 +169,54 @@ initControls app window = do
   return ()
 
 -- | Create a draggable fish button.
-createDraggableFish :: IO ()
-createDraggableFish = undefined
+createDraggableFish :: SharedApplicationPtr -> Ptr UIElement-> IO ()
+createDraggableFish app root = do
+  (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
+  (graphics :: Ptr Graphics) <- fromJustTrace "Graphics" <$> getSubsystem app 
+  cntx <- getContext app 
+
+  -- Create a draggable Fish button
+  (draggableFish :: Ptr Button) <- newObject cntx 
+  (tex :: Ptr Texture) <-fromJustTrace "UrhoDecal.dds" <$> cacheGetResource cache "Textures/UrhoDecal.dds" True
+  borderImageSetTexture draggableFish tex
+  borderImageSetBlendMode draggableFish BlendAdd 
+  uiElementSetSize draggableFish $ IntVector2 128 128
+  gwidth <- graphicsGetWidth graphics 
+  width <- uiElementGetWidth draggableFish
+  uiElementSetPosition draggableFish $ IntVector2 ((gwidth - width) `div` 2) 200
+  uiElementSetName draggableFish "Fish"
+  uiElementAddChild root draggableFish
+
+  -- Add a tooltip to Fish button
+  (toolTip :: Ptr ToolTip) <- newObject cntx 
+  uiElementAddChild draggableFish toolTip
+  uiElementSetPosition toolTip $ IntVector2 (width + 5) (width `div` 2)
+  
+  (textHolder :: Ptr BorderImage) <- newObject cntx 
+  uiElementAddChild toolTip textHolder
+  uiElementSetStyleDefault textHolder "ToolTipBorderImage"
+
+  (toolTipText :: Ptr Text) <- newObject cntx
+  uiElementAddChild textHolder toolTipText
+  uiElementSetStyleDefault toolTipText "ToolTipText"
+  textSetText toolTipText "Please drag me!"
+
+  -- Subscribe draggableFish to Drag Events (in order to make it draggable)
+  -- See "Event list" in documentation's Main Page for reference on available Events and their eventData
+  subscribeToEventSpecific app draggableFish handleDragBegin
+  subscribeToEventSpecific app draggableFish handleDragMove
+  subscribeToEventSpecific app draggableFish handleDragEnd
 
 -- | Handle drag begin for the fish button.
-handleDragBegin :: IO ()
+handleDragBegin :: EventDragBegin -> IO ()
 handleDragBegin = undefined
 
 -- | Handle drag move for the fish button.
-handleDragMove :: IO ()
+handleDragMove :: EventDragMove -> IO ()
 handleDragMove = undefined
 
 -- | Handle drag end for the fish button.
-handleDragEnd :: IO ()
+handleDragEnd :: EventDragEnd -> IO ()
 handleDragEnd =  undefined
 
 -- | Handle any UI control being clicked.

@@ -163,7 +163,7 @@ createLogo sr = do
       twidth <- textureWidth logoTexture
       theight <- textureHeight logoTexture
       spriteSetScale sprite $ 256 / fromIntegral twidth
-      uiElementSetSize sprite twidth theight
+      uiElementSetSize sprite $ IntVector2 twidth theight
       spriteSetHotSpot sprite 0 theight
       uiElementSetAlignment sprite AlignmentLeft AlignmentBottom 
       uiElementSetOpacity sprite 0.75

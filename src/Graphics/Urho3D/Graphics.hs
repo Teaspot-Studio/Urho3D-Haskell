@@ -3,6 +3,7 @@ module Graphics.Urho3D.Graphics(
   ) where 
 
 import Graphics.Urho3D.Graphics.Camera as X
+import Graphics.Urho3D.Graphics.Defs as X
 import Graphics.Urho3D.Graphics.Graphics as X
 import Graphics.Urho3D.Graphics.Renderer as X
 import Graphics.Urho3D.Graphics.Texture as X

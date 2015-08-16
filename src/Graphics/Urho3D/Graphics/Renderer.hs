@@ -7,8 +7,6 @@
 module Graphics.Urho3D.Graphics.Renderer(
     Renderer
   , rendererContext
-  , Quality(..)
-  , ShadowQuality(..)
   , rendererGetTextureQuality
   , rendererSetTextureQuality
   , rendererGetMaterialQuality
@@ -31,6 +29,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.Renderer
+import Graphics.Urho3D.Graphics.Defs
 import Graphics.Urho3D.Core.Object 
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -53,58 +52,12 @@ instance Parent Object Renderer where
 instance Subsystem Renderer where 
   getSubsystemImpl ptr = [C.exp| Renderer* { $(Object* ptr)->GetSubsystem<Renderer>() } |]
 
-class UrhoEnum a where 
-  enumToUrho :: a -> CInt 
-  enumFromUrho :: CInt -> a 
-
-data Quality = 
-    Quality'Low
-  | Quality'Medium
-  | Quality'High
-  | Quality'Max
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
-instance UrhoEnum Quality where 
-  enumToUrho q = case q of 
-    Quality'Low -> 0 
-    Quality'Medium -> 1 
-    Quality'High -> 2 
-    Quality'Max -> 15
-
-  enumFromUrho i = case i of 
-    0 -> Quality'Low 
-    1 -> Quality'Medium 
-    2 -> Quality'High
-    15 -> Quality'Max 
-    _ -> Quality'Low 
-
-data ShadowQuality = 
-    ShadowQuality'Low16Bit 
-  | ShadowQuality'Low24Bit
-  | ShadowQuality'High16Bit
-  | ShadowQuality'High24Bit
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
-instance UrhoEnum ShadowQuality where 
-  enumToUrho q = case q of 
-    ShadowQuality'Low16Bit -> 0
-    ShadowQuality'Low24Bit -> 1
-    ShadowQuality'High16Bit -> 2
-    ShadowQuality'High24Bit -> 3
-
-  enumFromUrho i = case i of 
-    0 -> ShadowQuality'Low16Bit
-    1 -> ShadowQuality'Low24Bit
-    2 -> ShadowQuality'High16Bit
-    3 -> ShadowQuality'High24Bit
-    _ -> ShadowQuality'Low16Bit
-
 -- | Return texture quality level.
 rendererGetTextureQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child
   -> m Quality
 rendererGetTextureQuality p = liftIO $ do 
   let ptr = parentPointer p 
-  enumFromUrho <$> [C.exp| int { $(Renderer* ptr)->GetTextureQuality() } |]
+  toEnum . fromIntegral <$> [C.exp| int { $(Renderer* ptr)->GetTextureQuality() } |]
 
 -- | Sets texture quality level
 rendererSetTextureQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child
@@ -112,7 +65,7 @@ rendererSetTextureQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p --
   -> m ()
 rendererSetTextureQuality p q = liftIO $ do 
   let ptr = parentPointer p 
-      e = enumToUrho q 
+      e = fromIntegral $ fromEnum q 
   [C.exp| void {$(Renderer* ptr)->SetTextureQuality($(int e))} |]
 
 -- | Return material quality level.
@@ -120,7 +73,7 @@ rendererGetMaterialQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -
   -> m Quality
 rendererGetMaterialQuality p = liftIO $ do 
   let ptr = parentPointer p 
-  enumFromUrho <$> [C.exp| int { $(Renderer* ptr)->GetMaterialQuality() } |]
+  toEnum . fromIntegral <$> [C.exp| int { $(Renderer* ptr)->GetMaterialQuality() } |]
 
 -- | Sets texture quality level
 rendererSetMaterialQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child
@@ -128,7 +81,7 @@ rendererSetMaterialQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -
   -> m ()
 rendererSetMaterialQuality p q = liftIO $ do 
   let ptr = parentPointer p 
-      e = enumToUrho q 
+      e = fromIntegral $ fromEnum q 
   [C.exp| void {$(Renderer* ptr)->SetMaterialQuality($(int e))} |]
 
 -- | Is specular lighting on?
@@ -184,7 +137,7 @@ rendererGetShadowQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- 
   -> m ShadowQuality
 rendererGetShadowQuality p = liftIO $ do 
   let ptr = parentPointer p 
-  enumFromUrho <$> [C.exp| int { $(Renderer* ptr)->GetShadowQuality() } |]
+  toEnum . fromIntegral <$> [C.exp| int { $(Renderer* ptr)->GetShadowQuality() } |]
 
 -- | Sets shadow quality level
 rendererSetShadowQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child
@@ -192,7 +145,7 @@ rendererSetShadowQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- 
   -> m ()
 rendererSetShadowQuality p q = liftIO $ do 
   let ptr = parentPointer p 
-      e = enumToUrho q 
+      e = fromIntegral $ fromEnum q 
   [C.exp| void {$(Renderer* ptr)->SetShadowQuality($(int e))} |]
 
 -- | Returns maximum number of triangles that occluder lefts on scene
@@ -216,7 +169,7 @@ rendererGetDynamicInstancing :: (Parent Renderer a, Pointer p a, MonadIO m) => p
   -> m Bool
 rendererGetDynamicInstancing p = liftIO $ do 
   let ptr = parentPointer p 
-  (/= 0) <$> [C.exp| int {$(Renderer* ptr)->GetDynamicInstancing()}|]
+  toBool <$> [C.exp| int {$(Renderer* ptr)->GetDynamicInstancing()}|]
 
 -- | Switches on/off dynamic instancing
 rendererSetDynamicInstancing :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child
@@ -224,5 +177,5 @@ rendererSetDynamicInstancing :: (Parent Renderer a, Pointer p a, MonadIO m) => p
   -> m ()
 rendererSetDynamicInstancing p flag = liftIO $ do 
   let ptr = parentPointer p 
-      flag' = if flag then 1 else 0
+      flag' = fromBool flag
   [C.exp| void {$(Renderer* ptr)->SetDynamicInstancing($(int flag') != 0)}|]

@@ -12,5 +12,6 @@ import Graphics.Urho3D.UI.Font as X
 import Graphics.Urho3D.UI.LineEdit as X
 import Graphics.Urho3D.UI.Sprite as X
 import Graphics.Urho3D.UI.Text as X
+import Graphics.Urho3D.UI.ToolTip as X
 import Graphics.Urho3D.UI.UI as X
 import Graphics.Urho3D.UI.Window as X

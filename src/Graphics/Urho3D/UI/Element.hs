@@ -16,6 +16,7 @@ module Graphics.Urho3D.UI.Element(
   , createChild
   , createChildSimple
   , uiElementSetSize
+  , uiElementSetSize'
   , uiElementSetPosition
   , HorizontalAlignment(..)
   , VerticalAlignment(..)
@@ -40,6 +41,10 @@ module Graphics.Urho3D.UI.Element(
   , uiElementSetLayoutSpacing
   , uiElementSetLayoutBorder
   , uiElementSetLayoutFlexScale
+  , uiElementGetSize
+  , uiElementGetWidth
+  , uiElementGetHeight
+  , uiElementGetPosition
   ) where
 
 import qualified Language.C.Inline as C 
@@ -121,10 +126,18 @@ createChildSimple ptr = createChild ptr "" (fromIntegral (maxBound :: Word32))
 
 -- | Changes physical size of element
 uiElementSetSize :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
+  -> IntVector2 -- ^ Size vector
+  -> m ()
+uiElementSetSize ptr v = liftIO $ with v $ \v' -> do 
+  let ptr' = parentPointer ptr 
+  [C.exp| void { $(UIElement* ptr')->SetSize(*$(IntVector2* v')) } |]
+
+-- | Changes physical size of element
+uiElementSetSize' :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
   -> Int -- ^ Width
   -> Int -- ^ Height
   -> m ()
-uiElementSetSize ptr width height = liftIO $ do 
+uiElementSetSize' ptr width height = liftIO $ do 
   let ptr' = parentPointer ptr 
       width' = fromIntegral width 
       height' = fromIntegral height
@@ -351,3 +364,35 @@ uiElementSetLayoutFlexScale :: (Parent UIElement a, Pointer p a, MonadIO m)
 uiElementSetLayoutFlexScale p scale = liftIO $ with scale $ \scale' -> do 
   let ptr = parentPointer p 
   [C.exp| void { $(UIElement* ptr)->SetLayoutFlexScale(*$(Vector2* scale')) } |]
+
+-- | Return size
+uiElementGetSize :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> m IntVector2
+uiElementGetSize p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| const IntVector2* { &$(UIElement* ptr)->GetSize() } |]
+
+-- | Return width
+uiElementGetWidth :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> m Int
+uiElementGetWidth p = liftIO $ do 
+  let ptr = parentPointer p 
+  fromIntegral <$> [C.exp| int { $(UIElement* ptr)->GetWidth() } |]
+
+-- | Return height
+uiElementGetHeight :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> m Int
+uiElementGetHeight p = liftIO $ do 
+  let ptr = parentPointer p 
+  fromIntegral <$> [C.exp| int { $(UIElement* ptr)->GetHeight() } |]
+
+-- | Return position
+uiElementGetPosition :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> m IntVector2
+uiElementGetPosition p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| const IntVector2* { &$(UIElement* ptr)->GetPosition() } |]
