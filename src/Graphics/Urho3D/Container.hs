@@ -4,3 +4,4 @@ module Graphics.Urho3D.Container(
 
 import Graphics.Urho3D.Container.HashMap as X
 import Graphics.Urho3D.Container.Ptr as X
+import Graphics.Urho3D.Container.Str as X

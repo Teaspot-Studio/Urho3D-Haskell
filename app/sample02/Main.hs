@@ -146,7 +146,7 @@ initWindow app root = do
   -- Subscride also to all UI mouse clicks just to see where we have clicked
   subscribeToEvent app handleControlClicked
   return window
-  
+
 -- | Create and add various common controls for demonstration purposes.
 initControls :: SharedApplicationPtr -> SharedWindowPtr -> IO ()
 initControls app window = do 

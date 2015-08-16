@@ -21,6 +21,7 @@ library
                        Graphics.Urho3D.Container
                        Graphics.Urho3D.Container.HashMap
                        Graphics.Urho3D.Container.Ptr
+                       Graphics.Urho3D.Container.Str
                        Graphics.Urho3D.Core
                        Graphics.Urho3D.Core.Context
                        Graphics.Urho3D.Core.Events
@@ -72,7 +73,8 @@ library
                        Graphics.Urho3D.UI.UI
                        Graphics.Urho3D.UI.Window
 
-  other-modules:       Graphics.Urho3D.Core.Internal.Context
+  other-modules:       Graphics.Urho3D.Container.Internal.Str
+                       Graphics.Urho3D.Core.Internal.Context
                        Graphics.Urho3D.Core.Internal.Object
                        Graphics.Urho3D.Core.Internal.Variant
                        Graphics.Urho3D.Engine.Internal.Application
@@ -110,7 +112,8 @@ library
                        Graphics.Urho3D.UI.Internal.UI
                        Graphics.Urho3D.UI.Internal.Window
 
-  c-sources:           src/Graphics/Urho3D/Core/Context.cpp
+  c-sources:           src/Graphics/Urho3D/Container/Str.cpp
+                       src/Graphics/Urho3D/Core/Context.cpp
                        src/Graphics/Urho3D/Core/Events.cpp
                        src/Graphics/Urho3D/Core/Object.cpp
                        src/Graphics/Urho3D/Core/ProcessUtils.cpp

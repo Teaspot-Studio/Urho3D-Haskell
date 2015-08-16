@@ -93,7 +93,7 @@ sampleStart :: SampleRef -> IO ()
 sampleStart sr = do 
   s <- readIORef sr
   let app = s^.sampleApplication
-
+  
   if platform == "Android" || platform == "iOS" 
   then initTouchInput sr
   else do 

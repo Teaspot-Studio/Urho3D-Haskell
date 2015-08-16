@@ -22,6 +22,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 import qualified Data.Text as T 
 
+import Graphics.Urho3D.Container.Str
 import Graphics.Urho3D.Core.Internal.Variant
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Createable
@@ -34,7 +35,7 @@ import Foreign
 import Foreign.C.String 
 import Control.DeepSeq
 
-C.context (C.cppCtx <> variantCntx <> variantMapCntx <> stringHashContext <> contextContext)
+C.context (C.cppCtx <> variantCntx <> variantMapCntx <> stringHashContext <> contextContext <> stringContext)
 C.include "<Urho3D/Core/Variant.h>"
 C.using "namespace Urho3D"
 
@@ -79,7 +80,7 @@ instance VariantStorable String where
     t <- variantType ptr 
     case t of 
       VariantString -> do 
-       str <- peekCString =<< [C.exp| const char* { $(Variant* ptr)->GetString().CString() } |]
+       str <- loadUrhoString =<< [C.exp| String* { new String($(Variant* ptr)->GetString()) } |]
        return $ Just str
       _ -> return Nothing
 
@@ -90,7 +91,7 @@ instance VariantStorable T.Text where
     t <- variantType ptr 
     case t of 
       VariantString -> do 
-       str <- textFromPtrW32 =<< [C.exp| const wchar_t* { WString($(Variant* ptr)->GetString()).CString() } |]
+       str <- loadUrhoText =<< [C.exp| String* { new String($(Variant* ptr)->GetString()) } |]
        return $ Just str
       _ -> return Nothing
 

@@ -6,13 +6,14 @@ module Graphics.Urho3D.Core.ProcessUtils(
 
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
+import Graphics.Urho3D.Container.Str
 import System.IO.Unsafe (unsafePerformIO)
-import Foreign.C.String 
+import Data.Monoid
 
-C.context (C.cppCtx)
+C.context (C.cppCtx <> stringContext)
 C.include "<Urho3D/Core/ProcessUtils.h>"
 C.using "namespace Urho3D"
 
 -- | Returns current platform
 platform :: String
-platform = unsafePerformIO $ peekCString =<< [C.exp| const char* { GetPlatform().CString() } |]
+platform = unsafePerformIO $ loadUrhoString =<< [C.exp| String* { new String(GetPlatform()) } |]
