@@ -9,6 +9,8 @@ module Graphics.Urho3D.Container.Str(
   , stringContext
   , loadUrhoString
   , loadUrhoText
+  , loadConstUrhoString
+  , loadConstUrhoText
   ) where 
 
 import qualified Language.C.Inline as C
@@ -44,11 +46,19 @@ instance Createable (Ptr UrhoWString) where
 
 -- | Loads given Urho3D::String into Haskell Stirng AND deletes the Urho string after creation
 loadUrhoString :: (MonadMask m, MonadIO m) => Ptr UrhoString -> m String 
-loadUrhoString ptr = bracket (return ptr) deleteObject $ \str -> liftIO $ peekCString =<< [C.exp| const char* { $(String* str)->CString() } |]
+loadUrhoString ptr = bracket (return ptr) deleteObject loadConstUrhoString
+
+-- | Loads given Urho3D::String into Haskell Stirng WITHOUT deletion of source Urho string
+loadConstUrhoString :: MonadIO m => Ptr UrhoString -> m String 
+loadConstUrhoString ptr = liftIO $ peekCString =<< [C.exp| const char* { $(String* ptr)->CString() } |]
 
 -- | Loads given Urho3D::String into Haskell Text AND deletes the Urho string after creation
 loadUrhoText :: (MonadMask m, MonadIO m) => Ptr UrhoString -> m T.Text 
 loadUrhoText ptr = bracket 
   (liftIO [C.exp| WString* { new WString(*$(String* ptr)) } |])
   (\wstr -> deleteObject wstr >> deleteObject ptr)
-  $ \wstr -> liftIO $ textFromPtrW32 =<< [C.exp| const wchar_t* { $(WString* wstr)->CString() } |]
+  loadConstUrhoText
+
+-- | Loads given Urho3D::String into Haskell Text WITHOUT deletion of source Urho string
+loadConstUrhoText :: MonadIO m => Ptr UrhoWString -> m T.Text  
+loadConstUrhoText wstr = liftIO $ textFromPtrW32 =<< [C.exp| const wchar_t* { $(WString* wstr)->CString() } |]

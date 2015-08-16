@@ -13,6 +13,18 @@ build-type:          Simple
 -- extra-source-files:  
 cabal-version:       >=1.10
 
+flag Urho3DOpenGL 
+  description: binding to Urho3D engine with OpenGL renderer
+  default: True
+
+flag Urho3DD3D9
+  description: binding to Urho3D engine with Direct3D9 renderer
+  default: False
+
+flag Urho3DD3D11
+  description: binding to Urho3D engine with Direct3D11 renderer
+  default: False
+
 library
   hs-source-dirs:      src
   include-dirs:        src
@@ -46,6 +58,7 @@ library
                        Graphics.Urho3D.Input.Input
                        Graphics.Urho3D.IO
                        Graphics.Urho3D.IO.FileSystem
+                       Graphics.Urho3D.Math.Color
                        Graphics.Urho3D.Math.Quaternion
                        Graphics.Urho3D.Math.Rect
                        Graphics.Urho3D.Math.StringHash
@@ -91,6 +104,7 @@ library
                        Graphics.Urho3D.Graphics.Internal.Texture2D
                        Graphics.Urho3D.Input.Internal.Input
                        Graphics.Urho3D.IO.Internal.FileSystem
+                       Graphics.Urho3D.Math.Internal.Color
                        Graphics.Urho3D.Math.Internal.Quaternion
                        Graphics.Urho3D.Math.Internal.Rect
                        Graphics.Urho3D.Math.Internal.StringHash
@@ -136,6 +150,7 @@ library
                        src/Graphics/Urho3D/Input/Events.cpp
                        src/Graphics/Urho3D/Input/Input.cpp
                        src/Graphics/Urho3D/IO/FileSystem.cpp
+                       src/Graphics/Urho3D/Math/Color.cpp
                        src/Graphics/Urho3D/Math/Quaternion.cpp
                        src/Graphics/Urho3D/Math/Rect.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
@@ -183,9 +198,12 @@ library
                       , unordered-containers
 
   default-language:    Haskell2010
-  ghc-options:         -Wall -Werror -fPIC
-  cc-options:          -m64
+  ghc-options:         -Wall -Werror 
   extra-libraries:     Urho3D, stdc++, SDL
+  if flag(Urho3DOpenGL)
+    cc-options: -DURHO3D_OPENGL
+  elseif flag(Urho3DD3D11)
+    cc-options: -DURHO3D_D3D11
 
 executable urho3d-haskell-sample01
   hs-source-dirs:      app/sample01, app/common
@@ -218,6 +236,7 @@ executable urho3d-haskell-sample02
                      , thyme
                      , old-locale
                      , raw-strings-qq
+                     , text
 
   default-language:    Haskell2010
 

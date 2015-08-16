@@ -7,37 +7,44 @@
 module Graphics.Urho3D.Graphics.Texture(
     Texture
   , textureContext
+  , textureLevels
   , textureWidth
   , textureHeight
+  , textureDepth
   ) where
 
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.Texture
-import Graphics.Urho3D.Resource.Resource
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Data.Monoid
-import System.IO.Unsafe (unsafePerformIO)
 
 C.context (C.cppCtx <> textureCntx <> stringHashContext)
 C.include "<Urho3D/Graphics/Texture.h>"
+C.include "<iostream>"
 C.using "namespace Urho3D"
 
 textureContext :: C.Context 
 textureContext = textureCntx
 
-instance ResourceType Texture where 
-  resourceType _ = unsafePerformIO $ [C.block| StringHash* { 
-    static StringHash h = Texture::GetTypeStatic(); 
-    return &h; 
-    } |]
+textureLevels :: (Parent Texture a, Pointer p a, MonadIO m) => p -> m Int 
+textureLevels ptr = liftIO $ do 
+  let ptr' = parentPointer ptr
+  fromIntegral <$> [C.exp| int { $(Texture* ptr')->GetLevels() } |]
 
-textureWidth, textureHeight :: (Parent Texture a, Pointer p a, MonadIO m) => p -> m Int 
+textureWidth :: (Parent Texture a, Pointer p a, MonadIO m) => p -> m Int 
 textureWidth ptr = liftIO $ do 
   let ptr' = parentPointer ptr
   fromIntegral <$> [C.exp| int { $(Texture* ptr')->GetWidth() } |]
+
+textureHeight :: (Parent Texture a, Pointer p a, MonadIO m) => p -> m Int 
 textureHeight ptr = liftIO $ do 
   let ptr' = parentPointer ptr
   fromIntegral <$> [C.exp| int { $(Texture* ptr')->GetHeight() } |]
+
+textureDepth :: (Parent Texture a, Pointer p a, MonadIO m) => p -> m Int 
+textureDepth ptr = liftIO $ do 
+  let ptr' = parentPointer ptr
+  fromIntegral <$> [C.exp| int { $(Texture* ptr')->GetDepth() } |]

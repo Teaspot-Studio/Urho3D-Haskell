@@ -19,6 +19,7 @@ import Graphics.Urho3D.Math.Internal.Vector2
 import Data.Monoid
 import Foreign 
 import Text.RawString.QQ
+import Control.Lens 
 
 C.context (C.cppCtx <> vector2Cntx)
 C.include "<Urho3D/Math/Vector2.h>"
@@ -71,3 +72,19 @@ instance Storable IntVector2 where
     where
     vx' = fromIntegral vx 
     vy' = fromIntegral vy 
+
+instance Num Vector2 where 
+  a + b = Vector2 (a^.x + b^.x) (a^.y + b^.y)
+  a - b = Vector2 (a^.x - b^.x) (a^.y - b^.y)
+  a * b = Vector2 (a^.x * b^.x) (a^.y * b^.y)
+  abs a = Vector2 (abs $ a^.x) (abs $ a^.y)
+  signum a = Vector2 (signum $ a^.x) (signum $ a^.y)
+  fromInteger i = Vector2 (fromIntegral i) (fromIntegral i)
+
+instance Num IntVector2 where 
+  a + b = IntVector2 (a^.x + b^.x) (a^.y + b^.y)
+  a - b = IntVector2 (a^.x - b^.x) (a^.y - b^.y)
+  a * b = IntVector2 (a^.x * b^.x) (a^.y * b^.y)
+  abs a = IntVector2 (abs $ a^.x) (abs $ a^.y)
+  signum a = IntVector2 (signum $ a^.x) (signum $ a^.y)
+  fromInteger i = IntVector2 (fromIntegral i) (fromIntegral i)

@@ -19,6 +19,7 @@ import Graphics.Urho3D.Math.Internal.Vector3
 import Data.Monoid
 import Foreign 
 import Text.RawString.QQ
+import Control.Lens 
 
 C.context (C.cppCtx <> vector3Cntx)
 C.include "<Urho3D/Math/Vector3.h>"
@@ -59,3 +60,11 @@ instance Storable Vector3 where
     vx' = realToFrac vx 
     vy' = realToFrac vy 
     vz' = realToFrac vz
+
+instance Num Vector3 where 
+  a + b = Vector3 (a^.x + b^.x) (a^.y + b^.y) (a^.z + b^.z)
+  a - b = Vector3 (a^.x - b^.x) (a^.y - b^.y) (a^.z - b^.z)
+  a * b = Vector3 (a^.x * b^.x) (a^.y * b^.y) (a^.z * b^.z)
+  abs a = Vector3 (abs $ a^.x) (abs $ a^.y) (abs $ a^.z)
+  signum a = Vector3 (signum $ a^.x) (signum $ a^.y) (signum $ a^.z)
+  fromInteger i = Vector3 (fromIntegral i) (fromIntegral i) (fromIntegral i)

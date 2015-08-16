@@ -7,9 +7,14 @@
 module Graphics.Urho3D.Math.Rect(
     Rect(..)
   , IntRect(..)
+  , rectContext
+  -- | Lens API
   , HasMinPoint(..)
   , HasMaxPoint(..)
-  , rectContext
+  , HasLeft(..)
+  , HasTop(..)
+  , HasRight(..)
+  , HasBottom(..)
   ) where
 
 import qualified Language.C.Inline as C 
@@ -20,6 +25,7 @@ import Graphics.Urho3D.Math.Vector2
 import Data.Monoid
 import Foreign 
 import Text.RawString.QQ
+import Control.Lens 
 
 C.context (C.cppCtx <> rectCntx <> vector2Context)
 C.include "<Urho3D/Math/Rect.h>"
@@ -75,3 +81,19 @@ instance Storable IntRect where
       vtop' = fromIntegral vtop 
       vright' = fromIntegral vright 
       vbottom' = fromIntegral vbottom
+
+instance Num Rect where 
+  a + b = Rect (a^.minPoint + b^.minPoint) (a^.maxPoint + b^.maxPoint)
+  a - b = Rect (a^.minPoint - b^.minPoint) (a^.maxPoint - b^.maxPoint)
+  a * b = Rect (a^.minPoint * b^.minPoint) (a^.maxPoint * b^.maxPoint)
+  abs a = Rect (abs $ a^.minPoint) (abs $ a^.maxPoint)
+  signum a = Rect (signum $ a^.minPoint) (signum $ a^.maxPoint)
+  fromInteger i = Rect (fromIntegral i) (fromIntegral i)
+
+instance Num IntRect where 
+  a + b = IntRect (a^.left + b^.left) (a^.top + b^.top) (a^.right + b^.right) (a^.bottom + b^.bottom)
+  a - b = IntRect (a^.left - b^.left) (a^.top - b^.top) (a^.right - b^.right) (a^.bottom + b^.bottom)
+  a * b = IntRect (a^.left * b^.left) (a^.top * b^.top) (a^.right * b^.right) (a^.bottom + b^.bottom)
+  abs a = IntRect (abs $ a^.left) (abs $ a^.top) (abs $ a^.right) (abs $ a^.bottom)
+  signum a = IntRect (signum $ a^.left) (signum $ a^.top) (signum $ a^.right) (signum $ a^.bottom)
+  fromInteger i = IntRect (fromIntegral i) (fromIntegral i) (fromIntegral i) (fromIntegral i)

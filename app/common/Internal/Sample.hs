@@ -16,7 +16,7 @@ data Sample = Sample {
 , _sampleScreenJoystickIndex :: Int32
 , _sampleScreenSettingsIndex :: Int32
 , _samplePaused :: Bool
-, _sampleLogo :: SharedSpritePtr
+, _sampleLogo :: Ptr Sprite
 , _sampleScene :: SharedScenePtr
 , _sampleCameraNode :: SharedNodePtr
 , _sampleJoystickPatch :: String 

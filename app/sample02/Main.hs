@@ -35,13 +35,15 @@ For more advanced users (beginners can skip this section):
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Text.RawString.QQ
-import Control.Lens hiding (Context)
+import qualified Data.Text as T
+import Control.Lens hiding (Context, element)
+import Control.Monad 
 import Data.IORef
+import Data.Monoid
 import Foreign
-
 import Graphics.Urho3D
 import Sample
+import Text.RawString.QQ
 
 -- | Return XML patch instructions for screen joystick layout for a specific sample app, if any.
 joysticPatch :: String 
@@ -132,10 +134,10 @@ initWindow app root = do
   uiElementSetStyleDefault buttonClose "CloseButton"
 
   -- Subscride to buttonClose release (following a 'press') events
-  subscribeToEventSpecific app buttonClose handleClosePressed
+  subscribeToEventSpecific app buttonClose $ handleClosePressed app
 
   -- Subscride also to all UI mouse clicks just to see where we have clicked
-  subscribeToEvent app handleControlClicked
+  subscribeToEvent app $ handleControlClicked window
   return window
 
 -- | Create and add various common controls for demonstration purposes.
@@ -177,7 +179,7 @@ createDraggableFish app root = do
 
   -- Create a draggable Fish button
   (draggableFish :: Ptr Button) <- newObject cntx 
-  (tex :: Ptr Texture) <-fromJustTrace "UrhoDecal.dds" <$> cacheGetResource cache "Textures/UrhoDecal.dds" True
+  (tex :: Ptr Texture2D) <- fromJustTrace "UrhoDecal.dds" <$> cacheGetResource cache "Textures/UrhoDecal.dds" True
   borderImageSetTexture draggableFish tex
   borderImageSetBlendMode draggableFish BlendAdd 
   uiElementSetSize draggableFish $ IntVector2 128 128
@@ -203,27 +205,45 @@ createDraggableFish app root = do
 
   -- Subscribe draggableFish to Drag Events (in order to make it draggable)
   -- See "Event list" in documentation's Main Page for reference on available Events and their eventData
-  subscribeToEventSpecific app draggableFish handleDragBegin
-  subscribeToEventSpecific app draggableFish handleDragMove
+  dragBeginPosRef <- newIORef 0
+  subscribeToEventSpecific app draggableFish $ handleDragBegin dragBeginPosRef
+  subscribeToEventSpecific app draggableFish $ handleDragMove dragBeginPosRef
   subscribeToEventSpecific app draggableFish handleDragEnd
 
 -- | Handle drag begin for the fish button.
-handleDragBegin :: EventDragBegin -> IO ()
-handleDragBegin = undefined
+handleDragBegin :: IORef IntVector2 -> EventDragBegin -> IO ()
+handleDragBegin dragBeginPosRef e = do
+  -- Get UIElement relative position where input (touch or click) occured (top-left = IntVector2(0,0))
+  writeIORef dragBeginPosRef $ IntVector2 (e^.elementX) (e^.elementY)
 
 -- | Handle drag move for the fish button.
-handleDragMove :: EventDragMove -> IO ()
-handleDragMove = undefined
+handleDragMove :: IORef IntVector2 -> EventDragMove -> IO ()
+handleDragMove dragBeginPosRef e = do
+  dragBeginPosition <- readIORef dragBeginPosRef
+  let dragCurrentPosition = IntVector2 (e^.x) (e^.y)
+  uiElementSetPosition (e^.element) (dragCurrentPosition - dragBeginPosition)
 
 -- | Handle drag end for the fish button.
 handleDragEnd :: EventDragEnd -> IO ()
-handleDragEnd =  undefined
-
--- | Handle any UI control being clicked.
-handleControlClicked :: EventUIMouseClick -> IO ()
-handleControlClicked = undefined
+handleDragEnd _ = return ()
 
 -- | Handle close button pressed and released.
-handleClosePressed :: EventReleased -> IO ()
-handleClosePressed = undefined
+handleClosePressed :: SharedApplicationPtr -> EventReleased -> IO ()
+handleClosePressed app _ = do 
+  engine <- applicationEngine app 
+  engineExit engine
 
+-- | Handle any UI control being clicked.
+handleControlClicked :: Ptr Window -> EventUIMouseClick -> IO ()
+handleControlClicked window e = do 
+  -- Get the Text control acting as the Window's title
+  (windowTitle :: Ptr Text) <- fromJustTrace "WindowTitle" <$> uiElementGetChild window "WindowTitle" True 
+  
+  -- Get control that was clicked
+  let clicked = e^.element 
+
+  -- Get the name of the control that was clicked
+  name <- maybeNull (return "...?") uiElementGetName clicked 
+
+  -- Update the Window's title text
+  textSetText windowTitle $ "Hello " <> T.pack name <> "!"

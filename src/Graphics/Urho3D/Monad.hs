@@ -15,6 +15,7 @@ module Graphics.Urho3D.Monad(
   , Pointer(..)
   , whenJust
   , whenM
+  , maybeNull
   , module X
   , parentPointer
   , mkParentPointer
@@ -137,3 +138,9 @@ textAsPtrW32 t = unsafeUseAsCString (encodeUtf32LE $ t `T.snoc` '\0') . (. castP
 -- | Converts text from UTF32 
 textFromPtrW32 :: Ptr CWchar -> IO T.Text 
 textFromPtrW32 ptr = decodeUtf32LE <$> unsafePackCString (castPtr ptr)
+
+-- | Same as @Prelude.maybe@, but operates with pointer
+maybeNull :: Pointer p a => b -> (p -> b) -> p -> b 
+maybeNull b f ptr
+  | isNull ptr = b 
+  | otherwise = f ptr

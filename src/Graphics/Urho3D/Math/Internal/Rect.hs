@@ -9,6 +9,10 @@ module Graphics.Urho3D.Math.Internal.Rect(
   , rectCntx
   , HasMinPoint(..)
   , HasMaxPoint(..)
+  , HasLeft(..)
+  , HasTop(..)
+  , HasRight(..)
+  , HasBottom(..)
   ) where
 
 import qualified Language.C.Inline as C
@@ -21,7 +25,7 @@ import Control.Lens
 data Rect = Rect {
   _rectMinPoint :: Vector2 
 , _rectMaxPoint :: Vector2  
-}
+} deriving (Eq, Show)
 makeFields ''Rect
 
 data IntRect = IntRect {
@@ -29,7 +33,7 @@ data IntRect = IntRect {
 , _intRectTop :: Int 
 , _intRectRight :: Int 
 , _intRectBottom :: Int
-}
+} deriving (Eq, Show)
 makeFields ''IntRect
 
 rectCntx :: C.Context 

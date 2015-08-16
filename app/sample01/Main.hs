@@ -90,6 +90,7 @@ createText app = do
   -- Set font and text color
   (font :: Ptr Font) <- fromJustTrace "Cannot load Fonts/Anonymous Pro.ttf!" <$> cacheGetResource cache "Fonts/Anonymous Pro.ttf" True
   textSetFont helloText font 30
+  uiElementSetColor helloText $ rgb 0 1 0
 
   -- Align Text center-screen
   uiElementSetAlignment helloText AlignmentHorizontalCenter AlignmentVerticalCenter

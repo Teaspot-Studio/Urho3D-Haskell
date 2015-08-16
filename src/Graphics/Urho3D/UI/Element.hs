@@ -35,6 +35,9 @@ module Graphics.Urho3D.UI.Element(
   , uiElementSetStyleAutoDefault
   , uiElementSetStyle
   , uiElementSetStyleDefault
+  , Corner(..)
+  , uiElementSetColor
+  , uiElementSetCornerColor
   , LayoutMode(..)
   , uiElementSetLayout
   , uiElementSetLayoutMode
@@ -45,6 +48,9 @@ module Graphics.Urho3D.UI.Element(
   , uiElementGetWidth
   , uiElementGetHeight
   , uiElementGetPosition
+  , uiElementGetChild
+  , uiElementGetName
+  , uiElementGetColor
   ) where
 
 import qualified Language.C.Inline as C 
@@ -53,6 +59,8 @@ import qualified Language.C.Inline.Cpp as C
 import Graphics.Urho3D.UI.Internal.Element
 import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Container.Str
+import Graphics.Urho3D.Math.Color
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector2
 import Graphics.Urho3D.Math.Rect
@@ -64,7 +72,7 @@ import Foreign
 import Foreign.C.String 
 import Data.Proxy 
 
-C.context (C.cppCtx <> sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context <> rectContext <> contextContext <> xmlFileContext)
+C.context (C.cppCtx <> sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context <> rectContext <> contextContext <> xmlFileContext <> stringContext <> colorContext)
 C.include "<Urho3D/UI/UIElement.h>"
 C.using "namespace Urho3D"
 
@@ -122,7 +130,7 @@ createChild ptr name index = do
 
 createChildSimple :: (Parent UIElement a, Pointer p a, MonadIO m, UIElem e) => p -- ^ Pointer to UI element
   -> m (Ptr e) 
-createChildSimple ptr = createChild ptr "" (fromIntegral (maxBound :: Word32))
+createChildSimple ptr = createChild ptr "" (fromIntegral [C.pure| unsigned int { M_MAX_UNSIGNED } |])
 
 -- | Changes physical size of element
 uiElementSetSize :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
@@ -365,6 +373,34 @@ uiElementSetLayoutFlexScale p scale = liftIO $ with scale $ \scale' -> do
   let ptr = parentPointer p 
   [C.exp| void { $(UIElement* ptr)->SetLayoutFlexScale(*$(Vector2* scale')) } |]
 
+-- | Set color on all corners.
+uiElementSetColor :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> Color -- ^ color for all corners
+  -> m ()
+uiElementSetColor p color = liftIO $ with color $ \color' -> do 
+  let ptr = parentPointer p 
+  [C.exp| void { $(UIElement* ptr)->SetColor(*$(Color* color')) } |]
+
+-- | Element corners.
+data Corner = 
+    CornerTopLeft
+  | CornerTopRight
+  | CornerBottomLeft
+  | CornerBottomRight
+  deriving (Eq, Ord, Show, Enum, Bounded)
+
+-- | Set color on all corners.
+uiElementSetCornerColor :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> Corner -- ^ Which corner to modify
+  -> Color -- ^ color for all corners
+  -> m ()
+uiElementSetCornerColor p corner color = liftIO $ with color $ \color' -> do 
+  let ptr = parentPointer p 
+      corner' = fromIntegral $ fromEnum corner 
+  [C.exp| void { $(UIElement* ptr)->SetColor((Corner)$(int corner'), *$(Color* color')) } |]
+
 -- | Return size
 uiElementGetSize :: (Parent UIElement a, Pointer p a, MonadIO m) 
   => p -- ^ Pointer to UI element
@@ -396,3 +432,32 @@ uiElementGetPosition :: (Parent UIElement a, Pointer p a, MonadIO m)
 uiElementGetPosition p = liftIO $ do 
   let ptr = parentPointer p 
   peek =<< [C.exp| const IntVector2* { &$(UIElement* ptr)->GetPosition() } |]
+
+-- | Return child element by name.
+uiElementGetChild :: (Parent UIElement a, Pointer p a, Parent UIElement e, UIElem e, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> String -- ^ Name of element
+  -> Bool -- ^ Recursive search?
+  -> m (Maybe (Ptr e))
+uiElementGetChild p name recursive = liftIO $ withCString name $ \name' -> do 
+  let ptr = parentPointer p 
+      recursive' = fromBool recursive
+  castToChild <$> [C.exp| UIElement* { $(UIElement* ptr)->GetChild(String($(const char* name')), $(int recursive') != 0) } |]
+
+-- | Return name
+uiElementGetName :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> m String
+uiElementGetName p = liftIO $ do 
+  let ptr = parentPointer p 
+  loadConstUrhoString =<< [C.exp| const String* { &$(UIElement* ptr)->GetName() } |]
+
+-- | Retrusn corner color
+uiElementGetColor :: (Parent UIElement a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to UI element
+  -> Corner -- ^ Which corner color to get
+  -> m Color
+uiElementGetColor p corner = liftIO $ do 
+  let ptr = parentPointer p 
+      corner' = fromIntegral $ fromEnum corner
+  peek =<< [C.exp| const Color* { &$(UIElement* ptr)->GetColor((Corner)$(int corner')) } |]

@@ -156,17 +156,24 @@ createLogo sr = do
     Nothing -> return ()
     Just (logoTexture :: Ptr Texture2D) -> do 
       (ui :: Ptr UI) <- fromJustTrace "createLogo:UI" <$> getSubsystem app
-      sprite <- newObject =<< createChildSimple =<< uiRoot ui 
+      sprite <- createChildSimple =<< uiRoot ui 
       liftIO $ modifyIORef' sr $ set sampleLogo sprite
 
+      -- Set logo sprite texture
       spriteSetTexture sprite logoTexture
       twidth <- textureWidth logoTexture
       theight <- textureHeight logoTexture
+      -- Set logo sprite scale
       spriteSetScale sprite $ 256 / fromIntegral twidth
+      -- Set logo sprite size
       uiElementSetSize sprite $ IntVector2 twidth theight
+      -- Set logo sprite hot spot
       spriteSetHotSpot sprite 0 theight
+      -- Set logo sprite alignment
       uiElementSetAlignment sprite AlignmentLeft AlignmentBottom 
+      -- Make logo not fully opaque to show the scene underneath
       uiElementSetOpacity sprite 0.75
+      -- Set a low priority for the logo so that other UI elements can be drawn on top
       uiElementSetPriority sprite (-100)
 
 setWindowTitleAndIcon :: SampleRef -> IO ()

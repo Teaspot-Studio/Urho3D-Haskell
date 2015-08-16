@@ -20,13 +20,13 @@ import Control.Lens
 data Vector2 = Vector2 {
   _vector2X :: Float 
 , _vector2Y :: Float  
-}
+} deriving (Eq, Show)
 makeFields ''Vector2
 
 data IntVector2 = IntVector2 {
   _intVector2X :: Int 
 , _intVector2Y :: Int
-}
+} deriving (Eq, Show)
 makeFields ''IntVector2
 
 vector2Cntx :: C.Context 
