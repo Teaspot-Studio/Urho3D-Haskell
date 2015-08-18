@@ -17,7 +17,9 @@ module Graphics.Urho3D.Math.Quaternion(
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
 
+import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Math.Internal.Quaternion
+import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 import Text.RawString.QQ
@@ -88,3 +90,9 @@ quaternionFromEuler ax ay az = unsafePerformIO $ do
     x' = realToFrac ax 
     y' = realToFrac ay 
     z' = realToFrac az
+
+instance Createable (Ptr Quaternion) where
+  type CreationOptions (Ptr Quaternion) = Quaternion
+
+  newObject = liftIO . new
+  deleteObject = liftIO . free

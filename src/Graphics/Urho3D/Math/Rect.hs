@@ -20,8 +20,10 @@ module Graphics.Urho3D.Math.Rect(
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
 
+import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Math.Internal.Rect
 import Graphics.Urho3D.Math.Vector2
+import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 import Text.RawString.QQ
@@ -97,3 +99,9 @@ instance Num IntRect where
   abs a = IntRect (abs $ a^.left) (abs $ a^.top) (abs $ a^.right) (abs $ a^.bottom)
   signum a = IntRect (signum $ a^.left) (signum $ a^.top) (signum $ a^.right) (signum $ a^.bottom)
   fromInteger i = IntRect (fromIntegral i) (fromIntegral i) (fromIntegral i) (fromIntegral i)
+
+instance Createable (Ptr IntRect) where
+  type CreationOptions (Ptr IntRect) = IntRect
+
+  newObject = liftIO . new
+  deleteObject = liftIO . free

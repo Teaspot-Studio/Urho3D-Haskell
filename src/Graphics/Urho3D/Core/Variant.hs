@@ -11,6 +11,9 @@ module Graphics.Urho3D.Core.Variant(
   , variantType
   , VariantStorable(..)
   , newVariant
+  , newVariantMaybe
+  , withVariant
+  , withVariantMaybe
   , VariantMap
   , HashMapStringHashVariant
   , variantMapGet
@@ -61,22 +64,22 @@ variantType ptr = toEnum.fromIntegral <$> [C.exp| int { (int)$(Variant* ptr)->Ge
 
 -- | Extended API to create, set and get variant values of various types
 class VariantStorable a where 
-  setVariant :: a -> Ptr Variant -> IO ()
-  getVariant :: Ptr Variant -> IO (Maybe a)
+  setVariant :: MonadIO m => a -> Ptr Variant -> m ()
+  getVariant :: MonadIO m => Ptr Variant -> m (Maybe a)
 
 instance VariantStorable Bool where 
   setVariant a ptr = let val = fromBool a
-    in [C.exp| void { *$(Variant* ptr) = $(int val) } |]
-  getVariant ptr = do
+    in liftIO [C.exp| void { *$(Variant* ptr) = $(int val) } |]
+  getVariant ptr = liftIO $ do
     t <- variantType ptr 
     case t of 
       VariantBool -> Just . toBool <$> [C.exp| int { (int)$(Variant* ptr)->GetBool() } |]
       _ -> return Nothing
 
 instance VariantStorable String where 
-  setVariant a ptr = withCString a $ \str ->
+  setVariant a ptr = liftIO $ withCString a $ \str ->
     [C.exp| void { *$(Variant* ptr) = $(char* str) } |]
-  getVariant ptr = do 
+  getVariant ptr = liftIO $ do 
     t <- variantType ptr 
     case t of 
       VariantString -> do 
@@ -85,9 +88,9 @@ instance VariantStorable String where
       _ -> return Nothing
 
 instance VariantStorable T.Text where 
-  setVariant a ptr = textAsPtrW32 a $ \str ->
+  setVariant a ptr = liftIO $ textAsPtrW32 a $ \str ->
     [C.exp| void { *$(Variant* ptr) = String($(wchar_t* str)) } |]
-  getVariant ptr = do 
+  getVariant ptr = liftIO $ do 
     t <- variantType ptr 
     case t of 
       VariantString -> do 
@@ -96,9 +99,9 @@ instance VariantStorable T.Text where
       _ -> return Nothing
 
 instance VariantStorable Int where 
-  setVariant a ptr = [C.exp| void { *$(Variant* ptr) = $(int a') } |]
+  setVariant a ptr = liftIO [C.exp| void { *$(Variant* ptr) = $(int a') } |]
     where a' = fromIntegral a 
-  getVariant ptr = do 
+  getVariant ptr = liftIO $ do 
     t <- variantType ptr 
     case t of 
       VariantInt -> do 
@@ -107,9 +110,9 @@ instance VariantStorable Int where
       _ -> return Nothing
 
 instance VariantStorable Float where 
-  setVariant a ptr = [C.exp| void { *$(Variant* ptr) = $(float a') } |]
+  setVariant a ptr = liftIO [C.exp| void { *$(Variant* ptr) = $(float a') } |]
     where a' = realToFrac a 
-  getVariant ptr = do 
+  getVariant ptr = liftIO $ do 
     t <- variantType ptr 
     case t of 
       VariantFloat -> do 
@@ -118,9 +121,9 @@ instance VariantStorable Float where
       _ -> return Nothing
 
 instance VariantStorable Double where 
-  setVariant a ptr = [C.exp| void { *$(Variant* ptr) = $(double a') } |]
+  setVariant a ptr = liftIO [C.exp| void { *$(Variant* ptr) = $(double a') } |]
     where a' = realToFrac a 
-  getVariant ptr = do 
+  getVariant ptr = liftIO $ do 
     t <- variantType ptr 
     case t of 
       VariantDouble -> do 
@@ -129,9 +132,9 @@ instance VariantStorable Double where
       _ -> return Nothing
 
 instance VariantStorable (Ptr a) where 
-  setVariant a ptr = [C.exp| void { *$(Variant* ptr) = $(void* a') } |]
+  setVariant a ptr = liftIO [C.exp| void { *$(Variant* ptr) = $(void* a') } |]
     where a' = castPtr a 
-  getVariant ptr = do 
+  getVariant ptr = liftIO $ do 
     t <- variantType ptr 
     case t of 
       VariantPtr -> do 
@@ -140,11 +143,24 @@ instance VariantStorable (Ptr a) where
       _ -> return Nothing 
 
 -- | Creates new Variant with specified value inside
-newVariant :: VariantStorable a => a -> IO (Ptr Variant)
-newVariant val = do 
+newVariant :: (MonadIO m, VariantStorable a) => a -> m (Ptr Variant)
+newVariant val = liftIO $ do 
   ptr <- newEmptyVariant
   setVariant val ptr
   return ptr 
+
+-- | Creates new Variant with specified value inside or empty variant
+newVariantMaybe :: (MonadIO m, VariantStorable a) => Maybe a -> m (Ptr Variant)
+newVariantMaybe (Just val) = newVariant val 
+newVariantMaybe Nothing = liftIO newEmptyVariant
+
+-- | Performs action with filled variant and after deletes it
+withVariant :: (MonadIO m, MonadMask m, VariantStorable a) => a -> (Ptr Variant -> m b) -> m b 
+withVariant a = bracket (newVariant a) deleteObject 
+
+-- | Performs action with filled variant and after deletes it, creates empty variant for Nothing
+withVariantMaybe :: (MonadIO m, MonadMask m, VariantStorable a) => Maybe a -> (Ptr Variant -> m b) -> m b 
+withVariantMaybe a = bracket (newVariantMaybe a) deleteObject 
 
 hashMap "StringHash" "Variant"
 

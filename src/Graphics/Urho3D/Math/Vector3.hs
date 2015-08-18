@@ -15,7 +15,9 @@ module Graphics.Urho3D.Math.Vector3(
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
 
+import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Math.Internal.Vector3
+import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 import Text.RawString.QQ
@@ -68,3 +70,10 @@ instance Num Vector3 where
   abs a = Vector3 (abs $ a^.x) (abs $ a^.y) (abs $ a^.z)
   signum a = Vector3 (signum $ a^.x) (signum $ a^.y) (signum $ a^.z)
   fromInteger i = Vector3 (fromIntegral i) (fromIntegral i) (fromIntegral i)
+
+
+instance Createable (Ptr Vector3) where
+  type CreationOptions (Ptr Vector3) = Vector3
+
+  newObject = liftIO . new
+  deleteObject = liftIO . free

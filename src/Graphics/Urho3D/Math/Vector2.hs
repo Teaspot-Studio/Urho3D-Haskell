@@ -15,7 +15,9 @@ module Graphics.Urho3D.Math.Vector2(
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
 
+import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Math.Internal.Vector2
+import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 import Text.RawString.QQ
@@ -88,3 +90,15 @@ instance Num IntVector2 where
   abs a = IntVector2 (abs $ a^.x) (abs $ a^.y)
   signum a = IntVector2 (signum $ a^.x) (signum $ a^.y)
   fromInteger i = IntVector2 (fromIntegral i) (fromIntegral i)
+
+instance Createable (Ptr IntVector2) where
+  type CreationOptions (Ptr IntVector2) = IntVector2
+
+  newObject = liftIO . new
+  deleteObject = liftIO . free
+
+instance Createable (Ptr Vector2) where
+  type CreationOptions (Ptr Vector2) = Vector2
+
+  newObject = liftIO . new
+  deleteObject = liftIO . free

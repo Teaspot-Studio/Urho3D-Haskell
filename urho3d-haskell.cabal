@@ -31,9 +31,11 @@ library
 
   exposed-modules:     Graphics.Urho3D
                        Graphics.Urho3D.Container
+                       Graphics.Urho3D.Container.ForeignVector
                        Graphics.Urho3D.Container.HashMap
                        Graphics.Urho3D.Container.Ptr
                        Graphics.Urho3D.Container.Str
+                       Graphics.Urho3D.Container.Vector
                        Graphics.Urho3D.Core
                        Graphics.Urho3D.Core.Context
                        Graphics.Urho3D.Core.Events
@@ -58,6 +60,7 @@ library
                        Graphics.Urho3D.Input.Input
                        Graphics.Urho3D.IO
                        Graphics.Urho3D.IO.FileSystem
+                       Graphics.Urho3D.Math
                        Graphics.Urho3D.Math.Color
                        Graphics.Urho3D.Math.Quaternion
                        Graphics.Urho3D.Math.Rect
@@ -65,10 +68,12 @@ library
                        Graphics.Urho3D.Math.Vector2 
                        Graphics.Urho3D.Math.Vector3
                        Graphics.Urho3D.Monad
+                       Graphics.Urho3D.Resource
                        Graphics.Urho3D.Resource.Cache
                        Graphics.Urho3D.Resource.Image
                        Graphics.Urho3D.Resource.Resource
                        Graphics.Urho3D.Resource.XMLFile
+                       Graphics.Urho3D.Resource.XMLElement
                        Graphics.Urho3D.Scene
                        Graphics.Urho3D.Scene.Component
                        Graphics.Urho3D.Scene.Events
@@ -114,6 +119,7 @@ library
                        Graphics.Urho3D.Resource.Internal.Image
                        Graphics.Urho3D.Resource.Internal.Resource
                        Graphics.Urho3D.Resource.Internal.XMLFile
+                       Graphics.Urho3D.Resource.Internal.XMLElement
                        Graphics.Urho3D.Scene.Internal.Component
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Scene.Internal.Scene
@@ -160,6 +166,7 @@ library
                        src/Graphics/Urho3D/Resource/Image.cpp
                        src/Graphics/Urho3D/Resource/Resource.cpp
                        src/Graphics/Urho3D/Resource/XMLFile.cpp
+                       src/Graphics/Urho3D/Resource/XMLElement.cpp
                        src/Graphics/Urho3D/Scene/Events.cpp
                        src/Graphics/Urho3D/Scene/Component.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
@@ -224,6 +231,24 @@ executable urho3d-haskell-sample01
 
 executable urho3d-haskell-sample02
   hs-source-dirs:      app/sample02, app/common
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  other-modules:       Sample
+                       Internal.Sample
+  build-depends:       base
+                     , urho3d-haskell
+                     , StateVar
+                     , lens
+                     , mtl
+                     , thyme
+                     , old-locale
+                     , raw-strings-qq
+                     , text
+
+  default-language:    Haskell2010
+
+executable urho3d-haskell-sample03
+  hs-source-dirs:      app/sample03, app/common
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   other-modules:       Sample

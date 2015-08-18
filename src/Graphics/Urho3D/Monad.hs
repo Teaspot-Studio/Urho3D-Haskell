@@ -1,6 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Monad(
     Urho
   , evalUrho
@@ -31,6 +32,7 @@ import Foreign.C.Types
 import Control.Monad
 import Control.Monad.Catch as X
 import Control.Monad.Reader as X
+import Control.DeepSeq 
 
 import Data.Typeable
 import Data.Text.Encoding (encodeUtf32LE, decodeUtf32LE)
@@ -144,3 +146,6 @@ maybeNull :: Pointer p a => b -> (p -> b) -> p -> b
 maybeNull b f ptr
   | isNull ptr = b 
   | otherwise = f ptr
+
+instance NFData (Ptr a) where 
+  rnf = (`seq` ())

@@ -237,7 +237,7 @@ handleClosePressed app _ = do
 handleControlClicked :: Ptr Window -> EventUIMouseClick -> IO ()
 handleControlClicked window e = do 
   -- Get the Text control acting as the Window's title
-  (windowTitle :: Ptr Text) <- fromJustTrace "WindowTitle" <$> uiElementGetChild window "WindowTitle" True 
+  (windowTitle :: Ptr Text) <- fromJustTrace "WindowTitle" <$> uiElementGetChildByName window "WindowTitle" True 
   
   -- Get control that was clicked
   let clicked = e^.element 

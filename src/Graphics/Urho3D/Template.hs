@@ -3,6 +3,7 @@ module Graphics.Urho3D.Template(
     inline
   , (^::)
   , (^=)
+  , lam
   , mkFunc1
   , mkFunc1Con
   , mkFuncN
@@ -20,6 +21,10 @@ name ^:: typeQ = sigD (mkName name) typeQ
 
 (^=) :: String -> Q Exp -> Q Dec
 name ^= bodyQ = valD (varP (mkName name)) (normalB bodyQ) []
+
+-- | Makes lamda expression with give args
+lam :: [String] -> Q Exp -> Q Exp 
+lam args = lamE (varP . mkName <$> args)
 
 mkFunc1 :: String -> String -> (Name -> Q Exp) -> Q Dec 
 mkFunc1 name par bodyQ = do
