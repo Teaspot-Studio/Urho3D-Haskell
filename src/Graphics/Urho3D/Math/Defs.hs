@@ -183,7 +183,7 @@ instance UrhoRandom Int where
           max' = fromIntegral maxv
 
 instance UrhoRandom Float where 
-  random = liftIO $ realToFrac <$> [C.exp| float {Random(2)} |]
+  random = liftIO $ realToFrac <$> [C.exp| float {Random()} |]
   randomUp maxv = liftIO $ realToFrac <$> [C.exp| float {Random($(float max'))} |]
     where max' = realToFrac maxv 
   randomRange minv maxv = liftIO $ realToFrac <$> [C.exp| float {Random($(float min'), $(float max'))} |]

@@ -88,7 +88,8 @@ sampleSetup sr = do
 
   startupParameter app "FullScreen" $= False 
   startupParameter app "Headless" $= False 
-
+  startupParameter app "ForceGL2" $= True 
+  
 sampleStart :: SampleRef -> IO ()
 sampleStart sr = do 
   s <- readIORef sr

@@ -72,7 +72,7 @@ class VariantStorable a where
 
 instance VariantStorable Bool where 
   setVariant a ptr = let val = fromBool a
-    in liftIO [C.exp| void { *$(Variant* ptr) = $(int val) } |]
+    in liftIO [C.exp| void { *$(Variant* ptr) = $(int val) != 0 } |]
   getVariant ptr = liftIO $ do
     t <- variantType ptr 
     case t of 

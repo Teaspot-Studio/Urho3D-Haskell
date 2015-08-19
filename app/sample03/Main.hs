@@ -78,7 +78,7 @@ customStart sr = do
   -- Create the sprites to the user interface
   srpites <- createSprites app
   -- Hook up to the frame update events
-  subscribeToEvents
+  subscribeToEvents app srpites
 
 -- | Construct the sprites.
 createSprites :: SharedApplicationPtr -> IO [SharedSpritePtr]
@@ -92,7 +92,7 @@ createSprites app = do
   height <- fromIntegral <$> graphicsGetHeight graphics
 
   -- Get the Urho3D fish texture
-  (decalTex :: Ptr Texture2D) <- fromJustTrace "UrhoDecal.dds" <$> cacheGetResource cache "Texture/UrhoDecal.dds" True 
+  (decalTex :: Ptr Texture2D) <- fromJustTrace "UrhoDecal.dds" <$> cacheGetResource cache "Textures/UrhoDecal.dds" True 
 
   root <- uiRoot ui 
   forM [1 .. numSprites] $ const $ do 
@@ -109,8 +109,10 @@ createSprites app = do
     spriteSetHotSpot sprite 64
 
     -- Set random rotation in degrees and random scale 
-    spriteSetRotation sprite =<< (360 *) <$> random
-    spriteSetScale sprite =<< (0.5 +) <$> randomUp 1.0
+    rot <- random 
+    spriteSetRotation sprite $ 360 * rot
+    scale <- randomUp 1.0
+    spriteSetScale' sprite (scale + 0.5) (scale + 0.5)
 
     -- Set random color and additive blending mode
     [cr1, cr2, cr3] <- replicateM 3 $ randomUp 0.5
@@ -121,20 +123,47 @@ createSprites app = do
     uiElementAddChild root sprite 
 
     -- Store sprite's velocity as a custom variable 
-    [vr1, vr2] <- replicateM 2 random
+    [vr1, vr2] <- replicateM 2 $ randomUp 200
     uiElementSetVar sprite varVelocity $ Vector2 (vr1 - 100) (vr2 - 100)
 
     -- Store sprites to our own container for easy movement update iteration
     return sprite 
 
 -- | Move the sprites using the delta time step given.
-moveSprites :: Float -> IO ()
-moveSprites = undefined
+moveSprites :: SharedApplicationPtr -> [SharedSpritePtr] -> Float -> IO ()
+moveSprites app sprites timeStep = do 
+  (graphics :: Ptr Graphics) <- fromJustTrace "Graphics" <$> getSubsystem app 
+  width <- fromIntegral <$> graphicsGetWidth graphics
+  height <- fromIntegral <$> graphicsGetHeight graphics 
+
+  -- Go through all sprites
+  forM_ sprites $ \sprite -> do 
+    -- Rotate 
+    rot <- spriteGetRotation sprite
+    spriteSetRotation sprite $ timeStep * 30 + rot
+
+    -- Move, wrap around rendering window edges 
+    p <- spriteGetPosition sprite 
+    v <- fromJustTrace "Velocity var" <$> uiElementGetVar sprite varVelocity 
+    let newPos = p + v * realToFrac timeStep
+        wrapedPos = Vector2 
+          (if newPos^.x < 0 then newPos^.x + width else 
+            if newPos^.x >= width then newPos^.x - width else newPos^.x) 
+          (if newPos^.y < 0 then newPos^.y + height else 
+            if newPos^.y >= height then newPos^.y - height else newPos^.y)
+    spriteSetPosition sprite wrapedPos
 
 -- | Subscribe to application-wide logic update events.
-subscribeToEvents :: IO ()
-subscribeToEvents = undefined
+subscribeToEvents :: SharedApplicationPtr -> [SharedSpritePtr] -> IO ()
+subscribeToEvents app sprites = do 
+  -- Subscribe HandleUpdate() function for processing update events
+  subscribeToEvent app $ handleUpdate app sprites
 
 -- | Handle the logic update event.
-handleUpdate :: EventUpdate -> IO ()
-handleUpdate = undefined
+handleUpdate :: SharedApplicationPtr -> [SharedSpritePtr] -> EventUpdate -> IO ()
+handleUpdate app sprites e = do 
+  -- Take the frame time step, which is stored as a float
+  let t = e^.timeStep 
+
+  -- Move sprites, scale movement with time step
+  moveSprites app sprites t
