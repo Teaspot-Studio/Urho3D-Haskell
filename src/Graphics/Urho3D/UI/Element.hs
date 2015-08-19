@@ -793,7 +793,7 @@ uiElementSetParent p1 p2 i = liftIO $ do
   [C.exp| void { $(UIElement* ptr1)->SetParent($(UIElement* ptr2), $(int i')) } |]
 
 -- | Set a user variable.
-uiElementSetVar :: (Parent UIElement a, Pointer p a, VariantStorable a, MonadIO m) 
+uiElementSetVar :: (Parent UIElement b, Pointer p b, VariantStorable a, MonadIO m) 
   => p -- ^ Pointer to UI element
   -> String -- ^ Var name
   -> a -- ^ Value
@@ -1409,7 +1409,7 @@ uiElementGetDerivedColor p = liftIO $ do
   peek =<< [C.exp| const Color* { &$(UIElement* ptr)->GetDerivedColor() } |]
 
 -- | Return a user variable.
-uiElementGetVar :: (Parent UIElement a, Pointer p a, VariantStorable a, MonadIO m) 
+uiElementGetVar :: (Parent UIElement b, Pointer p b, VariantStorable a, MonadIO m) 
   => p -- ^ Pointer to UI element
   -> String -- ^ key
   -> m (Maybe a)
@@ -1418,7 +1418,7 @@ uiElementGetVar p key = liftIO $ withObject key $ \key' -> do
   getVariant =<< [C.exp| const Variant* { &$(UIElement* ptr)->GetVar(*$(StringHash* key')) } |]
 
 -- | Return all user variables.
-uiElementGetVars :: (Parent UIElement a, Pointer p a, VariantStorable a, MonadIO m) 
+uiElementGetVars :: (Parent UIElement a, Pointer p a, MonadIO m) 
   => p -- ^ Pointer to UI element
   -> m (Ptr VariantMap)
 uiElementGetVars p = liftIO $ do 

@@ -15,13 +15,14 @@ module Graphics.Urho3D.Math.Vector3(
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
 
-import Graphics.Urho3D.Createable
-import Graphics.Urho3D.Math.Internal.Vector3
-import Graphics.Urho3D.Monad
+import Control.Lens 
 import Data.Monoid
 import Foreign 
+import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Math.Defs
+import Graphics.Urho3D.Math.Internal.Vector3
+import Graphics.Urho3D.Monad
 import Text.RawString.QQ
-import Control.Lens 
 
 C.context (C.cppCtx <> vector3Cntx)
 C.include "<Urho3D/Math/Vector3.h>"
@@ -71,9 +72,23 @@ instance Num Vector3 where
   signum a = Vector3 (signum $ a^.x) (signum $ a^.y) (signum $ a^.z)
   fromInteger i = Vector3 (fromIntegral i) (fromIntegral i) (fromIntegral i)
 
+instance Fractional Vector3 where 
+  a / b = Vector3 (a^.x / b^.x) (a^.y / b^.y) (a^.z / b^.z)
+  fromRational v = Vector3 (fromRational v) (fromRational v) (fromRational v)
 
 instance Createable (Ptr Vector3) where
   type CreationOptions (Ptr Vector3) = Vector3
 
   newObject = liftIO . new
   deleteObject = liftIO . free
+
+instance UrhoRandom Vector3 where 
+  random = Vector3 <$> random <*> random <*> random
+  randomUp maxv = Vector3 
+    <$> randomUp (maxv^.x) 
+    <*> randomUp (maxv^.y)
+    <*> randomUp (maxv^.z)
+  randomRange minv maxv = Vector3 
+    <$> randomRange (minv^.x) (maxv^.x) 
+    <*> randomRange (minv^.y) (maxv^.y)
+    <*> randomRange (minv^.z) (maxv^.z)

@@ -168,7 +168,7 @@ createLogo sr = do
       -- Set logo sprite size
       uiElementSetSize sprite $ IntVector2 twidth theight
       -- Set logo sprite hot spot
-      spriteSetHotSpot sprite 0 theight
+      spriteSetHotSpot' sprite 0 theight
       -- Set logo sprite alignment
       uiElementSetAlignment sprite AlignmentLeft AlignmentBottom 
       -- Make logo not fully opaque to show the scene underneath

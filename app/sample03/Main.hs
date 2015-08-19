@@ -92,7 +92,7 @@ createSprites app = do
   height <- fromIntegral <$> graphicsGetHeight graphics
 
   -- Get the Urho3D fish texture
-  (decalTex :: Ptr Texture2D) <- cacheGetResource cache "Texture/UrhoDecal.dds" True 
+  (decalTex :: Ptr Texture2D) <- fromJustTrace "UrhoDecal.dds" <$> cacheGetResource cache "Texture/UrhoDecal.dds" True 
 
   root <- uiRoot ui 
   forM [1 .. numSprites] $ const $ do 
@@ -114,7 +114,7 @@ createSprites app = do
 
     -- Set random color and additive blending mode
     [cr1, cr2, cr3] <- replicateM 3 $ randomUp 0.5
-    uiElementSetColor sprite $ Color (cr1 + 0.5) (cr2 + 0.5) (cr3 + 0.5)
+    uiElementSetColor sprite $ rgb (cr1 + 0.5) (cr2 + 0.5) (cr3 + 0.5)
     spriteSetBlendMode sprite BlendAdd 
 
     -- Add as a child of the root UI element

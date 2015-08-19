@@ -25,20 +25,23 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 import qualified Data.Text as T 
 
-import Graphics.Urho3D.Container.Str
-import Graphics.Urho3D.Core.Internal.Variant
-import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
-import Graphics.Urho3D.Container.HashMap
-import Graphics.Urho3D.Math.StringHash
-import Graphics.Urho3D.Monad
-import Data.Monoid
+import Control.DeepSeq
 import Data.Maybe (fromMaybe)
+import Data.Monoid
 import Foreign 
 import Foreign.C.String 
-import Control.DeepSeq
+import Graphics.Urho3D.Container.HashMap
+import Graphics.Urho3D.Container.Str
+import Graphics.Urho3D.Core.Context 
+import Graphics.Urho3D.Core.Internal.Variant
+import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Math.Rect 
+import Graphics.Urho3D.Math.StringHash
+import Graphics.Urho3D.Math.Vector2
+import Graphics.Urho3D.Math.Vector3
+import Graphics.Urho3D.Monad
 
-C.context (C.cppCtx <> variantCntx <> variantMapCntx <> stringHashContext <> contextContext <> stringContext)
+C.context (C.cppCtx <> variantCntx <> variantMapCntx <> stringHashContext <> contextContext <> stringContext <> vector2Context <> vector3Context <> rectContext)
 C.include "<Urho3D/Core/Variant.h>"
 C.using "namespace Urho3D"
 
@@ -140,6 +143,46 @@ instance VariantStorable (Ptr a) where
       VariantPtr -> do 
         v <- [C.exp| void* { $(Variant* ptr)->GetVoidPtr() } |]
         return $ Just $ castPtr v 
+      _ -> return Nothing 
+
+instance VariantStorable Vector2 where 
+  setVariant v ptr = liftIO $ with v $ \v' -> [C.exp| void { *$(Variant* ptr) = *$(Vector2* v') } |]
+  getVariant ptr = liftIO $ do 
+    t <- variantType ptr 
+    case t of 
+      VariantVector2 -> do 
+        v <- peek =<< [C.exp| const Vector2* { &$(Variant* ptr)->GetVector2() } |]
+        return $ Just v
+      _ -> return Nothing 
+
+instance VariantStorable Vector3 where 
+  setVariant v ptr = liftIO $ with v $ \v' -> [C.exp| void { *$(Variant* ptr) = *$(Vector3* v') } |]
+  getVariant ptr = liftIO $ do 
+    t <- variantType ptr 
+    case t of 
+      VariantVector3 -> do 
+        v <- peek =<< [C.exp| const Vector3* { &$(Variant* ptr)->GetVector3() } |]
+        return $ Just v
+      _ -> return Nothing 
+
+instance VariantStorable IntVector2 where 
+  setVariant v ptr = liftIO $ with v $ \v' -> [C.exp| void { *$(Variant* ptr) = *$(IntVector2* v') } |]
+  getVariant ptr = liftIO $ do 
+    t <- variantType ptr 
+    case t of 
+      VariantIntVector2 -> do 
+        v <- peek =<< [C.exp| const IntVector2* { &$(Variant* ptr)->GetIntVector2() } |]
+        return $ Just v
+      _ -> return Nothing 
+
+instance VariantStorable IntRect where 
+  setVariant v ptr = liftIO $ with v $ \v' -> [C.exp| void { *$(Variant* ptr) = *$(IntRect* v') } |]
+  getVariant ptr = liftIO $ do 
+    t <- variantType ptr 
+    case t of 
+      VariantIntRect -> do 
+        v <- peek =<< [C.exp| const IntRect* { &$(Variant* ptr)->GetIntRect() } |]
+        return $ Just v
       _ -> return Nothing 
 
 -- | Creates new Variant with specified value inside

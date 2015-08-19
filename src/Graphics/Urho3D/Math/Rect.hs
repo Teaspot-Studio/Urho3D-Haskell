@@ -20,14 +20,15 @@ module Graphics.Urho3D.Math.Rect(
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
 
+import Control.Lens 
+import Data.Monoid
+import Foreign 
 import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Math.Defs
 import Graphics.Urho3D.Math.Internal.Rect
 import Graphics.Urho3D.Math.Vector2
 import Graphics.Urho3D.Monad
-import Data.Monoid
-import Foreign 
 import Text.RawString.QQ
-import Control.Lens 
 
 C.context (C.cppCtx <> rectCntx <> vector2Context)
 C.include "<Urho3D/Math/Rect.h>"
@@ -105,3 +106,41 @@ instance Createable (Ptr IntRect) where
 
   newObject = liftIO . new
   deleteObject = liftIO . free
+
+-- | Swaps corners if min point is greater than max point
+rectFix :: Rect -> Rect 
+rectFix rс = Rect minPoint' maxPoint'
+  where 
+    minPoint' = if rс^.minPoint > rс^.maxPoint then rс^.maxPoint else rс^.minPoint
+    maxPoint' = if rс^.minPoint > rс^.maxPoint then rс^.minPoint else rс^.maxPoint
+
+-- | Swaps corners if min point is greater than max point
+intRectFix :: IntRect -> IntRect 
+intRectFix rс = IntRect leftv' topv' rightv' bottomv'
+  where 
+    leftv' = if rс^.left > rс^.right then rс^.right else rс^.left
+    topv' = if rс^.top > rс^.bottom then rс^.bottom else rс^.top
+    rightv' = if rс^.left > rс^.right then rс^.left else rс^.right
+    bottomv' = if rс^.top > rс^.bottom then rс^.top else rс^.bottom
+
+instance UrhoRandom Rect where 
+  random = fmap rectFix $ Rect <$> random <*> random
+  randomUp maxv = fmap rectFix $ Rect 
+    <$> randomUp (maxv^.minPoint) 
+    <*> randomUp (maxv^.maxPoint)
+  randomRange minv maxv = fmap rectFix $ Rect 
+    <$> randomRange (minv^.minPoint) (maxv^.minPoint) 
+    <*> randomRange (minv^.maxPoint) (maxv^.maxPoint)
+
+instance UrhoRandom IntRect where 
+  random = fmap intRectFix $ IntRect <$> random <*> random <*> random <*> random
+  randomUp maxv = fmap intRectFix $ IntRect 
+    <$> randomUp (maxv^.left) 
+    <*> randomUp (maxv^.top)
+    <*> randomUp (maxv^.right)
+    <*> randomUp (maxv^.bottom)
+  randomRange minv maxv = fmap intRectFix $ IntRect 
+    <$> randomRange (minv^.left) (maxv^.left) 
+    <*> randomRange (minv^.top) (maxv^.top)
+    <*> randomRange (minv^.right) (maxv^.right)
+    <*> randomRange (minv^.bottom) (maxv^.bottom)

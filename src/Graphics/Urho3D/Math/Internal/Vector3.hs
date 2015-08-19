@@ -22,7 +22,7 @@ data Vector3 = Vector3 {
   _vector3X :: Float 
 , _vector3Y :: Float 
 , _vector3Z :: Float   
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Show)
 makeFields ''Vector3
 
 vector3Cntx :: C.Context 
