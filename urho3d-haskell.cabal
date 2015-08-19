@@ -62,7 +62,9 @@ library
                        Graphics.Urho3D.IO.FileSystem
                        Graphics.Urho3D.Math
                        Graphics.Urho3D.Math.Color
+                       Graphics.Urho3D.Math.Defs
                        Graphics.Urho3D.Math.Quaternion
+                       Graphics.Urho3D.Math.Random
                        Graphics.Urho3D.Math.Rect
                        Graphics.Urho3D.Math.StringHash
                        Graphics.Urho3D.Math.Vector2 
@@ -157,7 +159,9 @@ library
                        src/Graphics/Urho3D/Input/Input.cpp
                        src/Graphics/Urho3D/IO/FileSystem.cpp
                        src/Graphics/Urho3D/Math/Color.cpp
+                       src/Graphics/Urho3D/Math/Defs.cpp
                        src/Graphics/Urho3D/Math/Quaternion.cpp
+                       src/Graphics/Urho3D/Math/Random.cpp
                        src/Graphics/Urho3D/Math/Rect.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
                        src/Graphics/Urho3D/Math/Vector2.cpp
