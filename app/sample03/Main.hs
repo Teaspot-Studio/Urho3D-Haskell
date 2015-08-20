@@ -54,7 +54,7 @@ joysticPatch = [r|
 
 main :: IO ()
 main = withObject () $ \cntx -> do 
-  newSample cntx "HelloWorld" joysticPatch customStart >>= runSample
+  newSample cntx "Sprites" joysticPatch customStart >>= runSample
 
 -- Number of sprites to draw
 numSprites :: Int 

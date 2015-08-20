@@ -57,7 +57,7 @@ joysticPatch = [r|
 
 main :: IO ()
 main = withObject () $ \cntx -> do 
-  newSample cntx "HelloWorld" joysticPatch customStart >>= runSample
+  newSample cntx "HelloGUI" joysticPatch customStart >>= runSample
 
 -- | Helper function that prints profided message when get Nothing
 fromJustTrace :: String -> Maybe a -> a 
