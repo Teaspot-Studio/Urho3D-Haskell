@@ -79,9 +79,9 @@ customStart sr = do
 -- | Construct the scene content.
 createScene :: SharedApplicationPtr -> IO SharedScenePtr
 createScene app = do 
-  (cache :: Ptr ResouceCache) <- fromJustTrace "ResouceCache" <$> getSubsystem app 
+  (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
 
-  (scene :: Ptr SharedScenePtr) <- newSharedObject =<< getContext app 
+  (scene :: SharedScenePtr) <- newSharedObject =<< getContext app 
 
   {-
    Create the Octree component to the scene. This is required before adding any drawable components, or else nothing will
