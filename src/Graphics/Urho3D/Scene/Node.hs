@@ -54,6 +54,14 @@ module Graphics.Urho3D.Scene.Node(
   , nodeRotate2D
   , nodeRotateAround
   , nodeRotateAround2D
+  , nodePitch
+  , nodeYaw
+  , nodeRoll
+  , nodeLookAt
+  , nodeLookAtSimple
+  , nodeScaleUniform
+  , nodeScale
+  , nodeScale2D
   -- | Getters
   , nodeGetComponent
   , nodeGetRotation
@@ -545,3 +553,79 @@ nodeGetRotation p = liftIO $ do
   let ptr = parentPointer p 
   peek =<< [C.exp| const Quaternion* { &$(Node* ptr)->GetRotation() } |]
   
+-- | Rotate around the X axis
+nodePitch :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> Float -- ^ angle 
+  -> TransformSpace -- ^ space
+  -> m ()
+nodePitch p angle space = liftIO $ do 
+  let ptr = parentPointer p 
+      a  = realToFrac angle 
+      sp = fromIntegral $ fromEnum space 
+  [C.exp| void { $(Node* ptr)->Pitch($(float a), (TransformSpace)$(int sp)) } |]
+
+-- | Rotate around the Y axis
+nodeYaw :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> Float -- ^ angle 
+  -> TransformSpace -- ^ space
+  -> m ()
+nodeYaw p angle space = liftIO $ do 
+  let ptr = parentPointer p 
+      a  = realToFrac angle 
+      sp = fromIntegral $ fromEnum space 
+  [C.exp| void { $(Node* ptr)->Yaw($(float a), (TransformSpace)$(int sp)) } |]
+
+-- | Rotate around the Z axis
+nodeRoll :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> Float -- ^ angle 
+  -> TransformSpace -- ^ space
+  -> m ()
+nodeRoll p angle space = liftIO $ do 
+  let ptr = parentPointer p 
+      a  = realToFrac angle 
+      sp = fromIntegral $ fromEnum space 
+  [C.exp| void { $(Node* ptr)->Roll($(float a), (TransformSpace)$(int sp)) } |]
+
+-- | Look at a target position in the chosen transform space. Note that the up vector is always specified in world space. Return true if successful, or false if resulted in an illegal rotation, in which case the current rotation remains.
+nodeLookAt :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> Vector3 -- ^ target
+  -> Vector3 -- ^ up
+  -> TransformSpace -- ^ space
+  -> m Bool
+nodeLookAt p target up space = liftIO $ with target $ \t -> with up $ \u -> do 
+  let ptr = parentPointer p 
+      sp = fromIntegral $ fromEnum space 
+  toBool <$> [C.exp| int { (int)$(Node* ptr)->LookAt(*$(Vector3* t), *$(Vector3* u), (TransformSpace)$(int sp)) } |]
+
+-- | Look at a target position in the chosen transform space. Note that the up vector is always specified in world space. Return true if successful, or false if resulted in an illegal rotation, in which case the current rotation remains.
+nodeLookAtSimple :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> Vector3 -- ^ target
+  -> m Bool
+nodeLookAtSimple p target = nodeLookAt p target vec3Up TS'World 
+
+-- | Modify scale in parent space uniformly.
+nodeScaleUniform :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> Float -- ^ scale 
+  -> m ()
+nodeScaleUniform p scale = liftIO $ do 
+  let ptr = parentPointer p 
+      v  = realToFrac scale 
+  [C.exp| void { $(Node* ptr)->Scale($(float v)) } |]
+
+-- | Modify scale in parent space.
+nodeScale :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> Vector3-- ^ scale 
+  -> m ()
+nodeScale p scale = liftIO $ with scale $ \v -> do 
+  let ptr = parentPointer p 
+  [C.exp| void { $(Node* ptr)->Scale(*$(Vector3* v)) } |]
+
+-- | Modify scale in parent space (for Urho2D).
+nodeScale2D :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> Vector2-- ^ scale 
+  -> m ()
+nodeScale2D p scale = liftIO $ with scale $ \v -> do 
+  let ptr = parentPointer p 
+  [C.exp| void { $(Node* ptr)->Scale2D(*$(Vector2* v)) } |]
+
+-- https://github.com/urho3d/Urho3D/blob/master/Source/Urho3D/Scene/Node.h#L234

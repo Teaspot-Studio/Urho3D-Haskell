@@ -10,6 +10,12 @@ module Graphics.Urho3D.Math.Vector3(
   , HasY(..)
   , HasZ(..)
   , vector3Context
+  , vec3Left
+  , vec3Right
+  , vec3Up
+  , vec3Down
+  , vec3Forward
+  , vec3Back
   ) where
 
 import qualified Language.C.Inline as C 
@@ -92,3 +98,27 @@ instance UrhoRandom Vector3 where
     <$> randomRange (minv^.x) (maxv^.x) 
     <*> randomRange (minv^.y) (maxv^.y)
     <*> randomRange (minv^.z) (maxv^.z)
+
+-- | (-1,0,0) vector.
+vec3Left :: Vector3
+vec3Left = Vector3 (-1) 0 0
+
+-- | (1,0,0) vector.
+vec3Right :: Vector3 
+vec3Right = Vector3 1 0 0
+
+-- | (0,1,0) vector.
+vec3Up :: Vector3
+vec3Up = Vector3 0 1 0
+
+-- | (0,-1,0) vector.
+vec3Down :: Vector3 
+vec3Down = Vector3 0 (-1) 0
+
+-- | (0,0,1) vector.
+vec3Forward :: Vector3
+vec3Forward = Vector3 0 0 1
+
+-- | (0,0,-1) vector.
+vec3Back :: Vector3
+vec3Back = Vector3 0 0 (-1)

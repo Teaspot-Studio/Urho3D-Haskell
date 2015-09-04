@@ -1,0 +1,5 @@
+*.cpp
+.stack-work
+urho3d-haskell.sublime-project
+urho3d-haskell.sublime-workspace
+inline-c
