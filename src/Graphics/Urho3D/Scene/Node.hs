@@ -62,6 +62,12 @@ module Graphics.Urho3D.Scene.Node(
   , nodeScaleUniform
   , nodeScale
   , nodeScale2D
+  , nodeSetEnabled
+  , nodeSetDeepEnabled
+  , nodeResetDeepEnabled
+  , nodeSetEnabledRecursive
+  , nodeSetOwner
+  , nodeMarkDirty
   -- | Getters
   , nodeGetComponent
   , nodeGetRotation
@@ -84,9 +90,10 @@ import Graphics.Urho3D.Math.Vector3
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Scene.Component
 import Graphics.Urho3D.Scene.Internal.Node
+import Graphics.Urho3D.Network.Connection
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> nodeCntx <> sharedNodePtrCntx <> contextContext <> stringHashContext <> componentContext <> quaternionContext <> vector2Context <> vector3Context)
+C.context (C.cppCtx <> nodeCntx <> sharedNodePtrCntx <> contextContext <> stringHashContext <> componentContext <> quaternionContext <> vector2Context <> vector3Context <> connectionContext)
 C.include "<Urho3D/Scene/Node.h>"
 C.include "<Urho3D/Scene/Component.h>"
 C.using "namespace Urho3D" 
@@ -628,4 +635,52 @@ nodeScale2D p scale = liftIO $ with scale $ \v -> do
   let ptr = parentPointer p 
   [C.exp| void { $(Node* ptr)->Scale2D(*$(Vector2* v)) } |]
 
--- https://github.com/urho3d/Urho3D/blob/master/Source/Urho3D/Scene/Node.h#L234
+-- | Set enabled/disabled state without recursion. Components in a disabled node become effectively disabled regardless of their own enable/disable state.
+nodeSetEnabled :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> Bool -- ^ enable 
+  -> m ()
+nodeSetEnabled p v = liftIO $ do 
+  let ptr = parentPointer p 
+      v' = fromBool v 
+  [C.exp| void { $(Node* ptr)->SetEnabled($(int v') != 0) } |]
+
+-- | Set enabled state on self and child nodes. Nodes' own enabled state is remembered (IsEnabledSelf) and can be restored.
+nodeSetDeepEnabled :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> Bool -- ^ enable 
+  -> m ()
+nodeSetDeepEnabled p v = liftIO $ do 
+  let ptr = parentPointer p 
+      v' = fromBool v 
+  [C.exp| void { $(Node* ptr)->SetDeepEnabled($(int v') != 0) } |]
+
+-- | Reset enabled state to the node's remembered state prior to calling SetDeepEnabled.
+nodeResetDeepEnabled :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> m ()
+nodeResetDeepEnabled p = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.exp| void { $(Node* ptr)->ResetDeepEnabled() } |]
+
+-- | Set enabled state on self and child nodes. Unlike SetDeepEnabled this does not remember the nodes' own enabled state, but overwrites it.
+nodeSetEnabledRecursive :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> Bool -- ^ enable 
+  -> m ()
+nodeSetEnabledRecursive p v = liftIO $ do 
+  let ptr = parentPointer p 
+      v' = fromBool v 
+  [C.exp| void { $(Node* ptr)->SetEnabledRecursive($(int v') != 0) } |]
+
+-- | Set owner connection for networking.
+nodeSetOwner :: (Parent Node a, Pointer p a, Parent Connection conn, Pointer pConn conn, MonadIO m) => p -- ^ Node pointer or child
+  -> pConn -- ^ owner 
+  -> m ()
+nodeSetOwner p v = liftIO $ do 
+  let ptr = parentPointer p 
+      v' = parentPointer v 
+  [C.exp| void { $(Node* ptr)->SetOwner($(Connection* v')) } |]
+
+-- | Mark node and child nodes to need world transform recalculation. Notify listener components.
+nodeMarkDirty :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
+  -> m ()
+nodeMarkDirty p = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.exp| void { $(Node* ptr)->MarkDirty() } |]

@@ -70,12 +70,14 @@ library
                        Graphics.Urho3D.Math.Vector2 
                        Graphics.Urho3D.Math.Vector3
                        Graphics.Urho3D.Monad
+                       Graphics.Urho3D.Network
+                       Graphics.Urho3D.Network.Connection
                        Graphics.Urho3D.Resource
                        Graphics.Urho3D.Resource.Cache
                        Graphics.Urho3D.Resource.Image
                        Graphics.Urho3D.Resource.Resource
-                       Graphics.Urho3D.Resource.XMLFile
                        Graphics.Urho3D.Resource.XMLElement
+                       Graphics.Urho3D.Resource.XMLFile
                        Graphics.Urho3D.Scene
                        Graphics.Urho3D.Scene.Component
                        Graphics.Urho3D.Scene.Events
@@ -117,11 +119,12 @@ library
                        Graphics.Urho3D.Math.Internal.StringHash
                        Graphics.Urho3D.Math.Internal.Vector2 
                        Graphics.Urho3D.Math.Internal.Vector3
+                       Graphics.Urho3D.Network.Internal.Connection
                        Graphics.Urho3D.Resource.Internal.Cache
                        Graphics.Urho3D.Resource.Internal.Image
                        Graphics.Urho3D.Resource.Internal.Resource
-                       Graphics.Urho3D.Resource.Internal.XMLFile
                        Graphics.Urho3D.Resource.Internal.XMLElement
+                       Graphics.Urho3D.Resource.Internal.XMLFile
                        Graphics.Urho3D.Scene.Internal.Component
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Scene.Internal.Scene
@@ -166,13 +169,14 @@ library
                        src/Graphics/Urho3D/Math/StringHash.cpp
                        src/Graphics/Urho3D/Math/Vector2.cpp
                        src/Graphics/Urho3D/Math/Vector3.cpp
+                       src/Graphics/Urho3D/Network/Connection.cpp
                        src/Graphics/Urho3D/Resource/Cache.cpp
                        src/Graphics/Urho3D/Resource/Image.cpp
                        src/Graphics/Urho3D/Resource/Resource.cpp
-                       src/Graphics/Urho3D/Resource/XMLFile.cpp
                        src/Graphics/Urho3D/Resource/XMLElement.cpp
-                       src/Graphics/Urho3D/Scene/Events.cpp
+                       src/Graphics/Urho3D/Resource/XMLFile.cpp
                        src/Graphics/Urho3D/Scene/Component.cpp
+                       src/Graphics/Urho3D/Scene/Events.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
                        src/Graphics/Urho3D/Scene/Scene.cpp
                        src/Graphics/Urho3D/UI/BorderImage.cpp
