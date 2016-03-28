@@ -24,3 +24,15 @@ extra-include-dirs:
 - /usr/include
 - /usr/include/Urho3D/ThirdParty
 ```
+
+And you need to setup `URHO3D_PREFIX_PATH` environment variable to run samples. For instance:
+
+```
+URHO3D_PREFIX_PATH=/usr/share/Urho3D/Resources
+```
+
+## Compilation of the bindings
+
+You need [stack](http://stackage.org):
+
+1. `stack install`
