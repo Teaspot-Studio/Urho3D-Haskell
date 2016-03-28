@@ -1,7 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
 module Graphics.Urho3D.Core.Events(
   -- | Events
     EventBeginFrame(..)

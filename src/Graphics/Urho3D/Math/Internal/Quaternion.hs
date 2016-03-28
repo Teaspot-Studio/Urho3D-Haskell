@@ -1,9 +1,3 @@
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE DeriveGeneric #-}
 module Graphics.Urho3D.Math.Internal.Quaternion(
     Quaternion(..)
   , quaternionCntx

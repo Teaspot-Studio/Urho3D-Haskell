@@ -1,4 +1,3 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Graphics.Urho3D.Template(
     inline
   , (^::)

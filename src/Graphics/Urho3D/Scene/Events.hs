@@ -1,6 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TypeFamilies #-}
 module Graphics.Urho3D.Scene.Events(
     EventSceneUpdate(..)
   ) where

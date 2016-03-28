@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeFamilies #-}
 module Graphics.Urho3D.Createable(
     Createable(..)
   , withObject

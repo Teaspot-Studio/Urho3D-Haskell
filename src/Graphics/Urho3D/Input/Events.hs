@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE QuasiQuotes #-}
 module Graphics.Urho3D.Input.Events(
     EventKeyDown(..)
   , EventTouchBegin(..)

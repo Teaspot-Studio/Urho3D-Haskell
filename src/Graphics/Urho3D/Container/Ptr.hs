@@ -1,5 +1,3 @@
-{-# LANGUAGE QuasiQuotes, TemplateHaskell #-}
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, FlexibleContexts #-}
 module Graphics.Urho3D.Container.Ptr(
     sharedPtr 
   , sharedPtrImpl 

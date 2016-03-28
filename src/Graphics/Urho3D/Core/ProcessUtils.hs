@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE QuasiQuotes #-}
 module Graphics.Urho3D.Core.ProcessUtils(
     platform
   ) where

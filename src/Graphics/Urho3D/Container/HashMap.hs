@@ -1,6 +1,3 @@
-{-# LANGUAGE QuasiQuotes, TemplateHaskell #-}
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
-{-# LANGUAGE FlexibleInstances #-}
 module Graphics.Urho3D.Container.HashMap(
     HashMap(..)
   , hashMap

@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeFamilies, RecordWildCards, ScopedTypeVariables, MultiWayIf #-}
 module Sample(
     Sample
   , SampleRef
@@ -17,19 +16,22 @@ module Sample(
   , sampleScene
   , sampleCameraNode
   , sampleJoystickPatch
+  -- | Helpers
+  , joysticPatch
   ) where 
 
-import Graphics.Urho3D
+import Control.Lens hiding (Context)
+import Control.Monad as Monad 
+import Data.IORef 
+import Data.Maybe 
+import Data.Proxy
+import Data.StateVar
+import Data.Thyme
 import Data.Word 
 import Foreign
-import Data.StateVar
-import Data.Maybe 
-import Data.IORef 
-import Data.Thyme
-import Data.Proxy
-import Control.Monad as Monad 
-import Control.Lens hiding (Context)
+import Graphics.Urho3D
 import System.Locale 
+import Text.RawString.QQ
 
 import Internal.Sample
 
@@ -326,3 +328,14 @@ handleTouchBegin sr _ = do
   initTouchInput sr
   let app = s ^. sampleApplication
   unsubscribeFromEvent app (Proxy :: Proxy EventTouchBegin)
+
+
+-- | Return XML patch instructions for screen joystick layout for a specific sample app, if any.
+joysticPatch :: String 
+joysticPatch = [r|
+<patch>
+    <add sel=\"/element/element[./attribute[@name='Name' and @value='Hat0']]\">
+        <attribute name=\"Is Visible\" value=\"false\" />
+    </add>
+</patch>
+|]

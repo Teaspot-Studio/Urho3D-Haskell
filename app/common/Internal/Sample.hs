@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 module Internal.Sample where
 
 import Graphics.Urho3D

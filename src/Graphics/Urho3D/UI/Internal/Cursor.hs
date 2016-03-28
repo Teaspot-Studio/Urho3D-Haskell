@@ -1,6 +1,3 @@
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE OverloadedStrings #-}
 module Graphics.Urho3D.UI.Internal.Cursor(
     Cursor 
   , cursorCntx

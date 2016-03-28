@@ -26,29 +26,14 @@
      - Adding a Text element to the graphical user interface
      - Subscribing to and handling of update events
 -}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Text.RawString.QQ
 import Control.Lens hiding (Context)
 import Data.IORef
 import Foreign
 
 import Graphics.Urho3D
 import Sample
-
--- | Return XML patch instructions for screen joystick layout for a specific sample app, if any.
-joysticPatch :: String 
-joysticPatch = [r|
-<patch>
-    <add sel=\"/element/element[./attribute[@name='Name' and @value='Hat0']]\">
-        <attribute name=\"Is Visible\" value=\"false\" />
-    </add>
-</patch>
-|]
 
 main :: IO ()
 main = withObject () $ \cntx -> do 

@@ -26,10 +26,6 @@
      - Storing custom data (sprite velocity) inside UI elements
      - Handling frame update events in which the sprites are moved
 -}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 import qualified Data.Text as T
@@ -40,17 +36,6 @@ import Data.Monoid
 import Foreign
 import Graphics.Urho3D
 import Sample
-import Text.RawString.QQ
-
--- | Return XML patch instructions for screen joystick layout for a specific sample app, if any.
-joysticPatch :: String 
-joysticPatch = [r|
-<patch>
-    <add sel=\"/element/element[./attribute[@name='Name' and @value='Hat0']]\">
-        <attribute name=\"Is Visible\" value=\"false\" />
-    </add>
-</patch>
-|]
 
 main :: IO ()
 main = withObject () $ \cntx -> do 

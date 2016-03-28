@@ -1,7 +1,3 @@
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
 module Graphics.Urho3D.Core.Internal.Variant(
     Variant
   , VariantType(..)

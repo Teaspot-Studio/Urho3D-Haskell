@@ -1,4 +1,3 @@
-{-# LANGUAGE QuasiQuotes, TemplateHaskell #-}
 module Graphics.Urho3D.Container.Vector(
     podVectorPtr
   , podVectorPtrImpl

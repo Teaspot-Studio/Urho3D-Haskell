@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE FlexibleContexts #-}
 module Graphics.Urho3D.Container.ForeignVector(
     ReadableVector(..)
   , WriteableVector(..)

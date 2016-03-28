@@ -1,6 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE ForeignFunctionInterface #-}
 module Graphics.Urho3D.Graphics.Defs where
 
 import qualified Language.C.Inline as C 
