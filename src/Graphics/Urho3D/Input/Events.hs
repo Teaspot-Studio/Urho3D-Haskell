@@ -23,7 +23,6 @@ C.using "namespace Urho3D"
 data EventKeyDown = EventKeyDown {
     pressKey :: Key 
   , pressScancode :: Int 
-  , pressRaw :: Int 
   , pressButtons :: Int 
   , pressQualifiers :: Int 
   , pressRepeat :: Bool
@@ -34,14 +33,12 @@ instance Event EventKeyDown where
   loadEventData vmap = do 
     pkey <- variantMapGet' vmap [C.pure| const StringHash* {&KeyDown::P_KEY} |]
     pscan <- variantMapGet' vmap [C.pure| const StringHash* {&KeyDown::P_SCANCODE} |]
-    praw <- variantMapGet' vmap [C.pure| const StringHash* {&KeyDown::P_RAW} |]
     pbuttons <- variantMapGet' vmap [C.pure| const StringHash* {&KeyDown::P_BUTTONS} |]
     pqualifiers <- variantMapGet' vmap [C.pure| const StringHash* {&KeyDown::P_QUALIFIERS} |]
     prepeat <- variantMapGet' vmap [C.pure| const StringHash* {&KeyDown::P_REPEAT} |]
     return $ EventKeyDown {
       pressKey = fromUrhoKey $ fromMaybe 0 pkey
     , pressScancode = fromMaybe 0 pscan 
-    , pressRaw = fromMaybe 0 praw 
     , pressButtons = fromMaybe 0 pbuttons
     , pressQualifiers = fromMaybe 0 pqualifiers
     , pressRepeat = fromMaybe False prepeat

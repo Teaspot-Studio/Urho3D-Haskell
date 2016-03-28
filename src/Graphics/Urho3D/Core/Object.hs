@@ -66,7 +66,7 @@ typedef HashMap<StringHash, Variant> HashMapStringHashVariant;
 extern "C" typedef void (*Handler)(HashMapStringHashVariant*);
 
 class HaskellHandler : public Object {
-  OBJECT(HaskellHandler);
+  URHO3D_OBJECT(HaskellHandler, Object);
 
   Handler handler_;
 public:

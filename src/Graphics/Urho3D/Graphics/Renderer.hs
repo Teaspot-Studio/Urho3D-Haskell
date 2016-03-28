@@ -146,7 +146,7 @@ rendererSetShadowQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- 
 rendererSetShadowQuality p q = liftIO $ do 
   let ptr = parentPointer p 
       e = fromIntegral $ fromEnum q 
-  [C.exp| void {$(Renderer* ptr)->SetShadowQuality($(int e))} |]
+  [C.exp| void {$(Renderer* ptr)->SetShadowQuality((ShadowQuality) $(int e))} |]
 
 -- | Returns maximum number of triangles that occluder lefts on scene
 rendererGetMaxOccluderTriangles :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child

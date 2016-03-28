@@ -532,7 +532,7 @@ nodeRotate2D p q s = liftIO $ do
   let ptr = parentPointer p 
       q' = realToFrac q
       s' = fromIntegral $ fromEnum s
-  [C.exp| void { $(Node* ptr)->Rotate($(float q'), (TransformSpace)$(int s')) } |]
+  [C.exp| void { $(Node* ptr)->Rotate2D($(float q'), (TransformSpace)$(int s')) } |]
 
 -- | Rotate around a point in the chosen transform space.
 nodeRotateAround :: (Parent Node a, Pointer p a, MonadIO m)
@@ -557,7 +557,7 @@ nodeRotateAround2D p pv q s = liftIO $ with pv $ \pv' -> do
   let ptr = parentPointer p 
       q' = realToFrac q
       s' = fromIntegral $ fromEnum s
-  [C.exp| void { $(Node* ptr)->RotateAround(*$(Vector2* pv'), $(float q'), (TransformSpace)$(int s')) } |]
+  [C.exp| void { $(Node* ptr)->RotateAround2D(*$(Vector2* pv'), $(float q'), (TransformSpace)$(int s')) } |]
 
 
 nodeGetComponent :: forall a p c m . (Parent Node a, Pointer p a, MonadIO m, NodeComponent c) 

@@ -214,7 +214,7 @@ library
 
   default-language:    Haskell2010
   ghc-options:         -Wall -Werror 
-  extra-libraries:     Urho3D, stdc++, SDL
+  extra-libraries:     Urho3D, stdc++
   if flag(Urho3DOpenGL)
     cc-options: -DURHO3D_OPENGL
   elseif flag(Urho3DD3D11)

@@ -47,7 +47,7 @@ extern "C" typedef void (*haskellIOFunc)();
 
 class ApplicationH : public Application {
 
-  OBJECT(ApplicationH);
+  URHO3D_OBJECT(ApplicationH, Application);
 
   public:
 

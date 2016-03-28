@@ -8,4 +8,10 @@ packages:
     git: git@github.com:fpco/inline-c-cpp.git
     commit: 12319586f19f08f6b32984e2a1f15c76db290e0c
 extra-deps: []
-resolver: nightly-2015-07-30
+resolver: lts-5.10
+
+extra-lib-dirs:
+- /usr/lib64/Urho3D
+extra-include-dirs:
+- /usr/include
+- /usr/include/Urho3D/ThirdParty

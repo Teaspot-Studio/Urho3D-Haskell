@@ -160,8 +160,6 @@ module Graphics.Urho3D.UI.Element(
   , uiElementIsInsideCombined
   , uiElementGetCombinedScreenRect
   , uiElementSortChildren
-  , uiElementGetLayoutMinSize
-  , uiElementGetLayoutMaxSize
   , uiElementGetIndent
   , uiElementGetIndentSpacing
   , uiElementGetIndentWidth
@@ -1500,22 +1498,6 @@ uiElementSortChildren :: (Parent UIElement a, Pointer p a, MonadIO m)
 uiElementSortChildren p = liftIO $ do 
   let ptr = parentPointer p 
   [C.exp| void { $(UIElement* ptr)->SortChildren() } |]
-
-  -- | Return minimum layout element size in the layout direction. Only valid after layout has been calculated. Used internally by UI for optimizations.
-uiElementGetLayoutMinSize :: (Parent UIElement a, Pointer p a, MonadIO m) 
-  => p -- ^ Pointer to UI element
-  -> m Int
-uiElementGetLayoutMinSize p = liftIO $ do 
-  let ptr = parentPointer p 
-  fromIntegral <$> [C.exp| int { $(UIElement* ptr)->GetLayoutMinSize() } |]
-
--- | Return maximum layout element size in the layout direction. Only valid after layout has been calculated. Used internally by UI for optimizations.
-uiElementGetLayoutMaxSize :: (Parent UIElement a, Pointer p a, MonadIO m) 
-  => p -- ^ Pointer to UI element
-  -> m Int
-uiElementGetLayoutMaxSize p = liftIO $ do 
-  let ptr = parentPointer p 
-  fromIntegral <$> [C.exp| int { $(UIElement* ptr)->GetLayoutMaxSize() } |]
 
 -- | Return horizontal indentation.
 uiElementGetIndent :: (Parent UIElement a, Pointer p a, MonadIO m) 
