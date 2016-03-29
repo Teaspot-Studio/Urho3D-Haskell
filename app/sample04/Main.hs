@@ -74,6 +74,8 @@ createScene app = do
    is also legal to place objects outside the volume but their visibility can then not be checked in a hierarchically
    optimizing manner
   -}
+  (_ :: Ptr Octree) <- fromJustTrace "Octree" <$> nodeCreateComponent scene Nothing Nothing
+
   undefined
 
 -- | Construct an instruction text to the UI.

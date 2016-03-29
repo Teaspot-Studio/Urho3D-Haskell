@@ -52,6 +52,7 @@ library
                        Graphics.Urho3D.Graphics.Camera
                        Graphics.Urho3D.Graphics.Defs
                        Graphics.Urho3D.Graphics.Graphics
+                       Graphics.Urho3D.Graphics.Octree
                        Graphics.Urho3D.Graphics.Renderer
                        Graphics.Urho3D.Graphics.Texture
                        Graphics.Urho3D.Graphics.Texture2D
@@ -108,6 +109,7 @@ library
                        Graphics.Urho3D.Engine.Internal.Engine
                        Graphics.Urho3D.Graphics.Internal.Camera
                        Graphics.Urho3D.Graphics.Internal.Graphics
+                       Graphics.Urho3D.Graphics.Internal.Octree
                        Graphics.Urho3D.Graphics.Internal.Renderer
                        Graphics.Urho3D.Graphics.Internal.Texture
                        Graphics.Urho3D.Graphics.Internal.Texture2D
@@ -155,6 +157,7 @@ library
                        src/Graphics/Urho3D/Graphics/Camera.cpp
                        src/Graphics/Urho3D/Graphics/Defs.cpp
                        src/Graphics/Urho3D/Graphics/Graphics.cpp
+                       src/Graphics/Urho3D/Graphics/Octree.cpp
                        src/Graphics/Urho3D/Graphics/Renderer.cpp
                        src/Graphics/Urho3D/Graphics/Texture.cpp
                        src/Graphics/Urho3D/Graphics/Texture2D.cpp
