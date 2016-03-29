@@ -83,10 +83,58 @@ createScene app = do
   -}
   planeNode <- nodeCreateChild scene "Plane" CM'Replicated 0
   nodeSetScale planeNode (Vector3 100 1 100)
-  (_ :: Ptr StaticModel) <- fromJustTrace "Plane StaticModel" <$> nodeCreateComponent scene Nothing Nothing
-  
-  undefined
+  (planeObject :: Ptr StaticModel) <- fromJustTrace "Plane StaticModel" <$> nodeCreateComponent scene Nothing Nothing
+  (planeModel :: Ptr Model) <- fromJustTrace "Plane.mdl" <$> cacheGetResource cache "Models/Plane.mdl" True 
+  staticModelSetModel planeObject planeModel
+  (planeMaterial :: Ptr Material) <- fromJustTrace "StoneTiled.xml" <$> cacheGetResource cache "Materials/StoneTiled.xml" True
+  staticModelSetMaterial planeObject planeMaterial
 
+  {-
+   Create a directional light to the world so that we can see something. The light scene node's orientation controls the
+   light direction; we will use the SetDirection() function which calculates the orientation from a forward direction vector.
+   The light will use default settings (white light, no shadows)
+  -}
+  lightNode <- nodeCreateChild scene "DirectionalLight" CM'Replicated 0
+  nodeSetDirection lightNode (Vector3 0.6 (-1.0) 0.8)
+  (light :: Ptr Light) <- fromJustTrace "Light" <$> nodeCreateComponent lightNode Nothing Nothing
+  lightSetLightType light LT'Directional
+
+  {-
+   Create more StaticModel objects to the scene, randomly positioned, rotated and scaled. For rotation, we construct a
+   quaternion from Euler angles where the Y angle (rotation about the Y axis) is randomized. The mushroom model contains
+   LOD levels, so the StaticModel component will automatically select the LOD level according to the view distance (you'll
+   see the model get simpler as it moves further away). Finally, rendering a large number of the same object with the
+   same material allows instancing to be used, if the GPU supports it. This reduces the amount of CPU work in rendering the
+   scene.
+  -}
+  let numObjects = 200
+  _ <- replicateM numObjects $ do 
+    mushroomNode <- nodeCreateChild scene "Mushroom" CM'Replicated 0
+    [r1, r2] <- replicateM 2 (randomUp 90)
+    nodeSetPosition mushroomNode $ Vector3 (r1 - 45) 0 (r2 - 45)
+    r3 <- randomUp 360 
+    nodeSetRotation mushroomNode $ quaternionFromEuler 0 r3 0
+    r4 <- randomUp 2
+    nodeSetScale' mushroomNode $ 0.5 + r4
+
+    (mushroomObject :: Ptr StaticModel) <- fromJustTrace "Mushroom StaticModel" <$> nodeCreateComponent scene Nothing Nothing
+    (mushroomModel :: Ptr Model) <- fromJustTrace "Mushroom.mdl" <$> cacheGetResource cache "Models/Mushroom.mdl" True
+    staticModelSetModel mushroomObject mushroomModel
+    (mushroomMaterial :: Ptr Material) <- fromJustTrace "Mushroom.xml" <$> cacheGetResource cache "Materials/Mushroom.xml" True
+    staticModelSetMaterial mushroomObject mushroomMaterial
+
+  {-
+    Create a scene node for the camera, which we will move around
+    The camera will use default settings (1000 far clip distance, 45 degrees FOV, set aspect ratio automatically)
+  -}
+  cameraNode <- nodeCreateChild scene "Camera" CM'Replicated 0
+  (_ :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent scene Nothing Nothing
+
+  -- Set an initial position for the camera scene node above the plane
+  nodeSetPosition cameraNode $ Vector3 0 5.0 0
+
+  return scene
+  
 -- | Construct an instruction text to the UI.
 createInstructions :: SharedApplicationPtr -> IO ()
 createInstructions app = undefined

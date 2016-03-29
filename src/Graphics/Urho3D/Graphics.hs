@@ -6,6 +6,7 @@ import Graphics.Urho3D.Graphics.Camera as X
 import Graphics.Urho3D.Graphics.Defs as X
 import Graphics.Urho3D.Graphics.Drawable as X
 import Graphics.Urho3D.Graphics.Graphics as X
+import Graphics.Urho3D.Graphics.Light as X
 import Graphics.Urho3D.Graphics.Material as X
 import Graphics.Urho3D.Graphics.Model as X
 import Graphics.Urho3D.Graphics.Octree as X
