@@ -76,6 +76,14 @@ createScene app = do
   -}
   (_ :: Ptr Octree) <- fromJustTrace "Octree" <$> nodeCreateComponent scene Nothing Nothing
 
+  {-
+   Create a child scene node (at world origin) and a StaticModel component into it. Set the StaticModel to show a simple
+   plane mesh with a "stone" material. Note that naming the scene nodes is optional. Scale the scene node larger
+   (100 x 100 world units)
+  -}
+  planeNode <- nodeCreateChild scene "Plane" CM'Replicated 0
+  nodeSetScale planeNode (Vector3 100 1 100)
+  (_ :: Ptr StaticModel) <- fromJustTrace "Plane StaticModel" <$> nodeCreateComponent scene Nothing Nothing
   undefined
 
 -- | Construct an instruction text to the UI.
