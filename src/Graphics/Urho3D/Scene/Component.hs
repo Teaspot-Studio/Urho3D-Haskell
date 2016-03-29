@@ -4,7 +4,6 @@ module Graphics.Urho3D.Scene.Component(
   , componentContext
   , SharedComponent
   , SharedComponentPtr
-  , IsComponent(..)
   ) where
 
 import qualified Language.C.Inline as C 
@@ -37,9 +36,5 @@ instance Createable (Ptr Component) where
 
   newObject = liftIO . newComponent
   deleteObject = liftIO . deleteComponent
-
--- | Defines components subclasses that can be indexed by string hash
-class Parent Component a => IsComponent a where 
-  componentHash :: forall proxy . proxy a -> Ptr StringHash
 
 sharedPtr "Component" 

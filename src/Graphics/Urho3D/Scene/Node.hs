@@ -751,7 +751,7 @@ nodeRemoveChildren p removeReplicated removeLocal recursive = liftIO $ do
   [C.exp| void { $(Node* ptr)->RemoveChildren($(int r') != 0, $(int l') != 0, $(int rec') != 0) } |]
 
 -- | Create a component to this node (with specified ID if provided)
-nodeCreateComponent :: forall a p c m . (Parent Node a, Pointer p a, IsComponent c, MonadIO m)
+nodeCreateComponent :: forall a p c m . (Parent Node a, Pointer p a, NodeComponent c, MonadIO m)
   => p -- ^ Node pointer or child
   -> Maybe CreateMode -- ^ mode, default is replicated
   -> Maybe Int -- ^ id, default is 0 
@@ -760,12 +760,12 @@ nodeCreateComponent p mc mi = liftIO $ do
   let ptr = parentPointer p 
       c' = maybe [C.pure| int { (int)REPLICATED } |] (fromIntegral . fromEnum) mc 
       i' = maybe 0 fromIntegral mi
-      th = componentHash (Proxy :: Proxy c)
+      th = nodeComponentType (Proxy :: Proxy c)
   cp <- [C.exp| Component* { $(Node* ptr)->CreateComponent(*$(StringHash* th), (CreateMode)$(int c'), $(int i')) } |]
   join <$> checkNullPtr' cp (return . castToChild)
 
 -- | Create a component to this node if it does not exist already.
-nodeGetOrCreateComponent :: forall a p c m . (Parent Node a, Pointer p a, IsComponent c, MonadIO m) 
+nodeGetOrCreateComponent :: forall a p c m . (Parent Node a, Pointer p a, NodeComponent c, MonadIO m) 
   => p -- ^ Node pointer or child
   -> Maybe CreateMode -- ^ mode, default is replicated
   -> Maybe Int -- ^ id, default is 0 
@@ -774,7 +774,7 @@ nodeGetOrCreateComponent p mc mi = liftIO $ do
   let ptr = parentPointer p 
       c' = maybe [C.pure| int { (int)REPLICATED } |] (fromIntegral . fromEnum) mc 
       i' = maybe 0 fromIntegral mi 
-      th = componentHash (Proxy :: Proxy c)
+      th = nodeComponentType (Proxy :: Proxy c)
   cp <- [C.exp| Component* { $(Node* ptr)->GetOrCreateComponent(*$(StringHash* th), (CreateMode)$(int c'), $(int i')) } |]
   join <$> checkNullPtr' cp (return . castToChild)
 

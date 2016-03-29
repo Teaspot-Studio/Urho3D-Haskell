@@ -84,7 +84,7 @@ rendererGetSpecularLighting :: (Parent Renderer a, Pointer p a, MonadIO m) => p 
   -> m Bool
 rendererGetSpecularLighting p = liftIO $ do 
   let ptr = parentPointer p 
-  (/= 0) <$> [C.exp| int {$(Renderer* ptr)->GetSpecularLighting()}|]
+  toBool <$> [C.exp| int {$(Renderer* ptr)->GetSpecularLighting()}|]
 
 -- | Switches on/off specular lighting
 rendererSetSpecularLighting :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child
@@ -100,7 +100,7 @@ rendererGetDrawShadows :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ 
   -> m Bool
 rendererGetDrawShadows p = liftIO $ do 
   let ptr = parentPointer p 
-  (/= 0) <$> [C.exp| int {$(Renderer* ptr)->GetDrawShadows()}|]
+  toBool <$> [C.exp| int {$(Renderer* ptr)->GetDrawShadows()}|]
 
 -- | Switches on/off shadows
 rendererSetDrawShadows :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child

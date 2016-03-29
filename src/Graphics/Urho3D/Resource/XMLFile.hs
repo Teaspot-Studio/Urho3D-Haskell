@@ -47,7 +47,7 @@ instance ResourceType XMLFile where
 -- | Loads XML from string
 xmlFileFromString :: MonadIO m => Ptr XMLFile -> String -> m Bool 
 xmlFileFromString ptr s = liftIO $ withCString s $ \s' -> do
-  (/= 0) <$> [C.exp| int { (int)$(XMLFile* ptr)->FromString(String($(const char* s'))) } |] 
+  toBool <$> [C.exp| int { (int)$(XMLFile* ptr)->FromString(String($(const char* s'))) } |] 
   
 -- | Patch the XMLFile with another XMLFile. Based on RFC 5261.
 xmlFilePatch :: MonadIO m => Ptr XMLFile -> Ptr XMLFile -> m ()

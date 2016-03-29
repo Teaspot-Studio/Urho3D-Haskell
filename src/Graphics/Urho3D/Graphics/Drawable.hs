@@ -13,8 +13,9 @@ import Data.Monoid
 import Foreign
 import System.IO.Unsafe (unsafePerformIO) 
 
-import Graphics.Urho3D.Scene.Component
 import Graphics.Urho3D.Math.StringHash 
+import Graphics.Urho3D.Scene.Component
+import Graphics.Urho3D.Scene.Node
 
 C.context (C.cppCtx <> drawableCntx <> componentContext <> stringHashContext)
 C.include "<Urho3D/Graphics/Drawable.h>"
@@ -29,11 +30,8 @@ instance Parent Component Drawable where
     let child = [C.pure| Drawable* { (Drawable*)$(Component* ptr) } |]
     in if child == nullPtr then Nothing else Just child
 
-instance IsComponent Drawable where 
-  componentHash _ = unsafePerformIO [C.block| StringHash* { 
-    static StringHash* sh = NULL;
-    if (!sh) {
-      sh = new StringHash(Drawable::GetTypeStatic());
-    }
-    return sh;
+instance NodeComponent Drawable where 
+  nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {
+    static StringHash h = Drawable::GetTypeStatic();
+    return &h;
   } |]

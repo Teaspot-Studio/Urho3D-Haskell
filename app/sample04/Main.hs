@@ -84,6 +84,7 @@ createScene app = do
   planeNode <- nodeCreateChild scene "Plane" CM'Replicated 0
   nodeSetScale planeNode (Vector3 100 1 100)
   (_ :: Ptr StaticModel) <- fromJustTrace "Plane StaticModel" <$> nodeCreateComponent scene Nothing Nothing
+  
   undefined
 
 -- | Construct an instruction text to the UI.

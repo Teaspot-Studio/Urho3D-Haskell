@@ -70,7 +70,7 @@ consoleIsVisible :: (Pointer p a, Parent Console a, MonadIO m) => p -- ^ Console
   -> m Bool
 consoleIsVisible p = liftIO $ do 
   let ptr = parentPointer p 
-  (/= 0) <$> [C.exp| int { (int)$(Console* ptr)->IsVisible()} |]
+  toBool <$> [C.exp| int { (int)$(Console* ptr)->IsVisible()} |]
 
 -- | Returns True if console is visible to user
 consoleSetVisible :: (Pointer p a, Parent Console a, MonadIO m) => p -- ^ Console ptr (or child)

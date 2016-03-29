@@ -53,6 +53,8 @@ library
                        Graphics.Urho3D.Graphics.Defs
                        Graphics.Urho3D.Graphics.Drawable
                        Graphics.Urho3D.Graphics.Graphics
+                       Graphics.Urho3D.Graphics.Material
+                       Graphics.Urho3D.Graphics.Model
                        Graphics.Urho3D.Graphics.Octree
                        Graphics.Urho3D.Graphics.Renderer
                        Graphics.Urho3D.Graphics.StaticModel
@@ -112,6 +114,8 @@ library
                        Graphics.Urho3D.Graphics.Internal.Camera
                        Graphics.Urho3D.Graphics.Internal.Drawable
                        Graphics.Urho3D.Graphics.Internal.Graphics
+                       Graphics.Urho3D.Graphics.Internal.Material
+                       Graphics.Urho3D.Graphics.Internal.Model
                        Graphics.Urho3D.Graphics.Internal.Octree
                        Graphics.Urho3D.Graphics.Internal.Renderer
                        Graphics.Urho3D.Graphics.Internal.StaticModel
@@ -162,6 +166,8 @@ library
                        src/Graphics/Urho3D/Graphics/Defs.cpp
                        src/Graphics/Urho3D/Graphics/Drawable.cpp
                        src/Graphics/Urho3D/Graphics/Graphics.cpp
+                       src/Graphics/Urho3D/Graphics/Material.cpp
+                       src/Graphics/Urho3D/Graphics/Model.cpp
                        src/Graphics/Urho3D/Graphics/Octree.cpp
                        src/Graphics/Urho3D/Graphics/Renderer.cpp
                        src/Graphics/Urho3D/Graphics/StaticModel.cpp

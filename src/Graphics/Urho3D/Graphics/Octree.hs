@@ -14,8 +14,9 @@ import Data.Monoid
 import Foreign
 import System.IO.Unsafe (unsafePerformIO) 
 
-import Graphics.Urho3D.Scene.Component
 import Graphics.Urho3D.Math.StringHash 
+import Graphics.Urho3D.Scene.Component
+import Graphics.Urho3D.Scene.Node
 
 C.context (C.cppCtx <> octreeCntx <> componentContext <> stringHashContext)
 C.include "<Urho3D/Graphics/Octree.h>"
@@ -36,11 +37,8 @@ instance Parent Octant Octree where
     let child = [C.pure| Octree* { (Octree*)$(Octant* ptr) } |]
     in if child == nullPtr then Nothing else Just child
 
-instance IsComponent Octree where 
-  componentHash _ = unsafePerformIO [C.block| StringHash* { 
-    static StringHash* sh = NULL;
-    if (!sh) {
-      sh = new StringHash(Octree::GetTypeStatic());
-    }
-    return sh;
+instance NodeComponent Octree where 
+  nodeComponentType _ = unsafePerformIO [C.block| StringHash* { 
+    static StringHash sh = Octree::GetTypeStatic();
+    return &sh;
   } |]
