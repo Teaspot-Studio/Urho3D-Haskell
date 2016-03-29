@@ -53,16 +53,16 @@ customStart sr = do
   let app = s ^. sampleApplication
 
   -- Create the scene content 
-  createScene app 
+  (scene, cameraNode) <- createScene app 
   -- Create the UI content 
   createInstructions app 
   -- Setup the viewport for displaying the scene
-  setupViewport app 
+  setupViewport app scene cameraNode
   -- Hook up to the frame update events 
   subscribeToEvents app 
 
 -- | Construct the scene content.
-createScene :: SharedApplicationPtr -> IO SharedScenePtr
+createScene :: SharedApplicationPtr -> IO (SharedScenePtr, Ptr Node)
 createScene app = do 
   (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
 
@@ -128,20 +128,44 @@ createScene app = do
     The camera will use default settings (1000 far clip distance, 45 degrees FOV, set aspect ratio automatically)
   -}
   cameraNode <- nodeCreateChild scene "Camera" CM'Replicated 0
-  (_ :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent scene Nothing Nothing
+  (_ :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
 
   -- Set an initial position for the camera scene node above the plane
   nodeSetPosition cameraNode $ Vector3 0 5.0 0
 
-  return scene
-  
+  return (scene, cameraNode)
+
 -- | Construct an instruction text to the UI.
 createInstructions :: SharedApplicationPtr -> IO ()
-createInstructions app = undefined
+createInstructions app = do 
+  (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
+  (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app
+  root <- uiRoot ui 
+
+  -- Construct new Text object, set string to display and font to use
+  (instructionText :: Ptr Text) <- createChildSimple root
+  textSetText instructionText "Use WASD keys and mouse/touch to move"
+  (font :: Ptr Font) <- fromJustTrace "Anonymous Pro.ttf" <$> cacheGetResource cache "Fonts/Anonymous Pro.ttf" True
+
+  -- Position the text relative to the screen center
+  uiElementSetAlignment instructionText AlignmentHorizontalCenter AlignmentVerticalCenter
+  rootHeight <- uiElementGetHeight root 
+  uiElementSetPosition instructionText $ IntVector2 0 (rootHeight `div` 4)
 
 -- | Set up a viewport for displaying the scene.
-setupViewport :: SharedApplicationPtr -> IO ()
-setupViewport app = undefined
+setupViewport :: SharedApplicationPtr -> SharedScenePtr -> Ptr Node -> IO ()
+setupViewport app scene cameraNode = do 
+  (renderer :: Ptr Renderer) <- fromJustTrace "Renderer" <$> getSubsystem app
+
+  {-
+    Set up a viewport to the Renderer subsystem so that the 3D scene can be seen. We need to define the scene and the camera
+    at minimum. Additionally we could configure the viewport screen size and the rendering path (eg. forward / deferred) to
+    use, but now we just use full screen and default render path configured in the engine command line options
+  -}
+  cntx <- getContext app 
+  (camera :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent cameraNode 
+  (viewport :: SharedViewportPtr) <- newSharedObject (cntx, pointer scene, camera)
+  rendererSetViewport renderer 0 viewport
 
 -- | Read input and moves the camera.
 moveCamera :: Float -> IO ()

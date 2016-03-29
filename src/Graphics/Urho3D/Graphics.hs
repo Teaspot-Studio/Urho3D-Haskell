@@ -14,3 +14,4 @@ import Graphics.Urho3D.Graphics.Renderer as X
 import Graphics.Urho3D.Graphics.StaticModel as X
 import Graphics.Urho3D.Graphics.Texture as X
 import Graphics.Urho3D.Graphics.Texture2D as X
+import Graphics.Urho3D.Graphics.Viewport as X

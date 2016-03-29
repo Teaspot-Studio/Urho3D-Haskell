@@ -2,6 +2,8 @@
 module Graphics.Urho3D.Graphics.Renderer(
     Renderer
   , rendererContext
+  , rendererSetNumViewports
+  , rendererSetViewport
   , rendererGetTextureQuality
   , rendererSetTextureQuality
   , rendererGetMaterialQuality
@@ -24,6 +26,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.Renderer
+import Graphics.Urho3D.Graphics.Viewport
 import Graphics.Urho3D.Graphics.Defs
 import Graphics.Urho3D.Core.Object 
 import Graphics.Urho3D.Monad
@@ -31,7 +34,7 @@ import Data.Monoid
 import Foreign 
 import Foreign.C.Types
 
-C.context (C.cppCtx <> rendererCntx <> objectContext)
+C.context (C.cppCtx <> rendererCntx <> objectContext <> viewportContext)
 C.include "<Urho3D/Graphics/Renderer.h>"
 C.using "namespace Urho3D"
 
@@ -46,6 +49,28 @@ instance Parent Object Renderer where
 
 instance Subsystem Renderer where 
   getSubsystemImpl ptr = [C.exp| Renderer* { $(Object* ptr)->GetSubsystem<Renderer>() } |]
+
+-- | Set number of backbuffer viewports to render. 
+rendererSetNumViewports :: (Parent Renderer a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to renderer
+  -> Word -- ^ Count of backbuffers
+  -> m ()
+rendererSetNumViewports p w = liftIO $ do 
+  let ptr = parentPointer p 
+      wi = fromIntegral w
+  [C.exp| void { $(Renderer* ptr)->SetNumViewports($(unsigned int wi)) } |]
+
+-- | Set a backbuffer viewport.
+rendererSetViewport :: (Parent Renderer a, Pointer p a, Parent Viewport b, Pointer pv b, MonadIO m) 
+  => p -- ^ Pointer to renderer
+  -> Word -- ^ Index of backbuffer
+  -> pv -- ^ Pointer to viewport
+  -> m ()
+rendererSetViewport p w pv = liftIO $ do 
+  let ptr = parentPointer p 
+      wi = fromIntegral w 
+      vptr = parentPointer pv 
+  [C.exp| void { $(Renderer* ptr)->SetViewport($(unsigned int wi), $(Viewport* vptr)) } |]
 
 -- | Return texture quality level.
 rendererGetTextureQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child

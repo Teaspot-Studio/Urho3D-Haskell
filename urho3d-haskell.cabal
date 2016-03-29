@@ -61,6 +61,7 @@ library
                        Graphics.Urho3D.Graphics.StaticModel
                        Graphics.Urho3D.Graphics.Texture
                        Graphics.Urho3D.Graphics.Texture2D
+                       Graphics.Urho3D.Graphics.Viewport
                        Graphics.Urho3D.Input
                        Graphics.Urho3D.Input.Events
                        Graphics.Urho3D.Input.Input
@@ -123,6 +124,7 @@ library
                        Graphics.Urho3D.Graphics.Internal.StaticModel
                        Graphics.Urho3D.Graphics.Internal.Texture
                        Graphics.Urho3D.Graphics.Internal.Texture2D
+                       Graphics.Urho3D.Graphics.Internal.Viewport
                        Graphics.Urho3D.Input.Internal.Input
                        Graphics.Urho3D.IO.Internal.FileSystem
                        Graphics.Urho3D.Math.Internal.Color
@@ -176,6 +178,7 @@ library
                        src/Graphics/Urho3D/Graphics/StaticModel.cpp
                        src/Graphics/Urho3D/Graphics/Texture.cpp
                        src/Graphics/Urho3D/Graphics/Texture2D.cpp
+                       src/Graphics/Urho3D/Graphics/Viewport.cpp
                        src/Graphics/Urho3D/Input/Events.cpp
                        src/Graphics/Urho3D/Input/Input.cpp
                        src/Graphics/Urho3D/IO/FileSystem.cpp
