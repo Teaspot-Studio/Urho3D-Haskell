@@ -167,10 +167,51 @@ setupViewport app scene cameraNode = do
   (viewport :: SharedViewportPtr) <- newSharedObject (cntx, pointer scene, camera)
   rendererSetViewport renderer 0 viewport
 
--- | Read input and moves the camera.
-moveCamera :: Float -> IO ()
-moveCamera timeStep = undefined
+data CameraData = CameraData {
+  camYaw :: Float 
+, camPitch :: Float
+}
 
+-- | Read input and moves the camera.
+moveCamera :: SharedApplicationPtr -> Ptr Node -> Float -> CameraData -> IO CameraData
+moveCamera app cameraNode timeStep camData = do 
+  (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app 
+
+  -- Do not move if the UI has a focused element (the console)
+  mFocusElem <- uiFocusElement ui
+  whenNothing mFocusElem camData $ do 
+    (input :: Ptr Input) <- fromJustTrace "Input" <$> getSubsystem app
+
+    -- Movement speed as world units per second
+    let moveSpeed = 20
+    -- Mouse sensitivity as degrees per pixel
+    let mouseSensitivity = 0.1
+
+    -- Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
+    mouseMove <- inputGetMouseMove input 
+    let yaw = camYaw camData + mouseSensitivity * fromIntegral (mouseMove ^. x)
+    let pitch = camPitch camData + mouseSensitivity * fromIntegral (mouseMove ^. y)
+
+    -- Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
+    nodeSetRotation cameraNode $ quaternionFromEuler pitch yaw 0 
+
+    -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
+    -- Use the Translate() function (default local space) to move relative to the node's orientation.
+    whenM (inputGetKeyDown input 'W') $ 
+      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * timeStep)) TS'Local
+    whenM (inputGetKeyDown input 'S') $ 
+      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * timeStep)) TS'Local
+    whenM (inputGetKeyDown input 'A') $ 
+      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * timeStep)) TS'Local
+    whenM (inputGetKeyDown input 'D') $ 
+      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * timeStep)) TS'Local
+
+    return camData {
+        camYaw = yaw 
+      , camPitch = pitch
+      }
+  where 
+    mul (Vector3 a b c) v = Vector3 (a*v) (b*v) (c*v)
 -- | Subscribe to application-wide logic update events.
 subscribeToEvents :: SharedApplicationPtr -> IO ()
 subscribeToEvents app = undefined
@@ -178,3 +219,8 @@ subscribeToEvents app = undefined
 -- | Handle the logic update event.
 handleUpdate :: EventUpdate -> IO ()
 handleUpdate e = undefined
+
+-- | Helper to run code when value is nothing
+whenNothing :: Monad m => Maybe a -> b -> m b -> m b
+whenNothing Nothing _ f = f 
+whenNothing (Just _) a _ = return a

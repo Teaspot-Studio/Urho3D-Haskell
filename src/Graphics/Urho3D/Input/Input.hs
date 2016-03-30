@@ -17,6 +17,8 @@ module Graphics.Urho3D.Input.Input(
   , inputGetNumTouches
   , inputGetTouch
   , inputSetMouseVisible
+  , inputGetMouseMove
+  , inputGetKeyDown
   ) where
 
 import qualified Language.C.Inline as C 
@@ -33,6 +35,7 @@ import Foreign
 import Text.RawString.QQ
 import Control.Lens 
 import Data.Maybe
+import Data.Char 
 
 C.context (C.cppCtx <> inputCntx <> objectContext <> xmlFileContext <> vector2Context <> uiElementContext)
 C.include "<Urho3D/Input/Input.h>"
@@ -146,3 +149,22 @@ inputSetMouseVisible p flag = liftIO $ do
   let ptr = parentPointer p 
       flag' = fromBool flag
   [C.exp| void { $(Input* ptr)->SetMouseVisible($(int flag')) } |]
+
+-- | Return mouse movement since last frame.
+inputGetMouseMove :: (Parent Input a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to input
+  -> m IntVector2
+inputGetMouseMove p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| const IntVector2* { &$(Input* ptr)->GetMouseMove() } |]
+
+-- | Check if a key is held down.
+inputGetKeyDown :: (Parent Input a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to input
+  -> Char -- ^ Key to test
+  -> m Bool
+inputGetKeyDown p k = liftIO $ do 
+  let ptr = parentPointer p 
+      ki = fromIntegral . ord $ k
+  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetKeyDown($(int ki)) } |]
+  
