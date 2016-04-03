@@ -59,7 +59,7 @@ customStart sr = do
   -- Setup the viewport for displaying the scene
   setupViewport app scene cameraNode
   -- Hook up to the frame update events 
-  subscribeToEvents app 
+  subscribeToEvents app cameraNode
 
 -- | Construct the scene content.
 createScene :: SharedApplicationPtr -> IO (SharedScenePtr, Ptr Node)
@@ -83,7 +83,7 @@ createScene app = do
   -}
   planeNode <- nodeCreateChild scene "Plane" CM'Replicated 0
   nodeSetScale planeNode (Vector3 100 1 100)
-  (planeObject :: Ptr StaticModel) <- fromJustTrace "Plane StaticModel" <$> nodeCreateComponent scene Nothing Nothing
+  (planeObject :: Ptr StaticModel) <- fromJustTrace "Plane StaticModel" <$> nodeCreateComponent planeNode Nothing Nothing
   (planeModel :: Ptr Model) <- fromJustTrace "Plane.mdl" <$> cacheGetResource cache "Models/Plane.mdl" True 
   staticModelSetModel planeObject planeModel
   (planeMaterial :: Ptr Material) <- fromJustTrace "StoneTiled.xml" <$> cacheGetResource cache "Materials/StoneTiled.xml" True
@@ -117,7 +117,7 @@ createScene app = do
     r4 <- randomUp 2
     nodeSetScale' mushroomNode $ 0.5 + r4
 
-    (mushroomObject :: Ptr StaticModel) <- fromJustTrace "Mushroom StaticModel" <$> nodeCreateComponent scene Nothing Nothing
+    (mushroomObject :: Ptr StaticModel) <- fromJustTrace "Mushroom StaticModel" <$> nodeCreateComponent mushroomNode Nothing Nothing
     (mushroomModel :: Ptr Model) <- fromJustTrace "Mushroom.mdl" <$> cacheGetResource cache "Models/Mushroom.mdl" True
     staticModelSetModel mushroomObject mushroomModel
     (mushroomMaterial :: Ptr Material) <- fromJustTrace "Mushroom.xml" <$> cacheGetResource cache "Materials/Mushroom.xml" True
@@ -146,6 +146,7 @@ createInstructions app = do
   (instructionText :: Ptr Text) <- createChildSimple root
   textSetText instructionText "Use WASD keys and mouse/touch to move"
   (font :: Ptr Font) <- fromJustTrace "Anonymous Pro.ttf" <$> cacheGetResource cache "Fonts/Anonymous Pro.ttf" True
+  textSetFont instructionText font 15
 
   -- Position the text relative to the screen center
   uiElementSetAlignment instructionText AlignmentHorizontalCenter AlignmentVerticalCenter
@@ -212,13 +213,21 @@ moveCamera app cameraNode timeStep camData = do
       }
   where 
     mul (Vector3 a b c) v = Vector3 (a*v) (b*v) (c*v)
+
 -- | Subscribe to application-wide logic update events.
-subscribeToEvents :: SharedApplicationPtr -> IO ()
-subscribeToEvents app = undefined
+subscribeToEvents :: SharedApplicationPtr -> Ptr Node -> IO ()
+subscribeToEvents app cameraNode = do 
+  camDataRef <- newIORef $ CameraData 0 0
+  subscribeToEvent app $ handleUpdate app cameraNode camDataRef
 
 -- | Handle the logic update event.
-handleUpdate :: EventUpdate -> IO ()
-handleUpdate e = undefined
+handleUpdate :: SharedApplicationPtr -> Ptr Node -> IORef CameraData -> EventUpdate -> IO ()
+handleUpdate app cameraNode camDataRef e = do 
+  -- Take the frame time step, which is stored as a float
+  let t = e ^. timeStep
+  camData <- readIORef camDataRef
+  -- Move the camera, scale movement with time step
+  writeIORef camDataRef =<< moveCamera app cameraNode t camData
 
 -- | Helper to run code when value is nothing
 whenNothing :: Monad m => Maybe a -> b -> m b -> m b
