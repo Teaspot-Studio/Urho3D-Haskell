@@ -5,7 +5,7 @@ Haskell bindings to Urho3D engine
 
 * Partial bindings
 * Sample class is ported to Haskell
-* Hello-World sample is ported
+* Four samples are ported
 
 ## Compilation of Urho3D
 
