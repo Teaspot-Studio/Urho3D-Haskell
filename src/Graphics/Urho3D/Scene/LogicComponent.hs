@@ -20,8 +20,9 @@ import Foreign
 
 import Graphics.Urho3D.Scene.Animatable 
 import Graphics.Urho3D.Scene.Component 
+import Graphics.Urho3D.Scene.Serializable
 
-C.context (C.cppCtx <> logicComponentCntx <> sharedLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext)
+C.context (C.cppCtx <> logicComponentCntx <> sharedLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext <> serializableContext)
 C.include "<Urho3D/Scene/LogicComponent.h>"
 C.using "namespace Urho3D" 
 
@@ -52,4 +53,10 @@ instance Parent Animatable LogicComponent where
   castToParent ptr = [C.pure| Animatable* {(Animatable*)$(LogicComponent* ptr)} |]
   castToChild ptr = let
     child = [C.pure| LogicComponent* {(LogicComponent*)$(Animatable* ptr)} |]
+    in if child == nullPtr then Nothing else Just child
+
+instance Parent Serializable LogicComponent where
+  castToParent ptr = [C.pure| Serializable* {(Serializable*)$(LogicComponent* ptr)} |]
+  castToChild ptr = let
+    child = [C.pure| LogicComponent* {(LogicComponent*)$(Serializable* ptr)} |]
     in if child == nullPtr then Nothing else Just child

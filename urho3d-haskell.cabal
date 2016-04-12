@@ -92,6 +92,7 @@ library
                        Graphics.Urho3D.Scene.LogicComponent
                        Graphics.Urho3D.Scene.Node
                        Graphics.Urho3D.Scene.Scene
+                       Graphics.Urho3D.Scene.Serializable
                        Graphics.Urho3D.UI
                        Graphics.Urho3D.UI.BorderImage
                        Graphics.Urho3D.UI.Button
@@ -146,6 +147,7 @@ library
                        Graphics.Urho3D.Scene.Internal.LogicComponent
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Scene.Internal.Scene
+                       Graphics.Urho3D.Scene.Internal.Serializable
                        Graphics.Urho3D.Template
                        Graphics.Urho3D.UI.Internal.BorderImage
                        Graphics.Urho3D.UI.Internal.Button
@@ -206,6 +208,7 @@ library
                        src/Graphics/Urho3D/Scene/LogicComponent.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
                        src/Graphics/Urho3D/Scene/Scene.cpp
+                       src/Graphics/Urho3D/Scene/Serializable.cpp
                        src/Graphics/Urho3D/UI/BorderImage.cpp
                        src/Graphics/Urho3D/UI/Button.cpp
                        src/Graphics/Urho3D/UI/CheckBox.cpp
