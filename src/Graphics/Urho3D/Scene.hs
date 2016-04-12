@@ -3,6 +3,7 @@ module Graphics.Urho3D.Scene(
   ) where
 
 import Graphics.Urho3D.Scene.Component as X
+import Graphics.Urho3D.Scene.CustomLogicComponent as X
 import Graphics.Urho3D.Scene.Events as X
 import Graphics.Urho3D.Scene.LogicComponent as X
 import Graphics.Urho3D.Scene.Node as X

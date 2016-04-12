@@ -88,6 +88,7 @@ library
                        Graphics.Urho3D.Scene
                        Graphics.Urho3D.Scene.Animatable
                        Graphics.Urho3D.Scene.Component
+                       Graphics.Urho3D.Scene.CustomLogicComponent
                        Graphics.Urho3D.Scene.Events
                        Graphics.Urho3D.Scene.LogicComponent
                        Graphics.Urho3D.Scene.Node
@@ -144,6 +145,7 @@ library
                        Graphics.Urho3D.Resource.Internal.XMLFile
                        Graphics.Urho3D.Scene.Internal.Animatable
                        Graphics.Urho3D.Scene.Internal.Component
+                       Graphics.Urho3D.Scene.Internal.CustomLogicComponent
                        Graphics.Urho3D.Scene.Internal.LogicComponent
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Scene.Internal.Scene
@@ -204,6 +206,7 @@ library
                        src/Graphics/Urho3D/Resource/XMLFile.cpp
                        src/Graphics/Urho3D/Scene/Animatable.cpp
                        src/Graphics/Urho3D/Scene/Component.cpp
+                       src/Graphics/Urho3D/Scene/CustomLogicComponent.cpp
                        src/Graphics/Urho3D/Scene/Events.cpp
                        src/Graphics/Urho3D/Scene/LogicComponent.cpp
                        src/Graphics/Urho3D/Scene/Node.cpp
@@ -256,6 +259,7 @@ library
     TemplateHaskell
     TypeFamilies
     UndecidableInstances
+    RecordWildCards
     
   default-language:    Haskell2010
   ghc-options:         -Wall -Werror 

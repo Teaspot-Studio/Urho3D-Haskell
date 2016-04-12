@@ -4,6 +4,7 @@ module Graphics.Urho3D.Scene.LogicComponent(
   , logicComponentContext
   , SharedLogicComponent
   , SharedLogicComponentPtr
+  , EventMask(..)
   , logicComponentOnSetEnabled
   , logicComponentStart
   , logicComponentDelayedStart
