@@ -20,6 +20,7 @@ module Graphics.Urho3D.Monad(
   -- | Foreign utils
   , textAsPtrW32
   , textFromPtrW32
+  , BitSet(..)
   ) where
 
 import qualified Data.Text as T 
@@ -31,9 +32,10 @@ import Control.Monad.Catch as X
 import Control.Monad.Reader as X
 import Control.DeepSeq 
 
-import Data.Typeable
-import Data.Text.Encoding (encodeUtf32LE, decodeUtf32LE)
 import Data.ByteString.Unsafe (unsafeUseAsCString, unsafePackCString)
+import Data.Maybe 
+import Data.Text.Encoding (encodeUtf32LE, decodeUtf32LE)
+import Data.Typeable
 
 -- | Describes monad with context @s@
 newtype Urho s a = Urho { unUrho :: ReaderT (Ptr s) IO a}
@@ -146,3 +148,17 @@ maybeNull b f ptr
 
 instance NFData (Ptr a) where 
   rnf = (`seq` ())
+
+-- | Converting enums to bitset and vice-versa
+class BitSet a where 
+  toByteBitset :: [a] -> Word8
+  fromByteBitset :: Word8 -> [a]
+
+-- | Assumes that enum instance uses only powers of two
+instance Enum a => BitSet a where 
+  toByteBitset = sum . fmap (fromIntegral . fromEnum)
+  fromByteBitset w = catMaybes $ extractBit <$> [0 .. 7]
+    where
+    extractBit i = if testBit w i
+      then Just . toEnum $ 2^i 
+      else Nothing

@@ -255,7 +255,8 @@ library
     ScopedTypeVariables
     TemplateHaskell
     TypeFamilies
-
+    UndecidableInstances
+    
   default-language:    Haskell2010
   ghc-options:         -Wall -Werror 
   extra-libraries:     Urho3D, stdc++
