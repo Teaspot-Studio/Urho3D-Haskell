@@ -31,9 +31,11 @@ import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
+import System.IO.Unsafe (unsafePerformIO)
 
 import Graphics.Urho3D.Scene.Animatable 
 import Graphics.Urho3D.Scene.Component 
+import Graphics.Urho3D.Scene.Node 
 import Graphics.Urho3D.Scene.Serializable
 
 C.context (C.cppCtx <> logicComponentCntx <> sharedLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext <> serializableContext)
@@ -74,6 +76,12 @@ instance Parent Serializable LogicComponent where
   castToChild ptr = let
     child = [C.pure| LogicComponent* {(LogicComponent*)$(Serializable* ptr)} |]
     in if child == nullPtr then Nothing else Just child
+
+instance NodeComponent LogicComponent where 
+  nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {
+    static StringHash h = LogicComponent::GetTypeStatic();
+    return &h;
+  } |]
 
 -- | Data used in 'logicComponentSetUpdateEventMask' for optimizing even handling
 data EventMask = 
