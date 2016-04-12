@@ -194,13 +194,13 @@ uiElementContext = sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext 
 
 C.verbatim "typedef HashMap<StringHash, Variant> HashMapStringHashVariant;"
 
-sharedPtr "UIElement" 
-
 instance Createable (Ptr UIElement) where 
   type CreationOptions (Ptr UIElement) = Ptr Context 
 
   newObject ptr = liftIO $ [C.exp| UIElement* { new UIElement($(Context* ptr)) } |]
   deleteObject ptr = liftIO $ [C.exp| void { delete $(UIElement* ptr) } |]
+
+sharedPtr "UIElement" 
 
 -- | Create and add a child element and return it.
 uiElementCreateChild :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element

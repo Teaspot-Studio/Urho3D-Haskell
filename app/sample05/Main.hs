@@ -39,7 +39,7 @@ import Sample
 
 main :: IO ()
 main = withObject () $ \cntx -> do 
-  newSample cntx "StaticScene" joysticPatch customStart >>= runSample
+  newSample cntx "AnimatingScene" joysticPatch customStart >>= runSample
 
 -- | Helper function that prints profided message when get Nothing
 fromJustTrace :: String -> Maybe a -> a 

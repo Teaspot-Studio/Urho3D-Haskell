@@ -2,6 +2,7 @@ module Graphics.Urho3D.Container.Ptr(
     sharedPtr 
   , sharedPtrImpl 
   , SharedPointer(..)
+  , AbstractType
   ) where
 
 import Graphics.Urho3D.Template
@@ -9,6 +10,7 @@ import Language.Haskell.TH
 import Language.Haskell.TH.Quote
 import Foreign
 import Foreign.Concurrent as FC 
+import Data.Monoid 
 
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Context as C
@@ -23,6 +25,10 @@ class (Pointer pointer element, Createable (Ptr element)) => SharedPointer point
   -- | Creates new object and wraps it to shared pointer. Pointer is garbage collected. The created object
   -- will be destroyed as soon as there is no shared pointers pointed to it.
   newSharedObject :: CreationOptions (Ptr element) -> IO pointer
+
+-- | Create instance of the class if you don't want producing
+-- errors about missing 'Createable' instance when defining shared ptr.
+class AbstractType a 
 
 -- | Makes public API of SharedPtr for given type
 -- Makes following symbols:
@@ -83,10 +89,20 @@ sharedPtr tname = do
       makePointer = unsafePerformIO . $(varE $ mkName newSharedTPtr)
     |]
 
-  sharedPointerIns <- [d|
-    instance SharedPointer $sharedTPtrType $tType where 
-      newSharedObject opts = newObject opts >>= $(varE $ mkName newSharedTPtr)
-    |]
+  sharedPointerIns <- do 
+    ptrTType <- [t|Ptr $tType|]
+    isDefined <- ''Createable `isInstance` [ptrTType]
+    if not isDefined then do 
+      isAbstract <- ''AbstractType `isInstance` [ConT $ mkName tname]
+      unless isAbstract $ 
+        reportWarning $ "No instance Createable for " 
+          <> pprint ptrTType 
+          <> ". Add AbstractType instance to supress the warning."
+      return []
+    else [d|
+      instance SharedPointer $sharedTPtrType $tType where 
+        newSharedObject opts = newObject opts >>= $(varE $ mkName newSharedTPtr)
+      |]
 
   return $ typedef ++ deleter ++ wrappPointer ++ allocator ++ createable ++ pointerCast ++ pointerInst ++ sharedPointerIns
 

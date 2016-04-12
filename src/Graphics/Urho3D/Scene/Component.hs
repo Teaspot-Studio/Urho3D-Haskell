@@ -18,7 +18,9 @@ import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 
-C.context (C.cppCtx <> componentCntx <> sharedComponentPtrCntx <> contextContext <> stringHashContext)
+import Graphics.Urho3D.Scene.Animatable
+
+C.context (C.cppCtx <> componentCntx <> sharedComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext)
 C.include "<Urho3D/Scene/Component.h>"
 C.using "namespace Urho3D" 
 
@@ -38,3 +40,9 @@ instance Createable (Ptr Component) where
   deleteObject = liftIO . deleteComponent
 
 sharedPtr "Component" 
+
+instance Parent Animatable Component where
+  castToParent ptr = [C.pure| Animatable* {(Animatable*)$(Component* ptr)} |]
+  castToChild ptr = let
+    child = [C.pure| Component* {(Component*)$(Animatable* ptr)} |]
+    in if child == nullPtr then Nothing else Just child
