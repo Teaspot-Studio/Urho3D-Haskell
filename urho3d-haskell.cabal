@@ -42,6 +42,7 @@ library
                        Graphics.Urho3D.Core.Object
                        Graphics.Urho3D.Core.ObjectFactory
                        Graphics.Urho3D.Core.ProcessUtils
+                       Graphics.Urho3D.Core.TypeInfo
                        Graphics.Urho3D.Core.Variant
                        Graphics.Urho3D.Createable
                        Graphics.Urho3D.Engine
@@ -114,6 +115,7 @@ library
                        Graphics.Urho3D.Core.Internal.Context
                        Graphics.Urho3D.Core.Internal.Object
                        Graphics.Urho3D.Core.Internal.ObjectFactory
+                       Graphics.Urho3D.Core.Internal.TypeInfo
                        Graphics.Urho3D.Core.Internal.Variant
                        Graphics.Urho3D.Engine.Internal.Application
                        Graphics.Urho3D.Engine.Internal.Console
@@ -172,6 +174,7 @@ library
                        src/Graphics/Urho3D/Core/Object.cpp
                        src/Graphics/Urho3D/Core/ObjectFactory.cpp
                        src/Graphics/Urho3D/Core/ProcessUtils.cpp
+                       src/Graphics/Urho3D/Core/TypeInfo.cpp
                        src/Graphics/Urho3D/Core/Variant.cpp
                        src/Graphics/Urho3D/Engine/Application.cpp
                        src/Graphics/Urho3D/Engine/Console.cpp

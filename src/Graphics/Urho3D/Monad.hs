@@ -1,22 +1,22 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Monad(
-    Urho
-  , evalUrho
   -- | Handling null ptrs
-  , NullObjectPointerException
+    NullObjectPointerException
   , guardNullPtr
   , checkNullPtr
   , checkNullPtr'
   , checkNullPtrWith
-  , liftContext
+  -- | Pointer abstraction
   , Parent(..)
   , Pointer(..)
+  -- | Pointer utilities
+  , parentPointer
+  , mkParentPointer
+  -- | Monad utilities
   , whenJust
   , whenM
   , maybeNull
   , module X
-  , parentPointer
-  , mkParentPointer
   -- | Foreign utils
   , textAsPtrW32
   , textFromPtrW32
@@ -37,14 +37,6 @@ import Data.Maybe
 import Data.Text.Encoding (encodeUtf32LE, decodeUtf32LE)
 import Data.Typeable
 
--- | Describes monad with context @s@
-newtype Urho s a = Urho { unUrho :: ReaderT (Ptr s) IO a}
-  deriving (Functor, Applicative, Monad, MonadReader (Ptr s), MonadIO, MonadThrow, MonadCatch, MonadMask) 
-
--- | Performs computation stored in @Urho@ monad
-evalUrho :: Ptr s -> Urho s a -> IO a
-evalUrho s m = runReaderT (unUrho m) s
-
 -- | Null pointer exception with binded location info where the error is thrown
 -- TODO: Is attaching location is good idea?
 data NullObjectPointerException = NullObjectPointerException 
@@ -54,11 +46,8 @@ instance Exception NullObjectPointerException
 
 -- | Checks that pointer of context isn't equal NULL
 -- Will throw NullObjectPointerException
-guardNullPtr :: Urho s a -> Urho s a
-guardNullPtr f = do 
-  ptr <- ask
-  if ptr == nullPtr then throwM NullObjectPointerException else return ()
-  f 
+guardNullPtr :: (MonadThrow m, Pointer p a) => p -> m p
+guardNullPtr p = checkNullPtr p return 
 
 -- | Checks given ptr to be equal null, if then throws @NullObjectPointerException@
 -- if not null runs handler with this pointer
@@ -79,10 +68,6 @@ checkNullPtrWith :: (Exception e, MonadThrow m, Pointer p a) => e -> p -> (p -> 
 checkNullPtrWith err ptr handler = if isNull ptr
   then throwM err
   else handler ptr
-
--- | Transforms context of action (e.x. lift Application to sub manager context)
-liftContext :: Ptr s -> Urho s a -> Urho s' a 
-liftContext s (Urho m) = Urho $ withReaderT (const s) m
 
 -- | Relation between classes, where a is parent for b
 class Parent parent child where

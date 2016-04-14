@@ -2,6 +2,8 @@
 module Graphics.Urho3D.Math.StringHash(
     StringHash 
   , stringHashContext
+  -- | Low-level
+  , deleteStringHash
   ) where
 
 import qualified Language.C.Inline as C 
