@@ -1,7 +1,10 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Core.Object(
     Object
+  , SharedObject
+  , SharedObjectPtr(..)
   , objectContext
+  , wrapSharedObjectPtr
   , getSubsystem
   , Subsystem(..)
   , Event(..)
@@ -19,6 +22,7 @@ import qualified Data.HashMap.Strict as M
 import Graphics.Urho3D.Core.Internal.Object
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Core.Variant
+import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Control.Concurrent.STM.TVar
@@ -30,12 +34,16 @@ import Data.Proxy
 import Data.Hashable
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> C.funConstCtx <> objectCntx <> contextContext <> stringHashContext <> variantContext)
+C.context (C.cppCtx <> C.funConstCtx <> objectCntx <> contextContext <> stringHashContext <> variantContext <> sharedObjectPtrCntx)
 C.include "<Urho3D/Core/Object.h>"
 C.using "namespace Urho3D"
 
 objectContext :: C.Context 
-objectContext = objectCntx <> stringHashContext
+objectContext = objectCntx <> stringHashContext <> sharedObjectPtrCntx
+
+instance AbstractType Object
+
+sharedPtr "Object"
 
 -- | A subsystem of Urho3D, that can be aquired by Object API
 class Subsystem a where 

@@ -60,23 +60,23 @@ guardNullPtr f = do
   if ptr == nullPtr then throwM NullObjectPointerException else return ()
   f 
 
--- | Checks given ptr to be equal null, if then throws @ODBErrorNullObjectPointer@
+-- | Checks given ptr to be equal null, if then throws @NullObjectPointerException@
 -- if not null runs handler with this pointer
-checkNullPtr :: MonadThrow m => Ptr a -> (Ptr a -> m b) -> m b
+checkNullPtr :: (MonadThrow m, Pointer p a) => p -> (p -> m b) -> m b
 checkNullPtr = checkNullPtrWith NullObjectPointerException
 
 -- | Checks given ptr to be equal null, if then returns Nothing
 -- if not null runs handler with this pointer
 -- Version without custom monad
-checkNullPtr' :: Monad m => Ptr a -> (Ptr a -> m b) -> m (Maybe b)
-checkNullPtr' ptr handler = if ptr == nullPtr 
+checkNullPtr' :: (Monad m, Pointer p a) => p -> (p -> m b) -> m (Maybe b)
+checkNullPtr' ptr handler = if isNull ptr 
   then return Nothing
   else fmap Just $ handler ptr
 
 -- | Checks given ptr to be equal null, if then returns given @err@ as error
 -- if not null runs handler with this pointer
-checkNullPtrWith :: (Exception e, MonadThrow m) => e -> Ptr a -> (Ptr a -> m b) -> m b
-checkNullPtrWith err ptr handler = if ptr == nullPtr 
+checkNullPtrWith :: (Exception e, MonadThrow m, Pointer p a) => e -> p -> (p -> m b) -> m b
+checkNullPtrWith err ptr handler = if isNull ptr
   then throwM err
   else handler ptr
 

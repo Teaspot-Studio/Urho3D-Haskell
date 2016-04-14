@@ -2,6 +2,7 @@
 module Graphics.Urho3D.Core.Context(
     Context
   , contextContext
+  , HasFactory(..)
   ) where 
 
 import qualified Language.C.Inline as C
@@ -31,3 +32,11 @@ instance Createable (Ptr Context) where
 
   newObject _ = liftIO newContext
   deleteObject = liftIO . deleteContext
+
+-- TODO: CUSTOM FACTORIES
+-- | Means 'a' is able to be created via context's factory
+class HasFactory a where 
+  -- | Register a factory for an object type.
+  registerFactory :: forall proxy m . MonadIO m => Ptr Context -> proxy a -> m ()
+  -- | Register a factory for an object type and specify the object category.
+  registerFactoryCat :: forall proxy m . MonadIO m => Ptr Context -> proxy a -> String -> m ()

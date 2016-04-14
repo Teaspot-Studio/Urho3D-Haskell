@@ -2,11 +2,16 @@ module Graphics.Urho3D.Core.Internal.Object(
     Object
   , HaskellHandler
   , objectCntx
+  , sharedObjectPtrCntx
+  , SharedObject
+  , SharedObjectPtr(..)
   ) where
 
 import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Context as C
 import qualified Language.C.Types as C
+
+import Graphics.Urho3D.Container.Ptr
 
 import qualified Data.Map as Map
 
@@ -20,3 +25,5 @@ objectCntx = mempty {
     , (C.TypeName "HaskellHandler", [t| HaskellHandler |])
     ]
   } 
+
+sharedPtrImpl "Object"

@@ -21,6 +21,7 @@ import Graphics.Urho3D.Monad
 import Data.Maybe 
 import Data.Monoid
 import Foreign 
+--import Foreign.C.String 
 import System.IO.Unsafe (unsafePerformIO)
 
 import Graphics.Urho3D.Scene.Animatable 
@@ -32,6 +33,7 @@ import Graphics.Urho3D.Scene.Serializable
 
 C.context (C.cppCtx <> C.funConstCtx <> customLogicComponentCntx <> logicComponentContext <> sharedCustomLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext <> serializableContext <> sceneContext)
 C.include "<Urho3D/Scene/LogicComponent.h>"
+C.include "<Urho3D/Core/Context.h>"
 C.using "namespace Urho3D" 
 
 C.verbatim [r|
@@ -237,3 +239,9 @@ instance NodeComponent CustomLogicComponent where
     return &h;
   } |]
 
+-- instance HasFactory CustomLogicComponent where 
+--   -- | Register a factory for an object type.
+--   registerFactory cntx _ = liftIO [C.exp| void {$(Context* cntx)->RegisterFactory<CustomLogicComponent>() } |]
+--   -- | Register a factory for an object type and specify the object category.
+--   registerFactoryCat cntx _ cat = liftIO $ withCString cat $ \cat' ->
+--     [C.exp| void {$(Context* cntx)->RegisterFactory<CustomLogicComponent>($(const char* cat')) } |]
