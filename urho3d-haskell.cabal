@@ -117,6 +117,7 @@ library
                        Graphics.Urho3D.Core.Internal.CustomFactory
                        Graphics.Urho3D.Core.Internal.Object
                        Graphics.Urho3D.Core.Internal.ObjectFactory
+                       Graphics.Urho3D.Core.Internal.SharedObject
                        Graphics.Urho3D.Core.Internal.TypeInfo
                        Graphics.Urho3D.Core.Internal.Variant
                        Graphics.Urho3D.Engine.Internal.Application
@@ -174,6 +175,7 @@ library
                        src/Graphics/Urho3D/Core/Context.cpp
                        src/Graphics/Urho3D/Core/CustomFactory.cpp
                        src/Graphics/Urho3D/Core/Events.cpp
+                       src/Graphics/Urho3D/Core/Internal/SharedObject.cpp
                        src/Graphics/Urho3D/Core/Object.cpp
                        src/Graphics/Urho3D/Core/ObjectFactory.cpp
                        src/Graphics/Urho3D/Core/ProcessUtils.cpp

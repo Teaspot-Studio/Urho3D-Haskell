@@ -20,9 +20,9 @@ import qualified Language.C.Inline.Cpp as C
 import qualified Data.HashMap.Strict as M 
 
 import Graphics.Urho3D.Core.Internal.Object
+import Graphics.Urho3D.Core.Internal.SharedObject
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Core.Variant
-import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Control.Concurrent.STM.TVar
@@ -40,10 +40,6 @@ C.using "namespace Urho3D"
 
 objectContext :: C.Context 
 objectContext = objectCntx <> stringHashContext <> sharedObjectPtrCntx
-
-instance AbstractType Object
-
-sharedPtr "Object"
 
 -- | A subsystem of Urho3D, that can be aquired by Object API
 class Subsystem a where 
