@@ -6,6 +6,9 @@ module Graphics.Urho3D.Scene.CustomLogicComponent(
   , SharedCustomLogicComponentPtr
   , CustomLogicComponentSetup(..)
   , defaultCustomLogicComponent
+  , customComponentTypeInfo
+  , registerCustomComponent
+  , registerCustomComponentCat
   ) where 
 
 import qualified Language.C.Inline as C 
@@ -14,6 +17,9 @@ import Text.RawString.QQ
 
 import Graphics.Urho3D.Scene.Internal.CustomLogicComponent
 import Graphics.Urho3D.Core.Context 
+import Graphics.Urho3D.Core.CustomFactory
+import Graphics.Urho3D.Core.TypeInfo
+import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
@@ -21,7 +27,7 @@ import Graphics.Urho3D.Monad
 import Data.Maybe 
 import Data.Monoid
 import Foreign 
---import Foreign.C.String 
+-- import Foreign.C.String 
 import System.IO.Unsafe (unsafePerformIO)
 
 import Graphics.Urho3D.Scene.Animatable 
@@ -31,7 +37,7 @@ import Graphics.Urho3D.Scene.Node
 import Graphics.Urho3D.Scene.Scene 
 import Graphics.Urho3D.Scene.Serializable
 
-C.context (C.cppCtx <> C.funConstCtx <> customLogicComponentCntx <> logicComponentContext <> sharedCustomLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext <> serializableContext <> sceneContext)
+C.context (C.cppCtx <> C.funConstCtx <> customLogicComponentCntx <> logicComponentContext <> sharedCustomLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext <> serializableContext <> sceneContext <> customFactoryContext <> typeInfoContext)
 C.include "<Urho3D/Scene/LogicComponent.h>"
 C.include "<Urho3D/Core/Context.h>"
 C.using "namespace Urho3D" 
@@ -233,15 +239,59 @@ instance Parent Serializable CustomLogicComponent where
     child = [C.pure| CustomLogicComponent* {(CustomLogicComponent*)$(Serializable* ptr)} |]
     in if child == nullPtr then Nothing else Just child
 
+instance Parent Object CustomLogicComponent where
+  castToParent ptr = [C.pure| Object* {(Object*)$(CustomLogicComponent* ptr)} |]
+  castToChild ptr = let
+    child = [C.pure| CustomLogicComponent* {(CustomLogicComponent*)$(Object* ptr)} |]
+    in if child == nullPtr then Nothing else Just child
+
 instance NodeComponent CustomLogicComponent where 
   nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {
     static StringHash h = CustomLogicComponent::GetTypeStatic();
     return &h;
   } |]
 
--- instance HasFactory CustomLogicComponent where 
---   -- | Register a factory for an object type.
---   registerFactory cntx _ = liftIO [C.exp| void {$(Context* cntx)->RegisterFactory<CustomLogicComponent>() } |]
---   -- | Register a factory for an object type and specify the object category.
---   registerFactoryCat cntx _ cat = liftIO $ withCString cat $ \cat' ->
---     [C.exp| void {$(Context* cntx)->RegisterFactory<CustomLogicComponent>($(const char* cat')) } |]
+-- | Return type of custom logic component
+customComponentTypeInfo :: Ptr TypeInfo 
+customComponentTypeInfo = [C.pure| const TypeInfo* {
+    CustomLogicComponent::GetTypeInfoStatic()
+  } |]
+
+-- | Create new custom factory for custom component
+createCustomComponentFactory :: (Parent Context a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to context
+  -> String -- ^ Name of component type
+  -> CustomLogicComponentSetup -- ^ Config of custom component 
+  -> m (Ptr CustomFactory, Ptr TypeInfo) -- ^ Return new factory and new type info
+createCustomComponentFactory p name setup = liftIO $ do 
+  let ptr = parentPointer p
+      maker :: Ptr Context -> IO (Ptr Object)
+      maker cntx = do 
+        pobj <- newCustomLogicComponent cntx setup
+        return . castToParent $ pobj
+  customType <- newTypeInfo name customComponentTypeInfo
+  factory <- newCustomFactory ptr customType maker
+  return (factory, customType)
+
+-- | Register component in system, after that you can create the component with Node methods
+registerCustomComponent :: (Parent Context a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to context
+  -> String -- ^ Name of component type
+  -> CustomLogicComponentSetup -- ^ Config of custom component 
+  -> m (ForeignPtr StringHash) -- ^ Return type hash of component
+registerCustomComponent p name setup = liftIO $ do 
+  (factory, customType) <- createCustomComponentFactory p name setup
+  contextRegisterFactory p factory
+  typeInfoGetType customType
+
+-- | Register component in system, after that you can create the component with Node methods
+registerCustomComponentCat :: (Parent Context a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to context
+  -> String -- ^ Name of component type
+  -> String -- ^ Name of category to register fabric with
+  -> CustomLogicComponentSetup -- ^ Config of custom component 
+  -> m (ForeignPtr StringHash) -- ^ Return type hash of component
+registerCustomComponentCat p name cat setup = liftIO $ do 
+  (factory, customType) <- createCustomComponentFactory p name setup
+  contextRegisterFactoryCat p factory cat
+  typeInfoGetType customType

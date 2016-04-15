@@ -21,7 +21,20 @@
 -}
 module Rotator where
 
+import Foreign 
+
 import Graphics.Urho3D
 
 -- | Custom logic component for rotating a scene node.
 type Rotator = CustomLogicComponent
+-- | Type hash of our rotator component
+type RotatorType = ForeignPtr StringHash
+
+-- | Register rotator within Urho engine, resulting type is used for creation of 
+-- the component instances.
+registerRotator :: MonadIO m => Ptr Context -> m RotatorType
+registerRotator cntx = registerCustomComponent cntx "Rotator" rotatorDef
+
+-- | Custom logic component for rotating a scene node.
+rotatorDef :: CustomLogicComponentSetup
+rotatorDef = defaultCustomLogicComponent

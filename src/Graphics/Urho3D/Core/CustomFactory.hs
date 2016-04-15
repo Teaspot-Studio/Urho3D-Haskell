@@ -4,6 +4,7 @@ module Graphics.Urho3D.Core.CustomFactory(
   , SharedCustomFactory
   , SharedCustomFactoryPtr(..)
   , customFactoryContext
+  , newCustomFactory
   , wrapSharedCustomFactoryPtr
   ) where
 

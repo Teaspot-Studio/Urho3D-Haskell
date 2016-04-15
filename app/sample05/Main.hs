@@ -33,7 +33,6 @@ import Control.Lens hiding (Context, element)
 import Control.Monad 
 import Data.IORef
 import Data.Monoid
-import Data.Proxy
 import Foreign
 import Graphics.Urho3D
 import Sample
@@ -55,7 +54,7 @@ customStart cntx sr = do
   let app = s ^. sampleApplication
   
   -- Register an object factory for our custom Rotator component so that we can create them to scene nodes
-  registerFactory cntx (Proxy :: Proxy Rotator)
+  rotatorType <- registerRotator cntx
 
   -- Create the scene content 
   (scene, cameraNode) <- createScene app 
