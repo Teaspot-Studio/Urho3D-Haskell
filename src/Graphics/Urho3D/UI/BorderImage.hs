@@ -28,13 +28,18 @@ import Graphics.Urho3D.Graphics.Texture
 import Graphics.Urho3D.Math.Rect 
 import Graphics.Urho3D.Math.Vector2
 import Graphics.Urho3D.Monad
-import Graphics.Urho3D.UI.Element
 import Graphics.Urho3D.UI.Internal.BorderImage
 import Data.Monoid
 import Foreign 
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> borderImageCntx <> contextContext <> uiElementContext <> rectContext <> vector2Context <> textureContext)
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.UI.Element
+import Graphics.Urho3D.Parent
+
+C.context (C.cppCtx <> borderImageCntx <> contextContext <> uiElementContext <> rectContext <> vector2Context <> textureContext <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/UI/BorderImage.h>"
 C.using "namespace Urho3D"
 
@@ -53,11 +58,7 @@ instance Createable (Ptr BorderImage) where
   newObject = liftIO . newBorderImage
   deleteObject = liftIO . deleteBorderImage
 
-instance Parent UIElement BorderImage  where 
-  castToParent ptr = [C.pure| UIElement* {(UIElement*)$(BorderImage* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| BorderImage* {(BorderImage*)$(UIElement* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''UIElement] ''BorderImage
 
 instance UIElem BorderImage where 
   uiElemType _ = unsafePerformIO $ [C.block| StringHash* { 

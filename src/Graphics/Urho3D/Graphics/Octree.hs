@@ -9,33 +9,27 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.Octree
-import Graphics.Urho3D.Monad
 import Data.Monoid
-import Foreign
 import System.IO.Unsafe (unsafePerformIO) 
 
 import Graphics.Urho3D.Math.StringHash 
-import Graphics.Urho3D.Scene.Component
 import Graphics.Urho3D.Scene.Node
 
-C.context (C.cppCtx <> octreeCntx <> componentContext <> stringHashContext)
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.Scene.Component 
+import Graphics.Urho3D.Parent
+
+C.context (C.cppCtx <> octreeCntx <> componentContext <> stringHashContext <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/Graphics/Octree.h>"
 C.using "namespace Urho3D"
 
 octreeContext :: C.Context 
 octreeContext = octreeCntx <> componentContext <> stringHashContext
 
-instance Parent Component Octree where 
-  castToParent ptr = [C.pure| Component* { (Component*)$(Octree* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| Octree* { (Octree*)$(Component* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Octant Octree where 
-  castToParent ptr = [C.pure| Octant* { (Octant*)$(Octree* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| Octree* { (Octree*)$(Octant* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''Component, ''Octant] ''Octree
+deriveParents [''Object, ''Serializable, ''Animatable, ''Component] ''Octant
 
 instance NodeComponent Octree where 
   nodeComponentType _ = unsafePerformIO [C.block| StringHash* { 

@@ -8,25 +8,21 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.Material
-import Graphics.Urho3D.Monad
 import Data.Monoid
-import Foreign 
 import System.IO.Unsafe (unsafePerformIO)
 
 import Graphics.Urho3D.Resource.Resource
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Parent
 
-C.context (C.cppCtx <> materialCntx <> resourceContext)
+C.context (C.cppCtx <> materialCntx <> resourceContext <> objectContext)
 C.include "<Urho3D/Graphics/Material.h>"
 C.using "namespace Urho3D"
 
 materialContext :: C.Context 
 materialContext = materialCntx <> resourceContext
 
-instance Parent Resource Material where 
-  castToParent ptr = [C.pure| Resource* { (Resource*)$(Material* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| Material* { (Material*)$(Resource* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Resource] ''Material
 
 instance ResourceType Material where 
   resourceType _ = unsafePerformIO $ [C.block| StringHash* { 

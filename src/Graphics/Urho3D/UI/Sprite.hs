@@ -39,11 +39,16 @@ import Graphics.Urho3D.Graphics.Texture
 import Graphics.Urho3D.Math.Rect
 import Graphics.Urho3D.Math.Vector2 
 import Graphics.Urho3D.Monad
-import Graphics.Urho3D.UI.Element
 import Graphics.Urho3D.UI.Internal.Sprite
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> sharedSpritePtrCntx <> spriteCntx <> contextContext <> uiElementContext <> textureContext <> vector2Context <> rectContext)
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.UI.Element
+import Graphics.Urho3D.Parent
+
+C.context (C.cppCtx <> sharedSpritePtrCntx <> spriteCntx <> contextContext <> uiElementContext <> textureContext <> vector2Context <> rectContext <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/UI/Sprite.h>"
 C.using "namespace Urho3D"
 
@@ -62,11 +67,7 @@ instance Createable (Ptr Sprite) where
   newObject = liftIO . newSprite
   deleteObject = liftIO . deleteSprite
 
-instance Parent UIElement Sprite  where 
-  castToParent ptr = [C.pure| UIElement* {(UIElement*)$(Sprite* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| Sprite* {(Sprite*)$(UIElement* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''UIElement] ''Sprite
 
 instance UIElem Sprite where 
   uiElemType _ = unsafePerformIO $ [C.block| StringHash* { 

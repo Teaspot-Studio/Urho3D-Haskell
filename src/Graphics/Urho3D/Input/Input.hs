@@ -30,6 +30,7 @@ import Graphics.Urho3D.Resource.XMLFile
 import Graphics.Urho3D.Math.Vector2 
 import Graphics.Urho3D.UI.Element
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Data.Monoid
 import Foreign 
 import Text.RawString.QQ
@@ -44,11 +45,7 @@ C.using "namespace Urho3D"
 inputContext :: C.Context 
 inputContext = objectContext <> inputCntx <> vector2Context
 
-instance Parent Object Input where 
-  castToParent ptr = [C.pure| Object* { (Object*)$(Input* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| Input* { (Input*)$(Object* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
+deriveParent ''Object ''Input
 
 instance Subsystem Input where 
   getSubsystemImpl ptr = [C.exp| Input* { $(Object* ptr)->GetSubsystem<Input>() } |]

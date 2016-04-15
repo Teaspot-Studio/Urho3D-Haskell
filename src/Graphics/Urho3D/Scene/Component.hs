@@ -18,10 +18,12 @@ import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 
+import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Scene.Animatable
 import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Parent 
 
-C.context (C.cppCtx <> componentCntx <> sharedComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> serializableContext)
+C.context (C.cppCtx <> componentCntx <> sharedComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/Scene/Component.h>"
 C.using "namespace Urho3D" 
 
@@ -42,14 +44,4 @@ instance Createable (Ptr Component) where
 
 sharedPtr "Component" 
 
-instance Parent Animatable Component where
-  castToParent ptr = [C.pure| Animatable* {(Animatable*)$(Component* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| Component* {(Component*)$(Animatable* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Serializable Component where
-  castToParent ptr = [C.pure| Serializable* {(Serializable*)$(Component* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| Component* {(Component*)$(Serializable* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable] ''Component

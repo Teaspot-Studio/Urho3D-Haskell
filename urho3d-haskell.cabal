@@ -84,6 +84,7 @@ library
                        Graphics.Urho3D.Monad
                        Graphics.Urho3D.Network
                        Graphics.Urho3D.Network.Connection
+                       Graphics.Urho3D.Parent
                        Graphics.Urho3D.Resource
                        Graphics.Urho3D.Resource.Cache
                        Graphics.Urho3D.Resource.Image
@@ -290,7 +291,7 @@ library
 executable urho3d-haskell-sample01
   hs-source-dirs:      app/sample01, app/common
   main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:         -Odph -fno-liberate-case -funfolding-use-threshold1000 -funfolding-keeness-factor1000 -optlo-O3 -threaded -rtsopts -with-rtsopts=-N
   other-modules:       Sample
                        Internal.Sample
   build-depends:       base
@@ -315,7 +316,7 @@ executable urho3d-haskell-sample01
 executable urho3d-haskell-sample02
   hs-source-dirs:      app/sample02, app/common
   main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:         -Odph -fno-liberate-case -funfolding-use-threshold1000 -funfolding-keeness-factor1000 -optlo-O3 -threaded -rtsopts -with-rtsopts=-N
   other-modules:       Sample
                        Internal.Sample
   build-depends:       base
@@ -341,7 +342,7 @@ executable urho3d-haskell-sample02
 executable urho3d-haskell-sample03
   hs-source-dirs:      app/sample03, app/common
   main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:         -Odph -fno-liberate-case -funfolding-use-threshold1000 -funfolding-keeness-factor1000 -optlo-O3 -threaded -rtsopts -with-rtsopts=-N
   other-modules:       Sample
                        Internal.Sample
   build-depends:       base
@@ -367,7 +368,7 @@ executable urho3d-haskell-sample03
 executable urho3d-haskell-sample04
   hs-source-dirs:      app/sample04, app/common
   main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:         -Odph -fno-liberate-case -funfolding-use-threshold1000 -funfolding-keeness-factor1000 -optlo-O3 -threaded -rtsopts -with-rtsopts=-N
   other-modules:       Sample
                        Internal.Sample
   build-depends:       base
@@ -393,7 +394,7 @@ executable urho3d-haskell-sample04
 executable urho3d-haskell-sample05
   hs-source-dirs:      app/sample05, app/common
   main-is:             Main.hs
-  ghc-options:         -Odph -fno-liberate-case -funfolding-use-threshold1000 -funfolding-keeness-factor1000 -fllvm -optlo-O3 -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:         -Odph -fno-liberate-case -funfolding-use-threshold1000 -funfolding-keeness-factor1000 -optlo-O3 -threaded -rtsopts -with-rtsopts=-N
   other-modules:       Sample
                        Internal.Sample
                        Rotator

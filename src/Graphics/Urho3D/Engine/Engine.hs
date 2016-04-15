@@ -22,6 +22,7 @@ import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Data.Monoid
 import Foreign 
 
@@ -44,11 +45,7 @@ instance Createable (Ptr Engine) where
   newObject = liftIO . newEngine
   deleteObject = liftIO . deleteEngine
 
-instance Parent Object Engine where 
-  castToParent ptr = [C.pure| Object* {(Object*)$(Engine* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| Engine* {(Engine*)$(Object* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParent ''Object ''Engine
 
 sharedPtr "Engine" 
 

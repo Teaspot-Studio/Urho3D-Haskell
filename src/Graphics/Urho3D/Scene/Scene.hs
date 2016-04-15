@@ -15,10 +15,15 @@ import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Data.Monoid
 import Foreign 
 
-C.context (C.cppCtx <> sceneCntx <> sharedScenePtrCntx <> contextContext <> nodeContext)
+import Graphics.Urho3D.Scene.Animatable 
+import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Core.Object 
+
+C.context (C.cppCtx <> sceneCntx <> sharedScenePtrCntx <> contextContext <> nodeContext <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/Scene/Scene.h>"
 C.using "namespace Urho3D"
 
@@ -37,10 +42,6 @@ instance Createable (Ptr Scene) where
   newObject = liftIO . newScene
   deleteObject = liftIO . deleteScene
 
-instance Parent Node Scene where
-  castToParent ptr = [C.pure| Node* {(Node*)$(Scene* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| Scene* {(Scene*)$(Node* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''Node] ''Scene
 
 sharedPtr "Scene"

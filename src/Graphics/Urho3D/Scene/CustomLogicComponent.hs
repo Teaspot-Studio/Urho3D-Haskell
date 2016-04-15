@@ -24,6 +24,7 @@ import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Data.Maybe 
 import Data.Monoid
 import Foreign 
@@ -223,35 +224,7 @@ instance Createable (Ptr CustomLogicComponent) where
 
 sharedPtr "CustomLogicComponent" 
 
-instance Parent LogicComponent CustomLogicComponent where
-  castToParent ptr = [C.pure| LogicComponent* {(LogicComponent*)$(CustomLogicComponent* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| CustomLogicComponent* {(CustomLogicComponent*)$(LogicComponent* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Component CustomLogicComponent where
-  castToParent ptr = [C.pure| Component* {(Component*)$(CustomLogicComponent* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| CustomLogicComponent* {(CustomLogicComponent*)$(Component* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Animatable CustomLogicComponent where
-  castToParent ptr = [C.pure| Animatable* {(Animatable*)$(CustomLogicComponent* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| CustomLogicComponent* {(CustomLogicComponent*)$(Animatable* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Serializable CustomLogicComponent where
-  castToParent ptr = [C.pure| Serializable* {(Serializable*)$(CustomLogicComponent* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| CustomLogicComponent* {(CustomLogicComponent*)$(Serializable* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Object CustomLogicComponent where
-  castToParent ptr = [C.pure| Object* {(Object*)$(CustomLogicComponent* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| CustomLogicComponent* {(CustomLogicComponent*)$(Object* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''Component, ''LogicComponent] ''CustomLogicComponent
 
 instance NodeComponent CustomLogicComponent where 
   nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {

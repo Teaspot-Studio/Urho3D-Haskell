@@ -20,6 +20,7 @@ import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Engine.Engine
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Data.Monoid
 import Data.StateVar
 import Text.RawString.QQ
@@ -108,11 +109,7 @@ instance Createable (Ptr Application) where
   newObject (cntx, setup, start, stop) = liftIO $ newApplication cntx setup start stop
   deleteObject = liftIO . deleteApplication
 
-instance Parent Object Application where 
-  castToParent ptr = [C.pure| Object* {(Object*)$(ApplicationH* ptr)} |]
-  castToChild ptr = let 
-    child = [C.pure| ApplicationH* {(ApplicationH*)$(Object* ptr)} |]
-    in if child == nullPtr then Nothing else Just child 
+deriveParent ''Object ''ApplicationH
 
 sharedPtr "ApplicationH"
 

@@ -10,7 +10,6 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.UI.Internal.ToolTip
-import Graphics.Urho3D.UI.Element
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Container.Ptr
@@ -19,7 +18,13 @@ import Data.Monoid
 import Foreign 
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> sharedToolTipPtrCntx <> toolTipCntx <> contextContext <> uiElementContext)
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.UI.Element
+import Graphics.Urho3D.Parent 
+
+C.context (C.cppCtx <> sharedToolTipPtrCntx <> toolTipCntx <> contextContext <> uiElementContext <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/UI/ToolTip.h>"
 C.using "namespace Urho3D"
 
@@ -32,11 +37,7 @@ instance Createable (Ptr ToolTip) where
   newObject ptr = liftIO $ [C.exp| ToolTip* { new ToolTip( $(Context* ptr) ) } |]
   deleteObject ptr = liftIO $ [C.exp| void { delete $(ToolTip* ptr) } |]
 
-instance Parent UIElement ToolTip  where 
-  castToParent ptr = [C.pure| UIElement* {(UIElement*)$(ToolTip* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| ToolTip* {(ToolTip*)$(UIElement* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''UIElement] ''ToolTip
 
 instance UIElem ToolTip where 
   uiElemType _ = unsafePerformIO $ [C.block| StringHash* { 

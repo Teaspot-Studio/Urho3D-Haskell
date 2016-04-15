@@ -19,6 +19,7 @@ import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Data.Monoid
 import Foreign 
 
@@ -41,11 +42,7 @@ instance Createable (Ptr Console) where
   newObject = liftIO . newConsole
   deleteObject = liftIO . deleteConsole
 
-instance Parent Object Console where 
-  castToParent ptr = [C.pure| Object* {(Object*)$(Console* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| Console* {(Console*)$(Object* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParent ''Object ''Console
 
 instance Subsystem Console where 
   getSubsystemImpl ptr = [C.exp| Console* { $(Object* ptr)->GetSubsystem<Console>() } |]

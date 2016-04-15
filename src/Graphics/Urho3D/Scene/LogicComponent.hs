@@ -25,8 +25,7 @@ import GHC.Generics
 import Control.DeepSeq 
 
 import Graphics.Urho3D.Scene.Internal.LogicComponent
-import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
@@ -35,10 +34,12 @@ import Data.Monoid
 import Foreign 
 import System.IO.Unsafe (unsafePerformIO)
 
-import Graphics.Urho3D.Scene.Animatable 
-import Graphics.Urho3D.Scene.Component 
-import Graphics.Urho3D.Scene.Node 
+import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.Scene.Component 
+import Graphics.Urho3D.Scene.Node
+import Graphics.Urho3D.Parent
 
 C.context (C.cppCtx <> logicComponentCntx <> sharedLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext <> serializableContext <> objectContext)
 C.include "<Urho3D/Scene/LogicComponent.h>"
@@ -61,29 +62,7 @@ instance Createable (Ptr LogicComponent) where
 
 sharedPtr "LogicComponent" 
 
-instance Parent Component LogicComponent where
-  castToParent ptr = [C.pure| Component* {(Component*)$(LogicComponent* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| LogicComponent* {(LogicComponent*)$(Component* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Animatable LogicComponent where
-  castToParent ptr = [C.pure| Animatable* {(Animatable*)$(LogicComponent* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| LogicComponent* {(LogicComponent*)$(Animatable* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Serializable LogicComponent where
-  castToParent ptr = [C.pure| Serializable* {(Serializable*)$(LogicComponent* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| LogicComponent* {(LogicComponent*)$(Serializable* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Object LogicComponent where
-  castToParent ptr = [C.pure| Object* {(Object*)$(LogicComponent* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| LogicComponent* {(LogicComponent*)$(Object* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''Component] ''LogicComponent
 
 instance NodeComponent LogicComponent where 
   nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {

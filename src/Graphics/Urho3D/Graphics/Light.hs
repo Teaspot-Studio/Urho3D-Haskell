@@ -13,32 +13,26 @@ import qualified Language.C.Inline.Cpp as C
 import Graphics.Urho3D.Graphics.Internal.Light
 import Graphics.Urho3D.Monad
 import Data.Monoid
-import Foreign
 import System.IO.Unsafe (unsafePerformIO) 
 
-import Graphics.Urho3D.Graphics.Drawable 
 import Graphics.Urho3D.Math.StringHash 
-import Graphics.Urho3D.Scene.Component
 import Graphics.Urho3D.Scene.Node
 
-C.context (C.cppCtx <> lightCntx <> componentContext <> stringHashContext <> drawableContext)
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.Graphics.Drawable 
+import Graphics.Urho3D.Scene.Component 
+import Graphics.Urho3D.Parent
+
+C.context (C.cppCtx <> lightCntx <> componentContext <> stringHashContext <> drawableContext <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/Graphics/Light.h>"
 C.using "namespace Urho3D"
 
 lightContext :: C.Context 
 lightContext = lightCntx <> componentContext <> stringHashContext
 
-instance Parent Component Light where 
-  castToParent ptr = [C.pure| Component* { (Component*)$(Light* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| Light* { (Light*)$(Component* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Drawable Light where 
-  castToParent ptr = [C.pure| Drawable* { (Drawable*)$(Light* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| Light* { (Light*)$(Drawable* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''Component, ''Drawable] ''Light
 
 instance NodeComponent Light where 
   nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {

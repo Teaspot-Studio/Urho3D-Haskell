@@ -19,31 +19,26 @@ import Foreign
 import Foreign.C.String 
 import System.IO.Unsafe (unsafePerformIO) 
 
-import Graphics.Urho3D.Graphics.Drawable 
 import Graphics.Urho3D.Graphics.Model 
 import Graphics.Urho3D.Graphics.Material
 import Graphics.Urho3D.Math.StringHash 
-import Graphics.Urho3D.Scene.Component
 import Graphics.Urho3D.Scene.Node
 
-C.context (C.cppCtx <> staticModelCntx <> componentContext <> stringHashContext <> drawableContext <> modelContext <> materialContext)
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.Scene.Component 
+import Graphics.Urho3D.Graphics.Drawable 
+import Graphics.Urho3D.Parent
+
+C.context (C.cppCtx <> staticModelCntx <> componentContext <> stringHashContext <> drawableContext <> modelContext <> materialContext <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/Graphics/StaticModel.h>"
 C.using "namespace Urho3D"
 
 staticModelContext :: C.Context 
 staticModelContext = staticModelCntx <> componentContext <> stringHashContext
 
-instance Parent Component StaticModel where 
-  castToParent ptr = [C.pure| Component* { (Component*)$(StaticModel* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| StaticModel* { (StaticModel*)$(Component* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Drawable StaticModel where 
-  castToParent ptr = [C.pure| Drawable* { (Drawable*)$(StaticModel* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| StaticModel* { (StaticModel*)$(Drawable* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''Component, ''Drawable] ''StaticModel
 
 instance NodeComponent StaticModel where 
   nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {

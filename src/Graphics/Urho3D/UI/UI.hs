@@ -15,6 +15,7 @@ import Graphics.Urho3D.UI.Element
 import Graphics.Urho3D.UI.Cursor
 import Graphics.Urho3D.Core.Object 
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Data.Monoid
 import Foreign 
 
@@ -25,11 +26,7 @@ C.using "namespace Urho3D"
 uiContext :: C.Context 
 uiContext = objectContext <> uiCntx
 
-instance Parent Object UI where 
-  castToParent ptr = [C.pure| Object* { (Object*)$(UI* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| UI* { (UI*)$(Object* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
+deriveParent ''Object ''UI
 
 instance Subsystem UI where 
   getSubsystemImpl ptr = [C.exp| UI* { $(Object* ptr)->GetSubsystem<UI>() } |]

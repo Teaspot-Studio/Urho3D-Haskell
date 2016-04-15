@@ -10,8 +10,6 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.UI.Internal.CheckBox
-import Graphics.Urho3D.UI.Element
-import Graphics.Urho3D.UI.BorderImage
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Container.Ptr
@@ -20,7 +18,14 @@ import Data.Monoid
 import Foreign 
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> sharedCheckBoxPtrCntx <> checkBoxCntx <> contextContext <> uiElementContext <> borderImageContext)
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.UI.Element
+import Graphics.Urho3D.UI.BorderImage
+import Graphics.Urho3D.Parent
+
+C.context (C.cppCtx <> sharedCheckBoxPtrCntx <> checkBoxCntx <> contextContext <> uiElementContext <> borderImageContext <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/UI/CheckBox.h>"
 C.using "namespace Urho3D"
 
@@ -33,17 +38,7 @@ instance Createable (Ptr CheckBox) where
   newObject ptr = liftIO $ [C.exp| CheckBox* { new CheckBox( $(Context* ptr) ) } |]
   deleteObject ptr = liftIO $ [C.exp| void { delete $(CheckBox* ptr) } |]
 
-instance Parent UIElement CheckBox  where 
-  castToParent ptr = [C.pure| UIElement* {(UIElement*)$(CheckBox* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| CheckBox* {(CheckBox*)$(UIElement* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent BorderImage CheckBox  where 
-  castToParent ptr = [C.pure| BorderImage* {(BorderImage*)$(CheckBox* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| CheckBox* {(CheckBox*)$(BorderImage* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''UIElement, ''BorderImage] ''CheckBox
 
 instance UIElem CheckBox where 
   uiElemType _ = unsafePerformIO $ [C.block| StringHash* { 

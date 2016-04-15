@@ -30,6 +30,7 @@ import Graphics.Urho3D.Graphics.Viewport
 import Graphics.Urho3D.Graphics.Defs
 import Graphics.Urho3D.Core.Object 
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Data.Monoid
 import Foreign 
 import Foreign.C.Types
@@ -41,11 +42,7 @@ C.using "namespace Urho3D"
 rendererContext :: C.Context 
 rendererContext = objectContext <> rendererCntx
 
-instance Parent Object Renderer where 
-  castToParent ptr = [C.pure| Object* { (Object*)$(Renderer* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| Renderer* { (Renderer*)$(Object* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
+deriveParent ''Object ''Renderer
 
 instance Subsystem Renderer where 
   getSubsystemImpl ptr = [C.exp| Renderer* { $(Object* ptr)->GetSubsystem<Renderer>() } |]

@@ -12,25 +12,25 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.Camera
-import Graphics.Urho3D.Scene.Component 
 import Graphics.Urho3D.Scene.Node 
 import Graphics.Urho3D.Monad
 import Data.Monoid
-import Foreign 
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> cameraCntx <> componentContext)
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.Scene.Component 
+import Graphics.Urho3D.Parent
+
+C.context (C.cppCtx <> cameraCntx <> componentContext <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/Graphics/Camera.h>"
 C.using "namespace Urho3D"
 
 cameraContext :: C.Context 
 cameraContext = componentContext <> cameraCntx
 
-instance Parent Component Camera where 
-  castToParent ptr = [C.pure| Component* { (Component*)$(Camera* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| Camera* { (Camera*)$(Component* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''Component] ''Camera
 
 instance NodeComponent Camera where 
   nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {

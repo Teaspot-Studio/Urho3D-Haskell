@@ -14,7 +14,6 @@ import qualified Language.C.Inline.Cpp as C
 import qualified Data.Text as T 
 
 import Graphics.Urho3D.UI.Internal.Text
-import Graphics.Urho3D.UI.Element
 import Graphics.Urho3D.UI.Font
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Createable
@@ -25,7 +24,13 @@ import Foreign
 import Foreign.C.Types
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> sharedTextPtrCntx <> textCntx <> contextContext <> uiElementContext <> fontContext)
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.UI.Element
+import Graphics.Urho3D.Parent
+
+C.context (C.cppCtx <> sharedTextPtrCntx <> textCntx <> contextContext <> uiElementContext <> fontContext <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/UI/Text.h>"
 C.using "namespace Urho3D"
 
@@ -38,11 +43,7 @@ instance Createable (Ptr Text) where
   newObject ptr = liftIO $ [C.exp| Text* { new Text( $(Context* ptr) ) } |]
   deleteObject ptr = liftIO $ [C.exp| void { delete $(Text* ptr) } |]
 
-instance Parent UIElement Text  where 
-  castToParent ptr = [C.pure| UIElement* {(UIElement*)$(Text* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| Text* {(Text*)$(UIElement* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''UIElement] ''Text
 
 instance UIElem Text where 
   uiElemType _ = unsafePerformIO $ [C.block| StringHash* { 

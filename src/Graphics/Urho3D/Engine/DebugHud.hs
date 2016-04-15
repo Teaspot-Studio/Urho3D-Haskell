@@ -15,6 +15,7 @@ import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Data.Monoid
 import Foreign 
 
@@ -37,11 +38,7 @@ instance Createable (Ptr DebugHud) where
   newObject = liftIO . newDebugHud
   deleteObject = liftIO . deleteDebugHud
 
-instance Parent Object DebugHud where 
-  castToParent ptr = [C.pure| Object* {(Object*)$(DebugHud* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| DebugHud* {(DebugHud*)$(Object* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParent ''Object ''DebugHud
 
 instance Subsystem DebugHud where 
   getSubsystemImpl ptr = [C.exp| DebugHud* { $(Object* ptr)->GetSubsystem<DebugHud>() } |]

@@ -15,6 +15,7 @@ import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Data.Monoid
 import Foreign 
 
@@ -41,8 +42,4 @@ instance Createable (Ptr Serializable) where
 
 sharedPtr "Serializable" 
 
-instance Parent Object Serializable where
-  castToParent ptr = [C.pure| Object* {(Object*)$(Serializable* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| Serializable* {(Serializable*)$(Object* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParent ''Object ''Serializable

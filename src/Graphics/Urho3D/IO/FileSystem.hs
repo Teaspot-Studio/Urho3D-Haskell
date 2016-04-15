@@ -13,8 +13,8 @@ import Graphics.Urho3D.IO.Internal.FileSystem
 import Graphics.Urho3D.Container.Str
 import Graphics.Urho3D.Core.Object 
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Data.Monoid
-import Foreign 
 import Foreign.C.String 
 
 C.context (C.cppCtx <> fileSystemCntx <> objectContext <> stringContext)
@@ -24,11 +24,7 @@ C.using "namespace Urho3D"
 fileSystemContext :: C.Context 
 fileSystemContext = objectContext <> fileSystemCntx
 
-instance Parent Object FileSystem where 
-  castToParent ptr = [C.pure| Object* { (Object*)$(FileSystem* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| FileSystem* { (FileSystem*)$(Object* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
+deriveParent ''Object ''FileSystem
 
 instance Subsystem FileSystem where 
   getSubsystemImpl ptr = [C.exp| FileSystem* { $(Object* ptr)->GetSubsystem<FileSystem>() } |]

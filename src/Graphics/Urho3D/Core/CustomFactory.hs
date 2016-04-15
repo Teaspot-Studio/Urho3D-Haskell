@@ -21,6 +21,7 @@ import Graphics.Urho3D.Container.Str
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Text.RawString.QQ
 import Data.Monoid
 import Foreign 
@@ -76,11 +77,5 @@ instance Createable (Ptr CustomFactory) where
   newObject (ptr, pinfo, maker) = liftIO $ newCustomFactory ptr pinfo maker
   deleteObject = liftIO . deleteCustomFactory
 
-instance Parent ObjectFactory CustomFactory where 
-  castToParent ptr = [C.pure| ObjectFactory* {(ObjectFactory*)$(CustomFactory* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| CustomFactory* {(CustomFactory*)$(ObjectFactory* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-
+deriveParent ''ObjectFactory ''CustomFactory
 sharedPtr "CustomFactory"

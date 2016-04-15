@@ -20,18 +20,20 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.Zone
-import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Graphics.Texture
-import Graphics.Urho3D.Scene.Animatable
-import Graphics.Urho3D.Scene.Component 
 import Graphics.Urho3D.Scene.Node 
-import Graphics.Urho3D.Scene.Serializable
 import Graphics.Urho3D.Math.BoundingBox
 import Graphics.Urho3D.Math.Color
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 import System.IO.Unsafe (unsafePerformIO)
+
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.Scene.Component 
+import Graphics.Urho3D.Parent
 
 C.context (C.cppCtx <> zoneCntx <> componentContext <> animatableContext <> serializableContext <> objectContext <> boundingBoxContext <> colorContext <> textureContext)
 C.include "<Urho3D/Graphics/Zone.h>"
@@ -40,29 +42,7 @@ C.using "namespace Urho3D"
 zoneContext :: C.Context 
 zoneContext = componentContext <> zoneCntx
 
-instance Parent Component Zone where
-  castToParent ptr = [C.pure| Component* {(Component*)$(Zone* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| Zone* {(Zone*)$(Component* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Animatable Zone where
-  castToParent ptr = [C.pure| Animatable* {(Animatable*)$(Zone* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| Zone* {(Zone*)$(Animatable* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Serializable Zone where
-  castToParent ptr = [C.pure| Serializable* {(Serializable*)$(Zone* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| Zone* {(Zone*)$(Serializable* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
-
-instance Parent Object Zone where
-  castToParent ptr = [C.pure| Object* {(Object*)$(Zone* ptr)} |]
-  castToChild ptr = let
-    child = [C.pure| Zone* {(Zone*)$(Object* ptr)} |]
-    in if child == nullPtr then Nothing else Just child
+deriveParents [''Object, ''Serializable, ''Animatable, ''Component] ''Zone
 
 instance NodeComponent Zone where 
   nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {

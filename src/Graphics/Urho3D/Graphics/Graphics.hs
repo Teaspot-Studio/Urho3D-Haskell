@@ -16,6 +16,7 @@ import Graphics.Urho3D.Graphics.Internal.Graphics
 import Graphics.Urho3D.Resource.Image
 import Graphics.Urho3D.Core.Object 
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Data.Monoid
 import Foreign 
 import Foreign.C.String 
@@ -27,11 +28,7 @@ C.using "namespace Urho3D"
 graphicsContext :: C.Context 
 graphicsContext = objectContext <> graphicsCntx
 
-instance Parent Object Graphics where 
-  castToParent ptr = [C.pure| Object* { (Object*)$(Graphics* ptr) } |]
-  castToChild ptr = 
-    let child = [C.pure| Graphics* { (Graphics*)$(Object* ptr) } |]
-    in if child == nullPtr then Nothing else Just child
+deriveParent ''Object ''Graphics
 
 instance Subsystem Graphics where 
   getSubsystemImpl ptr = [C.exp| Graphics* { $(Object* ptr)->GetSubsystem<Graphics>() } |]
