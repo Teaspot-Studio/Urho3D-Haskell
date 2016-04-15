@@ -40,11 +40,12 @@ import Graphics.Urho3D.Scene.Serializable
 C.context (C.cppCtx <> C.funConstCtx <> customLogicComponentCntx <> logicComponentContext <> sharedCustomLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext <> serializableContext <> sceneContext <> customFactoryContext <> typeInfoContext)
 C.include "<Urho3D/Scene/LogicComponent.h>"
 C.include "<Urho3D/Core/Context.h>"
+C.include "<iostream>"
 C.using "namespace Urho3D" 
 
 C.verbatim [r|
 extern "C" typedef void (*haskellIO)();
-extern "C" typedef void (*haskellIOFloat)(float);
+extern "C" typedef void (*haskellIOFloat)(Node*, float);
 extern "C" typedef void (*haskellIONode)(Node*);
 extern "C" typedef void (*haskellIOScene)(Scene*);
 
@@ -54,9 +55,9 @@ class CustomLogicComponent : public LogicComponent {
   public:
 
   CustomLogicComponent(Context* context
-    , haskellIO onSetEnabledFunc_
-    , haskellIO startFunc_
-    , haskellIO delayedStartFunc_
+    , haskellIONode onSetEnabledFunc_
+    , haskellIONode startFunc_
+    , haskellIONode delayedStartFunc_
     , haskellIO stopFunc_
     , haskellIOFloat updateFunc_
     , haskellIOFloat postUpdateFunc_
@@ -76,61 +77,66 @@ class CustomLogicComponent : public LogicComponent {
     , onNodeSetFunc(onNodeSetFunc_)
     , onSceneSetFunc(onSceneSetFunc_)
   {
-    unsigned char mask = 0;
-    if (updateFunc) mask |= USE_UPDATE;
-    if (postUpdateFunc) mask |= USE_POSTUPDATE;
-    if (fixedUpdateFunc) mask |= USE_FIXEDUPDATE;
-    if (fixedPostUpdateFunc) mask |= USE_FIXEDPOSTUPDATE;    
-    SetUpdateEventMask(mask);
+
   }
 
   virtual void OnSetEnabled() {
-    if (onSetEnabledFunc) onSetEnabledFunc();
+    LogicComponent::OnSetEnabled();
+    if (onSetEnabledFunc) onSetEnabledFunc(node_);
   }
 
   virtual void Start() { 
-    if (startFunc) startFunc();
+    LogicComponent::Start();
+    if (startFunc) startFunc(node_);
   }
 
   virtual void DelayedStart() { 
-    if (delayedStartFunc) delayedStartFunc();
+    LogicComponent::DelayedStart();
+    if (delayedStartFunc) delayedStartFunc(node_);
   }
 
   virtual void Stop() { 
+    LogicComponent::Stop();
     if (stopFunc) stopFunc();
   }
 
   virtual void Update(float timeStep) {
-    if (updateFunc) updateFunc(timeStep);
+    LogicComponent::Update(timeStep);
+    if (updateFunc) updateFunc(node_, timeStep);
   }
 
   virtual void PostUpdate(float timeStep) {
-    if (postUpdateFunc) postUpdateFunc(timeStep);
+    LogicComponent::PostUpdate(timeStep);
+    if (postUpdateFunc) postUpdateFunc(node_, timeStep);
   }
 
   virtual void FixedUpdate(float timeStep) {
-    if (fixedUpdateFunc) fixedUpdateFunc(timeStep);
+    LogicComponent::FixedUpdate(timeStep);
+    if (fixedUpdateFunc) fixedUpdateFunc(node_, timeStep);
   }
 
   virtual void FixedPostUpdate(float timeStep) {
-    if (fixedPostUpdateFunc) fixedPostUpdateFunc(timeStep);
+    LogicComponent::FixedPostUpdate(timeStep);
+    if (fixedPostUpdateFunc) fixedPostUpdateFunc(node_, timeStep);
   }
 
   protected:
 
   virtual void OnNodeSet(Node* node) {
+    LogicComponent::OnNodeSet(node);
     if (onNodeSetFunc) onNodeSetFunc(node);
   }
 
   virtual void OnSceneSet(Scene* scene) {
+    LogicComponent::OnSceneSet(scene);
     if (onSceneSetFunc) onSceneSetFunc(scene);
   }
 
   private:
 
-  haskellIO onSetEnabledFunc = NULL;
-  haskellIO startFunc = NULL;
-  haskellIO delayedStartFunc = NULL;
+  haskellIONode onSetEnabledFunc = NULL;
+  haskellIONode startFunc = NULL;
+  haskellIONode delayedStartFunc = NULL;
   haskellIO stopFunc = NULL;
   haskellIOFloat updateFunc = NULL;
   haskellIOFloat postUpdateFunc = NULL;
@@ -143,14 +149,14 @@ class CustomLogicComponent : public LogicComponent {
 
 -- | Defines custom components callbacks
 data CustomLogicComponentSetup = CustomLogicComponentSetup {
-  componentOnSetEnabled :: IO () -- ^ Handle enabled/disabled state change. Changes update event subscription.
-, componentStart :: IO () -- ^ Called when the component is added to a scene node. Other components may not yet exist.
-, componentDelayedStart :: IO () -- ^ Called before the first update. At this point all other components of the node should exist. Will also be called if update events are not wanted; in that case the event is immediately unsubscribed afterward.
+  componentOnSetEnabled :: Ptr Node -> IO () -- ^ Handle enabled/disabled state change. Changes update event subscription.
+, componentStart :: Ptr Node -> IO () -- ^ Called when the component is added to a scene node. Other components may not yet exist.
+, componentDelayedStart :: Ptr Node -> IO () -- ^ Called before the first update. At this point all other components of the node should exist. Will also be called if update events are not wanted; in that case the event is immediately unsubscribed afterward.
 , componentStop :: IO () -- ^ Called when the component is detached from a scene node, usually on destruction. Note that you will no longer have access to the node and scene at that point.
-, componentUpdate :: Maybe (Float -> IO ()) -- ^ Called on scene update, variable timestep.
-, componentPostUpdate :: Maybe (Float -> IO ()) -- ^ Called on scene post-update, variable timestep.
-, componentFixedUpdate :: Maybe (Float -> IO ()) -- ^ Called on physics update, fixed timestep.
-, componentFixedPostUpdate :: Maybe (Float -> IO ()) -- ^ Called on physics post-update, fixed timestep.
+, componentUpdate :: Maybe (Ptr Node -> Float -> IO ()) -- ^ Called on scene update, variable timestep.
+, componentPostUpdate :: Maybe (Ptr Node -> Float -> IO ()) -- ^ Called on scene post-update, variable timestep.
+, componentFixedUpdate :: Maybe (Ptr Node -> Float -> IO ()) -- ^ Called on physics update, fixed timestep.
+, componentFixedPostUpdate :: Maybe (Ptr Node -> Float -> IO ()) -- ^ Called on physics post-update, fixed timestep.
 , componentFixedOnNodeSet :: Ptr Node -> IO () -- ^ Handle scene node being assigned at creation.
 , componentFixedOnSceneSet :: Ptr Scene -> IO () -- ^ Handle scene being assigned.
 }
@@ -158,9 +164,9 @@ data CustomLogicComponentSetup = CustomLogicComponentSetup {
 -- | Helper, all callbacks are Nothing
 defaultCustomLogicComponent :: CustomLogicComponentSetup
 defaultCustomLogicComponent = CustomLogicComponentSetup {
-  componentOnSetEnabled = return ()
-, componentStart = return ()
-, componentDelayedStart = return ()
+  componentOnSetEnabled = const $ return ()
+, componentStart = const $ return ()
+, componentDelayedStart = const $ return ()
 , componentStop = return ()
 , componentUpdate = Nothing
 , componentPostUpdate = Nothing
@@ -177,22 +183,24 @@ newCustomLogicComponent :: Ptr Context -> CustomLogicComponentSetup -> IO (Ptr C
 newCustomLogicComponent ptr CustomLogicComponentSetup {..} = do 
   component <- [C.exp| CustomLogicComponent* {
     new CustomLogicComponent($(Context* ptr)
-      , $funConst:(void (*componentOnSetEnabled)())
-      , $funConst:(void (*componentStart)())
-      , $funConst:(void (*componentDelayedStart)())
+      , $funConst:(void (*componentOnSetEnabled)(Node*))
+      , $funConst:(void (*componentStart)(Node*))
+      , $funConst:(void (*componentDelayedStart)(Node*))
       , $funConst:(void (*componentStop)())
-      , $funConst:(void (*updateFunc)(float))
-      , $funConst:(void (*postUpdateFunc)(float))
-      , $funConst:(void (*fixedUpdateFunc)(float))
-      , $funConst:(void (*fixedPostUpdateFunc)(float))
+      , $funConst:(void (*updateFunc)(Node*, float))
+      , $funConst:(void (*postUpdateFunc)(Node*, float))
+      , $funConst:(void (*fixedUpdateFunc)(Node*, float))
+      , $funConst:(void (*fixedPostUpdateFunc)(Node*, float))
       , $funConst:(void (*componentFixedOnNodeSet)(Node*))
       , $funConst:(void (*componentFixedOnSceneSet)(Scene*))
       ) 
   } |]
   logicComponentSetUpdateEventMask component emask
+  -- print =<< logicComponentGetUpdateEventMask component
   return component
   where 
-  prepareFunc = maybe (const $ return ()) (. realToFrac)
+  prepareFunc :: Maybe (Ptr Node -> Float -> IO ()) -> Ptr Node -> C.CFloat -> IO ()
+  prepareFunc = maybe (const . const $ return ()) (\f node t -> f node $ realToFrac t)
   updateFunc = prepareFunc componentUpdate
   postUpdateFunc = prepareFunc componentPostUpdate  
   fixedUpdateFunc = prepareFunc componentFixedUpdate

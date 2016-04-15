@@ -33,8 +33,15 @@ type RotatorType = ForeignPtr StringHash
 -- | Register rotator within Urho engine, resulting type is used for creation of 
 -- the component instances.
 registerRotator :: MonadIO m => Ptr Context -> m RotatorType
-registerRotator cntx = registerCustomComponent cntx "Rotator" rotatorDef
+registerRotator cntx = registerCustomComponent cntx "Rotator" $ rotatorDef (Vector3 10 20 30)
 
 -- | Custom logic component for rotating a scene node.
-rotatorDef :: CustomLogicComponentSetup
-rotatorDef = defaultCustomLogicComponent
+rotatorDef :: Vector3 -> CustomLogicComponentSetup
+rotatorDef rotSpeed = defaultCustomLogicComponent {
+    componentUpdate = Just $ \node t -> do 
+      -- Components have their scene node as a member variable for convenient access. Rotate the scene node now: construct a
+      -- rotation quaternion from Euler angles, scale rotation speed with the scene update time step
+      let Vector3 x y z = rotSpeed
+          q = quaternionFromEuler (x*t) (y*t) (z*t)
+      nodeRotate node q TS'Local
+  }
