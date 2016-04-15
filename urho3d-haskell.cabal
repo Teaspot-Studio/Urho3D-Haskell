@@ -393,7 +393,7 @@ executable urho3d-haskell-sample04
 executable urho3d-haskell-sample05
   hs-source-dirs:      app/sample05, app/common
   main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:         -Odph -fno-liberate-case -funfolding-use-threshold1000 -funfolding-keeness-factor1000 -fllvm -optlo-O3 -threaded -rtsopts -with-rtsopts=-N
   other-modules:       Sample
                        Internal.Sample
                        Rotator
