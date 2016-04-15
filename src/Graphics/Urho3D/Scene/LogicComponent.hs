@@ -26,6 +26,7 @@ import Control.DeepSeq
 
 import Graphics.Urho3D.Scene.Internal.LogicComponent
 import Graphics.Urho3D.Core.Context 
+import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
@@ -39,7 +40,7 @@ import Graphics.Urho3D.Scene.Component
 import Graphics.Urho3D.Scene.Node 
 import Graphics.Urho3D.Scene.Serializable
 
-C.context (C.cppCtx <> logicComponentCntx <> sharedLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext <> serializableContext)
+C.context (C.cppCtx <> logicComponentCntx <> sharedLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext <> serializableContext <> objectContext)
 C.include "<Urho3D/Scene/LogicComponent.h>"
 C.using "namespace Urho3D" 
 
@@ -76,6 +77,12 @@ instance Parent Serializable LogicComponent where
   castToParent ptr = [C.pure| Serializable* {(Serializable*)$(LogicComponent* ptr)} |]
   castToChild ptr = let
     child = [C.pure| LogicComponent* {(LogicComponent*)$(Serializable* ptr)} |]
+    in if child == nullPtr then Nothing else Just child
+
+instance Parent Object LogicComponent where
+  castToParent ptr = [C.pure| Object* {(Object*)$(LogicComponent* ptr)} |]
+  castToChild ptr = let
+    child = [C.pure| LogicComponent* {(LogicComponent*)$(Object* ptr)} |]
     in if child == nullPtr then Nothing else Just child
 
 instance NodeComponent LogicComponent where 

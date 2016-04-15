@@ -2,6 +2,7 @@ module Graphics.Urho3D.Math(
     module X
   ) where
 
+import Graphics.Urho3D.Math.BoundingBox as X
 import Graphics.Urho3D.Math.Color as X
 import Graphics.Urho3D.Math.Defs as X
 import Graphics.Urho3D.Math.Quaternion as X

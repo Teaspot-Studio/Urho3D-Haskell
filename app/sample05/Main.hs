@@ -67,8 +67,32 @@ customStart cntx sr = do
 
 -- | Construct the scene content.
 createScene :: SharedApplicationPtr -> IO (SharedScenePtr, Ptr Node)
-createScene _ = undefined
+createScene app = do 
+  (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
+  (scene :: SharedScenePtr) <- newSharedObject =<< getContext app 
 
+  {-
+   Create the Octree component to the scene. This is required before adding any drawable components, or else nothing will
+   show up. The default octree volume will be from (-1000, -1000, -1000) to (1000, 1000, 1000) in world coordinates; it
+   is also legal to place objects outside the volume but their visibility can then not be checked in a hierarchically
+   optimizing manner
+  -}
+  (_ :: Ptr Octree) <- fromJustTrace "Octree" <$> nodeCreateComponent scene Nothing Nothing
+
+  -- Create a Zone component into a child scene node. The Zone controls ambient lighting and fog settings. Like the Octree,
+  -- it also defines its volume with a bounding box, but can be rotated (so it does not need to be aligned to the world X, Y
+  -- and Z axes.) Drawable objects "pick up" the zone they belong to and use it when rendering; several zones can exist
+  zoneNode <- nodeCreateChild scene "Zone" CM'Replicated 0
+  (zone :: Ptr Zone) <- fromJustTrace "Zone" <$> nodeCreateComponent zoneNode Nothing Nothing
+  -- Set same volume as the Octree, set a close bluish fog and some ambient light
+  zoneSetBoundingBox zone $ BoundingBox (-1000) 1000
+  zoneSetAmbientColor zone $ rgb 0.05 0.1 0.15
+  zoneSetFogColor zone $ rgb 0.1 0.2 0.3 
+  zoneSetFogStart zone 10
+  zoneSetFogEnd zone 100
+
+  undefined 
+  
 -- | Construct an instruction text to the UI.
 createInstructions :: SharedApplicationPtr -> IO ()
 createInstructions app = do 
