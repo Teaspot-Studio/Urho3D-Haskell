@@ -57,7 +57,7 @@ customStart cntx sr = do
   rotatorType <- registerRotator cntx
 
   -- Create the scene content 
-  (scene, cameraNode) <- createScene app 
+  (scene, cameraNode) <- createScene app rotatorType
   -- Create the UI content 
   createInstructions app 
   -- Setup the viewport for displaying the scene
@@ -66,8 +66,8 @@ customStart cntx sr = do
   subscribeToEvents app cameraNode
 
 -- | Construct the scene content.
-createScene :: SharedApplicationPtr -> IO (SharedScenePtr, Ptr Node)
-createScene app = do 
+createScene :: SharedApplicationPtr -> RotatorType -> IO (SharedScenePtr, Ptr Node)
+createScene app rotatorType = do 
   (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
   (scene :: SharedScenePtr) <- newSharedObject =<< getContext app 
 
@@ -91,8 +91,43 @@ createScene app = do
   zoneSetFogStart zone 10
   zoneSetFogEnd zone 100
 
-  undefined 
-  
+  -- Create randomly positioned and oriented box StaticModels in the scene
+  let numObjects = 2000
+  _ <- replicateM numObjects $ do 
+    boxNode <- nodeCreateChild scene "Box" CM'Replicated 0
+    [r1, r2, r3] <- replicateM 3 (randomUp 200)
+    nodeSetPosition boxNode $ Vector3 (r1 - 100) (r2 - 100) (r3 - 100)
+    -- Orient using random pitch, yaw and roll Euler angles
+    [r4, r5, r6] <- replicateM 3 (randomUp 360)
+    nodeSetRotation boxNode $ quaternionFromEuler r4 r5 r6 
+
+    (boxObject :: Ptr StaticModel) <- fromJustTrace "Box StaticModel" <$> nodeCreateComponent boxNode Nothing Nothing
+    (boxModel :: Ptr Model) <- fromJustTrace "Box.mdl" <$> cacheGetResource cache "Models/Box.mdl" True
+    staticModelSetModel boxObject boxModel
+    (boxMaterial :: Ptr Material) <- fromJustTrace "Stone.xml" <$> cacheGetResource cache "Materials/Stone.xml" True
+    staticModelSetMaterial boxObject boxMaterial
+
+    -- Add our custom Rotator component which will rotate the scene node each frame, when the scene sends its update event.
+    -- The Rotator component derives from the base class LogicComponent, which has convenience functionality to subscribe
+    -- to the various update events, and forward them to virtual functions that can be implemented by subclasses. This way
+    -- writing logic/update components in C++ becomes similar to scripting.
+    -- Now we simply set same rotation speed for all objects
+    (rotator :: Ptr Rotator) <- fromJustTrace "Rotator" <$> nodeCreateCustomComponent boxNode rotatorType Nothing Nothing
+    return ()
+
+  -- Create the camera. Let the starting position be at the world origin. As the fog limits maximum visible distance, we can
+  -- bring the far clip plane closer for more effective culling of distant objects
+  cameraNode <- nodeCreateChild scene "Camera" CM'Replicated 0
+  (camera :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
+  cameraSetFarClip camera 100 
+
+  -- Create a point light to the camera scene node
+  (light :: Ptr Light) <- fromJustTrace "Light" <$> nodeCreateComponent cameraNode Nothing Nothing
+  lightSetLightType light LT'Point
+  lightSetRange light 30 
+
+  return (scene, cameraNode)
+
 -- | Construct an instruction text to the UI.
 createInstructions :: SharedApplicationPtr -> IO ()
 createInstructions app = do 

@@ -68,6 +68,7 @@ module Graphics.Urho3D.Scene.Node(
   , nodeRemoveAllChildren
   , nodeRemoveChildren
   , nodeCreateComponent
+  , nodeCreateCustomComponent
   , nodeGetOrCreateComponent
   , nodeCloneComponent
   , nodeCloneComponent'
@@ -762,6 +763,20 @@ nodeCreateComponent p mc mi = liftIO $ do
       i' = maybe 0 fromIntegral mi
       th = nodeComponentType (Proxy :: Proxy c)
   cp <- [C.exp| Component* { $(Node* ptr)->CreateComponent(*$(StringHash* th), (CreateMode)$(int c'), $(int i')) } |]
+  join <$> checkNullPtr' cp (return . castToChild)
+
+-- | Create a component to this node (with specified ID if provided)
+nodeCreateCustomComponent :: forall a p c m . (Parent Node a, Pointer p a, NodeComponent c, MonadIO m)
+  => p -- ^ Node pointer or child
+  -> ForeignPtr StringHash -- ^ Custom type
+  -> Maybe CreateMode -- ^ mode, default is replicated
+  -> Maybe Int -- ^ id, default is 0 
+  -> m (Maybe (Ptr c))
+nodeCreateCustomComponent p fct mc mi = liftIO $ withForeignPtr fct $ \ct -> do 
+  let ptr = parentPointer p 
+      c' = maybe [C.pure| int { (int)REPLICATED } |] (fromIntegral . fromEnum) mc 
+      i' = maybe 0 fromIntegral mi
+  cp <- [C.exp| Component* { $(Node* ptr)->CreateComponent(*$(StringHash* ct), (CreateMode)$(int c'), $(int i')) } |]
   join <$> checkNullPtr' cp (return . castToChild)
 
 -- | Create a component to this node if it does not exist already.

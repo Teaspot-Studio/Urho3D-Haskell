@@ -4,6 +4,7 @@ module Graphics.Urho3D.Graphics.Light(
   , LightType(..)
   , lightContext
   , lightSetLightType
+  , lightSetRange
   ) where
 
 import qualified Language.C.Inline as C 
@@ -61,3 +62,13 @@ lightSetLightType p lt = liftIO $ do
   let ptr = parentPointer p 
       i = fromIntegral $ fromEnum lt 
   [C.exp| void { $(Light* ptr)->SetLightType((LightType)$(int i)) } |]
+
+-- | Set range.
+lightSetRange :: (Parent Light a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to light 
+  -> Float -- ^ Light max range
+  -> m ()
+lightSetRange p v = liftIO $ do 
+  let ptr = parentPointer p 
+      v' = realToFrac v
+  [C.exp| void { $(Light* ptr)->SetRange($(float v')) } |]
