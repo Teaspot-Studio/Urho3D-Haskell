@@ -269,9 +269,6 @@ vspBillboardrot = [C.pure| const StringHash* { &VSP_BILLBOARDROT } |]
 vspCamerapos :: Ptr StringHash
 vspCamerapos = [C.pure| const StringHash* { &VSP_CAMERAPOS } |]
 
-vspCamerarot :: Ptr StringHash
-vspCamerarot = [C.pure| const StringHash* { &VSP_CAMERAROT } |]
-
 vspClipplane :: Ptr StringHash
 vspClipplane = [C.pure| const StringHash* { &VSP_CLIPPLANE } |]
 

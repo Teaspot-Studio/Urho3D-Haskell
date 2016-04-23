@@ -64,6 +64,8 @@ customStart cntx sr = do
   setupViewport app scene cameraNode
   -- Hook up to the frame update events 
   subscribeToEvents app cameraNode
+  -- Save scene to prevent garbage collecting 
+  writeIORef sr $ sampleScene .~ scene $ s 
 
 -- | Construct the scene content.
 createScene :: SharedApplicationPtr -> RotatorType -> IO (SharedScenePtr, Ptr Node)

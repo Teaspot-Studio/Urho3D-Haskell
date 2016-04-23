@@ -45,11 +45,13 @@ class AbstractType a
 -- local context.
 sharedPtr :: String -> DecsQ 
 sharedPtr tname = do 
+  -- typedef <- C.verbatim $ "#include <iostream>\ntypedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
   typedef <- C.verbatim $ "typedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
   deleter <- sequence [
       deleteSharedTPtr ^:: [t| Ptr $sharedTType -> IO () |]
     , mkFunc1 deleteSharedTPtr "ptr" $ \ptrName -> 
         let inlinePtr = "$(" ++ sharedT ++ "* "++show ptrName++")"
+        -- in quoteExp C.exp ("void { std::cout << \"finalizing "++tname++"\" << std::endl; if ("++inlinePtr++") { delete "++inlinePtr++"; } }")
         in quoteExp C.exp ("void { if ("++inlinePtr++") { delete "++inlinePtr++"; } }")
     ]
 
