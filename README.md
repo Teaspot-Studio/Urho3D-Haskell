@@ -12,8 +12,16 @@ Haskell bindings to Urho3D engine
 
 Urho3D was configured with following options for development of the bindings:
 
-```
+``` bash
+git clone https://github.com/urho3d/Urho3D.git
+cd Urho3D
+mkdir build 
+cd build
+
 cmake .. -DURHO3D_SAMPLES=1 -DURHO3D_EXTRAS=1 -DURHO3D_LIB_TYPE=SHARED -DCMAKE_INSTALL_PREFIX:PATH=/usr
+
+make
+sudo make install
 ```
 
 Urho3D commit the bindings are tested with: `d492d32f4135c26409e93d0f76c429f36c242602`
