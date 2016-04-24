@@ -21,24 +21,31 @@
 -}
 module Rotator where
 
+import Data.IORef 
 import Foreign 
 
 import Graphics.Urho3D
 
 -- | Custom logic component for rotating a scene node.
 type Rotator = CustomLogicComponent
+-- | Custom logic component setup that holds state and callbacks.
+--
+-- At the case our state is rotation speed as Vector3.
+type RotatorSetup = CustomLogicComponentSetup Vector3
 -- | Type hash of our rotator component
 type RotatorType = ForeignPtr StringHash
 
 -- | Register rotator within Urho engine, resulting type is used for creation of 
 -- the component instances.
 registerRotator :: MonadIO m => Ptr Context -> m RotatorType
-registerRotator cntx = registerCustomComponent cntx "Rotator" $ rotatorDef (Vector3 10 20 30)
+registerRotator cntx = registerCustomComponent cntx "Rotator" (Vector3 10 20 30) rotatorDef 
 
 -- | Custom logic component for rotating a scene node.
-rotatorDef :: Vector3 -> CustomLogicComponentSetup
-rotatorDef rotSpeed = defaultCustomLogicComponent {
-    componentUpdate = Just $ \node t -> do 
+rotatorDef :: RotatorSetup
+rotatorDef = defaultCustomLogicComponent {
+    componentUpdate = Just $ \ref node t -> do 
+      -- Component state is passed via reference
+      rotSpeed <- readIORef ref
       -- Components have their scene node as a member variable for convenient access. Rotate the scene node now: construct a
       -- rotation quaternion from Euler angles, scale rotation speed with the scene update time step
       let Vector3 x y z = rotSpeed

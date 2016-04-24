@@ -6,6 +6,8 @@ module Graphics.Urho3D.Scene.CustomLogicComponent(
   , SharedCustomLogicComponentPtr
   , CustomLogicComponentSetup(..)
   , defaultCustomLogicComponent
+  , newCustomLogicComponent
+  , deleteCustomLogicComponent
   , customComponentTypeInfo
   , registerCustomComponent
   , registerCustomComponentCat
@@ -20,15 +22,14 @@ import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.CustomFactory
 import Graphics.Urho3D.Core.TypeInfo
 import Graphics.Urho3D.Core.Object
-import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Parent
+import Data.IORef
 import Data.Maybe 
 import Data.Monoid
 import Foreign 
--- import Foreign.C.String 
 import System.IO.Unsafe (unsafePerformIO)
 
 import Graphics.Urho3D.Scene.Animatable 
@@ -149,63 +150,85 @@ class CustomLogicComponent : public LogicComponent {
 |]
 
 -- | Defines custom components callbacks
-data CustomLogicComponentSetup = CustomLogicComponentSetup {
-  componentOnSetEnabled :: Ptr Node -> IO () -- ^ Handle enabled/disabled state change. Changes update event subscription.
-, componentStart :: Ptr Node -> IO () -- ^ Called when the component is added to a scene node. Other components may not yet exist.
-, componentDelayedStart :: Ptr Node -> IO () -- ^ Called before the first update. At this point all other components of the node should exist. Will also be called if update events are not wanted; in that case the event is immediately unsubscribed afterward.
-, componentStop :: IO () -- ^ Called when the component is detached from a scene node, usually on destruction. Note that you will no longer have access to the node and scene at that point.
-, componentUpdate :: Maybe (Ptr Node -> Float -> IO ()) -- ^ Called on scene update, variable timestep.
-, componentPostUpdate :: Maybe (Ptr Node -> Float -> IO ()) -- ^ Called on scene post-update, variable timestep.
-, componentFixedUpdate :: Maybe (Ptr Node -> Float -> IO ()) -- ^ Called on physics update, fixed timestep.
-, componentFixedPostUpdate :: Maybe (Ptr Node -> Float -> IO ()) -- ^ Called on physics post-update, fixed timestep.
-, componentFixedOnNodeSet :: Ptr Node -> IO () -- ^ Handle scene node being assigned at creation.
-, componentFixedOnSceneSet :: Ptr Scene -> IO () -- ^ Handle scene being assigned.
+data CustomLogicComponentSetup a = CustomLogicComponentSetup {
+  -- | Handle enabled/disabled state change. Changes update event subscription.
+  componentOnSetEnabled :: IORef a -> Ptr Node -> IO () 
+  -- | Called when the component is added to a scene node. Other components may not yet exist.
+, componentStart :: IORef a -> Ptr Node -> IO () 
+  -- | Called before the first update. At this point all other components of the node should exist. Will also be called if update events are not wanted; in that case the event is immediately unsubscribed afterward.
+, componentDelayedStart :: IORef a -> Ptr Node -> IO () 
+  -- | Called when the component is detached from a scene node, usually on destruction. Note that you will no longer have access to the node and scene at that point.
+, componentStop :: IORef a -> IO () 
+  -- | Called on scene update, variable timestep.
+, componentUpdate :: Maybe (IORef a -> Ptr Node -> Float -> IO ()) 
+  -- | Called on scene post-update, variable timestep.
+, componentPostUpdate :: Maybe (IORef a -> Ptr Node -> Float -> IO ()) 
+  -- | Called on physics update, fixed timestep.
+, componentFixedUpdate :: Maybe (IORef a -> Ptr Node -> Float -> IO ()) 
+  -- | Called on physics post-update, fixed timestep.
+, componentFixedPostUpdate :: Maybe (IORef a -> Ptr Node -> Float -> IO ()) 
+  -- | Handle scene node being assigned at creation.
+, componentFixedOnNodeSet :: IORef a -> Ptr Node -> IO () 
+  -- | Handle scene being assigned.
+, componentFixedOnSceneSet :: IORef a -> Ptr Scene -> IO () 
 }
 
 -- | Helper, all callbacks are Nothing
-defaultCustomLogicComponent :: CustomLogicComponentSetup
+defaultCustomLogicComponent :: CustomLogicComponentSetup a
 defaultCustomLogicComponent = CustomLogicComponentSetup {
-  componentOnSetEnabled = const $ return ()
-, componentStart = const $ return ()
-, componentDelayedStart = const $ return ()
-, componentStop = return ()
+  componentOnSetEnabled = const . const $ return ()
+, componentStart = const . const $ return ()
+, componentDelayedStart = const . const $ return ()
+, componentStop = const $ return ()
 , componentUpdate = Nothing
 , componentPostUpdate = Nothing
 , componentFixedUpdate = Nothing
 , componentFixedPostUpdate = Nothing
-, componentFixedOnNodeSet = const $ return ()
-, componentFixedOnSceneSet = const $ return ()
+, componentFixedOnNodeSet = const . const $ return ()
+, componentFixedOnSceneSet = const . const $ return ()
 }
 
 customLogicComponentContext :: C.Context 
 customLogicComponentContext = sharedCustomLogicComponentPtrCntx <> customLogicComponentCntx <> logicComponentContext <> stringHashContext
 
-newCustomLogicComponent :: Ptr Context -> CustomLogicComponentSetup -> IO (Ptr CustomLogicComponent)
-newCustomLogicComponent ptr CustomLogicComponentSetup {..} = do 
+newCustomLogicComponent :: forall m a . MonadIO m => Ptr Context -> a -> CustomLogicComponentSetup a -> m (Ptr CustomLogicComponent)
+newCustomLogicComponent ptr a CustomLogicComponentSetup {..} = liftIO $ do 
+  ref <- newIORef a
+  let 
+    componentOnSetEnabledFunc = componentOnSetEnabled ref
+    componentStartFunc = componentStart ref
+    componentDelayedStartFunc = componentDelayedStart ref
+    componentStopFunc = componentStop ref
+    componentFixedOnNodeSetFunc = componentFixedOnNodeSet ref
+    componentFixedOnSceneSetFunc = componentFixedOnSceneSet ref
+
+    updateFunc = prepareFunc ref componentUpdate
+    postUpdateFunc = prepareFunc ref componentPostUpdate  
+    fixedUpdateFunc = prepareFunc ref componentFixedUpdate
+    fixedPostUpdateFunc = prepareFunc ref componentFixedPostUpdate
+
   component <- [C.exp| CustomLogicComponent* {
     new CustomLogicComponent($(Context* ptr)
-      , $funConst:(void (*componentOnSetEnabled)(Node*))
-      , $funConst:(void (*componentStart)(Node*))
-      , $funConst:(void (*componentDelayedStart)(Node*))
-      , $funConst:(void (*componentStop)())
+      , $funConst:(void (*componentOnSetEnabledFunc)(Node*))
+      , $funConst:(void (*componentStartFunc)(Node*))
+      , $funConst:(void (*componentDelayedStartFunc)(Node*))
+      , $funConst:(void (*componentStopFunc)())
       , $funConst:(void (*updateFunc)(Node*, float))
       , $funConst:(void (*postUpdateFunc)(Node*, float))
       , $funConst:(void (*fixedUpdateFunc)(Node*, float))
       , $funConst:(void (*fixedPostUpdateFunc)(Node*, float))
-      , $funConst:(void (*componentFixedOnNodeSet)(Node*))
-      , $funConst:(void (*componentFixedOnSceneSet)(Scene*))
+      , $funConst:(void (*componentFixedOnNodeSetFunc)(Node*))
+      , $funConst:(void (*componentFixedOnSceneSetFunc)(Scene*))
       ) 
   } |]
   logicComponentSetUpdateEventMask component emask
   -- print =<< logicComponentGetUpdateEventMask component
   return component
-  where 
-  prepareFunc :: Maybe (Ptr Node -> Float -> IO ()) -> Ptr Node -> C.CFloat -> IO ()
-  prepareFunc = maybe (const . const $ return ()) (\f node t -> f node $ realToFrac t)
-  updateFunc = prepareFunc componentUpdate
-  postUpdateFunc = prepareFunc componentPostUpdate  
-  fixedUpdateFunc = prepareFunc componentFixedUpdate
-  fixedPostUpdateFunc = prepareFunc componentFixedPostUpdate
+  where
+
+  prepareFunc :: IORef a -> Maybe (IORef a -> Ptr Node -> Float -> IO ()) -> Ptr Node -> C.CFloat -> IO ()
+  prepareFunc ref = maybe (const . const $ return ()) (\f node t -> f ref node $ realToFrac t)
+
   emask = catMaybes $ [
       const EM'UseUpdate <$> componentUpdate
     , const EM'UsePostUpdate <$> componentPostUpdate
@@ -213,14 +236,10 @@ newCustomLogicComponent ptr CustomLogicComponentSetup {..} = do
     , const EM'UseFixedPostUpdate <$> componentFixedPostUpdate
     ]
 
-deleteCustomLogicComponent :: Ptr CustomLogicComponent -> IO ()
-deleteCustomLogicComponent ptr = [C.exp| void { delete $(CustomLogicComponent* ptr) } |]
+deleteCustomLogicComponent :: MonadIO m => Ptr CustomLogicComponent -> m ()
+deleteCustomLogicComponent ptr = liftIO [C.exp| void { delete $(CustomLogicComponent* ptr) } |]
 
-instance Createable (Ptr CustomLogicComponent) where 
-  type CreationOptions (Ptr CustomLogicComponent) = (Ptr Context, CustomLogicComponentSetup) 
-
-  newObject = liftIO . uncurry newCustomLogicComponent
-  deleteObject = liftIO . deleteCustomLogicComponent
+instance AbstractType CustomLogicComponent 
 
 sharedPtr "CustomLogicComponent" 
 
@@ -242,13 +261,14 @@ customComponentTypeInfo = [C.pure| const TypeInfo* {
 createCustomComponentFactory :: (Parent Context a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to context
   -> String -- ^ Name of component type
-  -> CustomLogicComponentSetup -- ^ Config of custom component 
+  -> state -- ^ Inital state of component
+  -> CustomLogicComponentSetup state -- ^ Config of custom component 
   -> m (Ptr CustomFactory, Ptr TypeInfo) -- ^ Return new factory and new type info
-createCustomComponentFactory p name setup = liftIO $ do 
+createCustomComponentFactory p name a setup = liftIO $ do 
   let ptr = parentPointer p
       maker :: Ptr Context -> IO (Ptr Object)
       maker cntx = do 
-        pobj <- newCustomLogicComponent cntx setup
+        pobj <- newCustomLogicComponent cntx a setup
         return . castToParent $ pobj
   customType <- newTypeInfo name customComponentTypeInfo
   factory <- newCustomFactory ptr customType maker
@@ -258,10 +278,11 @@ createCustomComponentFactory p name setup = liftIO $ do
 registerCustomComponent :: (Parent Context a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to context
   -> String -- ^ Name of component type
-  -> CustomLogicComponentSetup -- ^ Config of custom component 
+  -> state -- ^ Inital state of component
+  -> CustomLogicComponentSetup state -- ^ Config of custom component 
   -> m (ForeignPtr StringHash) -- ^ Return type hash of component
-registerCustomComponent p name setup = liftIO $ do 
-  (factory, customType) <- createCustomComponentFactory p name setup
+registerCustomComponent p name a setup = liftIO $ do 
+  (factory, customType) <- createCustomComponentFactory p name a setup
   contextRegisterFactory p factory
   typeInfoGetType customType
 
@@ -270,9 +291,10 @@ registerCustomComponentCat :: (Parent Context a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to context
   -> String -- ^ Name of component type
   -> String -- ^ Name of category to register fabric with
-  -> CustomLogicComponentSetup -- ^ Config of custom component 
+  -> state -- ^ Inital state of component
+  -> CustomLogicComponentSetup state -- ^ Config of custom component 
   -> m (ForeignPtr StringHash) -- ^ Return type hash of component
-registerCustomComponentCat p name cat setup = liftIO $ do 
-  (factory, customType) <- createCustomComponentFactory p name setup
+registerCustomComponentCat p name cat a setup = liftIO $ do 
+  (factory, customType) <- createCustomComponentFactory p name a setup
   contextRegisterFactoryCat p factory cat
   typeInfoGetType customType
