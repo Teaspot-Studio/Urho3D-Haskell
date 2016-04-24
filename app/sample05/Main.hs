@@ -115,6 +115,7 @@ createScene app rotatorType = do
     -- writing logic/update components in C++ becomes similar to scripting.
     -- Now we simply set same rotation speed for all objects
     (rotator :: Ptr Rotator) <- fromJustTrace "Rotator" <$> nodeCreateCustomComponent boxNode rotatorType Nothing Nothing
+    setRotatorSpeed rotator $ Vector3 10 20 30
     return ()
 
   -- Create the camera. Let the starting position be at the world origin. As the fog limits maximum visible distance, we can

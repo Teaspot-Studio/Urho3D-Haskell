@@ -9,6 +9,7 @@ module Graphics.Urho3D.Scene.CustomLogicComponent(
   , newCustomLogicComponent
   , deleteCustomLogicComponent
   , customComponentTypeInfo
+  , getCustomComponentState
   , registerCustomComponent
   , registerCustomComponentCat
   ) where 
@@ -29,7 +30,7 @@ import Graphics.Urho3D.Parent
 import Data.IORef
 import Data.Maybe 
 import Data.Monoid
-import Foreign 
+import Foreign
 import System.IO.Unsafe (unsafePerformIO)
 
 import Graphics.Urho3D.Scene.Animatable 
@@ -67,6 +68,7 @@ class CustomLogicComponent : public LogicComponent {
     , haskellIOFloat fixedPostUpdateFunc_
     , haskellIONode onNodeSetFunc_
     , haskellIOScene onSceneSetFunc_
+    , void* haskellState_
     ) : LogicComponent(context)
     , onSetEnabledFunc(onSetEnabledFunc_)
     , startFunc(startFunc_)
@@ -78,6 +80,7 @@ class CustomLogicComponent : public LogicComponent {
     , fixedPostUpdateFunc(fixedPostUpdateFunc_)
     , onNodeSetFunc(onNodeSetFunc_)
     , onSceneSetFunc(onSceneSetFunc_)
+    , haskellState(haskellState_)
   {
 
   }
@@ -122,6 +125,11 @@ class CustomLogicComponent : public LogicComponent {
     if (fixedPostUpdateFunc) fixedPostUpdateFunc(node_, timeStep);
   }
 
+  virtual void* GetHaskellState() {
+    assert(haskellState);
+    return haskellState;
+  }
+
   protected:
 
   virtual void OnNodeSet(Node* node) {
@@ -146,6 +154,7 @@ class CustomLogicComponent : public LogicComponent {
   haskellIOFloat fixedPostUpdateFunc = NULL;
   haskellIONode onNodeSetFunc = NULL;
   haskellIOScene onSceneSetFunc = NULL;
+  void* haskellState = NULL;
 };
 |]
 
@@ -207,6 +216,8 @@ newCustomLogicComponent ptr a CustomLogicComponentSetup {..} = liftIO $ do
     fixedUpdateFunc = prepareFunc ref componentFixedUpdate
     fixedPostUpdateFunc = prepareFunc ref componentFixedPostUpdate
 
+  statePtr <- castStablePtrToPtr <$> newStablePtr ref
+
   component <- [C.exp| CustomLogicComponent* {
     new CustomLogicComponent($(Context* ptr)
       , $funConst:(void (*componentOnSetEnabledFunc)(Node*))
@@ -219,6 +230,7 @@ newCustomLogicComponent ptr a CustomLogicComponentSetup {..} = liftIO $ do
       , $funConst:(void (*fixedPostUpdateFunc)(Node*, float))
       , $funConst:(void (*componentFixedOnNodeSetFunc)(Node*))
       , $funConst:(void (*componentFixedOnSceneSetFunc)(Scene*))
+      , $(void* statePtr)
       ) 
   } |]
   logicComponentSetUpdateEventMask component emask
@@ -237,7 +249,10 @@ newCustomLogicComponent ptr a CustomLogicComponentSetup {..} = liftIO $ do
     ]
 
 deleteCustomLogicComponent :: MonadIO m => Ptr CustomLogicComponent -> m ()
-deleteCustomLogicComponent ptr = liftIO [C.exp| void { delete $(CustomLogicComponent* ptr) } |]
+deleteCustomLogicComponent ptr = liftIO $ do
+  statePtr <- castPtrToStablePtr <$> [C.exp| void* { $(CustomLogicComponent* ptr)->GetHaskellState() } |]
+  freeStablePtr statePtr
+  [C.exp| void { delete $(CustomLogicComponent* ptr) } |]
 
 instance AbstractType CustomLogicComponent 
 
@@ -256,6 +271,15 @@ customComponentTypeInfo :: Ptr TypeInfo
 customComponentTypeInfo = [C.pure| const TypeInfo* {
     CustomLogicComponent::GetTypeInfoStatic()
   } |]
+
+-- | Getting component internal state, unsafe as you can cast state to any type
+getCustomComponentState :: (Parent CustomLogicComponent a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to component 
+  -> m (IORef state)
+getCustomComponentState p = liftIO $ do 
+  let ptr = parentPointer p 
+  statePtr <- castPtrToStablePtr <$> [C.exp| void* { $(CustomLogicComponent* ptr)->GetHaskellState() } |]
+  deRefStablePtr statePtr 
 
 -- | Create new custom factory for custom component
 createCustomComponentFactory :: (Parent Context a, Pointer p a, MonadIO m)
