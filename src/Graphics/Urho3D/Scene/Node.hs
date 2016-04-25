@@ -77,9 +77,66 @@ module Graphics.Urho3D.Scene.Node(
   , nodeRemoveComponents
   , nodeRemoveComponents'
   , nodeRemoveAllComponents
+  , nodeClone 
+  , nodeRemove
+  , nodeSetParent
+  , nodeSetVar 
+  , nodeAddListener
+  , nodeRemoveListener
   -- | Getters
-  , nodeGetComponent
+  , nodeGetID
+  , nodeGetName 
+  , nodeGetNameHash
+  , nodeGetTags
+  , nodeHasTag
+  , nodeGetParent
+  , nodeGetScene
+  , nodeIsEnabled
+  , nodeIsEnabledSelf
+  , nodeGetOwner
+  , nodeGetPosition
+  , nodeGetPosition2D
   , nodeGetRotation
+  , nodeGetRotation2D
+  , nodeGetDirection
+  , nodeGetUp
+  , nodeGetRight
+  , nodeGetScale
+  , nodeGetScale2D
+  , nodeGetTransform
+  , nodeGetWorldPosition
+  , nodeGetWorldPosition2D
+  , nodeGetWorldRotation
+  , nodeGetWorldRotation2D
+  , nodeGetWorldDirection
+  , nodeGetWorldUp
+  , nodeGetWorldRight
+  , nodeGetWorldScale
+  , nodeGetWorldScale2D
+  , nodeGetWorldTransform
+  , NodeLocalToWorld(..)
+  , nodeLocalToWorld2D
+  , NodeWorldToLocal(..)
+  , nodeWorldToLocal2D
+  , nodeIsDirty
+  , nodeGetNumChildren
+  , nodeGetChildren 
+  , nodeGetChildren'
+  , nodeGetChildrenWithComponent
+  , nodeGetChildrenWithTag 
+  , nodeGetChildByIndex
+  , nodeGetChildByName
+  , nodeGetChildByNameHash
+  , nodeGetNumComponents
+  , nodeGetNumNetworkComponents
+  , nodeGetComponents 
+  , nodeGetComponentsByType
+  , nodeGetComponent
+  , nodeGetParentComponent
+  , nodeHasComponent
+  , nodeGetListeners
+  , nodeGetVar
+  , nodeGetVars
   ) where
 
 import qualified Language.C.Inline as C 
@@ -91,6 +148,7 @@ import Foreign
 import Foreign.C.String
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Core.Context 
+import Graphics.Urho3D.Core.Variant
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Math.Quaternion
 import Graphics.Urho3D.Math.StringHash
@@ -102,7 +160,7 @@ import Graphics.Urho3D.Scene.Internal.Node
 import Graphics.Urho3D.Network.Connection
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> nodeCntx <> sharedNodePtrCntx <> contextContext <> stringHashContext <> componentContext <> quaternionContext <> vector2Context <> vector3Context <> connectionContext)
+C.context (C.cppCtx <> nodeCntx <> sharedNodePtrCntx <> contextContext <> stringHashContext <> componentContext <> quaternionContext <> vector2Context <> vector3Context <> connectionContext <> variantContext)
 C.include "<Urho3D/Scene/Node.h>"
 C.include "<Urho3D/Scene/Component.h>"
 C.using "namespace Urho3D" 
@@ -861,5 +919,62 @@ nodeRemoveAllComponents :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Nod
 nodeRemoveAllComponents p = liftIO $ do 
   let ptr = parentPointer p 
   [C.exp| void { $(Node* ptr)->RemoveAllComponents() } |]
+
+-- | Clone scene node, components and child nodes. Return the clone.
+nodeClone :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> CreateMode 
+  -> m (Ptr Node)
+nodeClone p cm = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.exp| Node* {$(Node* ptr)->Clone()} |]
+
+-- | Remove from the parent node. If no other shared pointer references exist, causes immediate deletion.
+nodeRemove:: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m ()
+nodeRemove p = liftIO $ do 
+  let ptr = parentPointer p
+  [C.exp| void {$(Node* ptr)->Remove()} |]
+
+-- | Set parent scene node. Retains the world transform.
+nodeSetParent:: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> Ptr Node -- ^ parent
+  -> m ()
+nodeSetParent p parent = liftIO $ do 
+  let ptr = parentPointer p
+  [C.exp| void {$(Node* ptr)->SetParent()} |]
+
+-- | Set a user variable.
+nodeSetVar :: (Parent Node a, Pointer p a, VariantStorable v, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> String -- ^ key
+  -> v -- ^ value
+  -> m ()
+nodeSetVar p key value = liftIO $ withObject key $ \pkey -> withVariant value $ \pvalue -> do 
+  let ptr = parentPointer p
+  [C.exp| void {$(Node* ptr)->SetVar(*$(StringHash* pkey), *$(Variant* pvalue))} |]
+
+-- | Add listener component that is notified of node being dirtied. Can either be in the same node or another.
+nodeAddListener:: (Parent Node a, Pointer p a, Parent Component b, Pointer pComponent b, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> pComponent -- ^ Pointer to component
+  -> m ()
+nodeAddListener p pcmp = liftIO $ do 
+  let ptr = parentPointer p
+      cmp = parentPointer pcmp
+  [C.exp| void {$(Node* ptr)->AddListener($(Component* cmp))} |]
+
+-- | Remove listener component.
+nodeRemoveListener:: (Parent Node a, Pointer p a, Parent Component b, Pointer pComponent b, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> pComponent -- ^ Pointer to component
+  -> m ()
+nodeRemoveListener p pcmp = liftIO $ do 
+  let ptr = parentPointer p
+      cmp = parentPointer pcmp
+  [C.exp| void {$(Node* ptr)->($(Component* cmp))} |]
+
 
 -- Stopped at: https://github.com/urho3d/Urho3D/blob/master/Source/Urho3D/Scene/Node.h#L274

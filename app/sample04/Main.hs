@@ -41,11 +41,6 @@ main :: IO ()
 main = withObject () $ \cntx -> do 
   newSample cntx "StaticScene" joysticPatch customStart >>= runSample
 
--- | Helper function that prints profided message when get Nothing
-fromJustTrace :: String -> Maybe a -> a 
-fromJustTrace msg Nothing = error $ "fromJust: " ++ msg 
-fromJustTrace _ (Just a) = a 
-
 -- | Setup after engine initialization and before running the main loop.
 customStart :: SampleRef -> IO ()
 customStart sr = do 
@@ -230,8 +225,3 @@ handleUpdate app cameraNode camDataRef e = do
   camData <- readIORef camDataRef
   -- Move the camera, scale movement with time step
   writeIORef camDataRef =<< moveCamera app cameraNode t camData
-
--- | Helper to run code when value is nothing
-whenNothing :: Monad m => Maybe a -> b -> m b -> m b
-whenNothing Nothing _ f = f 
-whenNothing (Just _) a _ = return a

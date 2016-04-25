@@ -18,6 +18,10 @@ module Sample(
   , sampleJoystickPatch
   -- | Helpers
   , joysticPatch
+  , fromJustTrace
+  , whenNothing
+  , clamp
+  , vec3
   ) where 
 
 import Control.Lens hiding (Context)
@@ -72,10 +76,6 @@ newSample context name joystickPatch customStart = do
   }
   writeIORef sampleRef s
   return sampleRef
-
-fromJustTrace :: String -> Maybe a -> a 
-fromJustTrace _ (Just a) = a 
-fromJustTrace msg Nothing = error $ "fromJust: " ++ msg
 
 sampleSetup :: SampleRef -> IO ()
 sampleSetup sr = do
@@ -329,13 +329,33 @@ handleTouchBegin sr _ = do
   let app = s ^. sampleApplication
   unsubscribeFromEvent app (Proxy :: Proxy EventTouchBegin)
 
+-- | Helper function that prints profided message when get Nothing
+fromJustTrace :: String -> Maybe a -> a 
+fromJustTrace msg Nothing = error $ "fromJust: " ++ msg 
+fromJustTrace _ (Just a) = a 
+
+-- | Helper to run code when value is nothing
+whenNothing :: Monad m => Maybe a -> b -> m b -> m b
+whenNothing Nothing _ f = f 
+whenNothing (Just _) a _ = return a
+
+clamp :: Ord a => a -> a -> a -> a 
+clamp mina maxa = max mina . min maxa 
+
+vec3 :: Float -> Vector3 
+vec3 a = Vector3 a a a
 
 -- | Return XML patch instructions for screen joystick layout for a specific sample app, if any.
 joysticPatch :: String 
 joysticPatch = [r|
 <patch>
-    <add sel=\"/element/element[./attribute[@name='Name' and @value='Hat0']]\">
-        <attribute name=\"Is Visible\" value=\"false\" />
+    <remove sel="/element/element[./attribute[@name='Name' and @value='Button1']]/attribute[@name='Is Visible']" />
+    <replace sel="/element/element[./attribute[@name='Name' and @value='Button1']]/element[./attribute[@name='Name' and @value='Label']]/attribute[@name='Text']/@value">Debug</replace>
+    <add sel="/element/element[./attribute[@name='Name' and @value='Button1']]">
+        <element type="Text">
+            <attribute name="Name" value="KeyBinding" />
+            <attribute name="Text" value="SPACE" />
+        </element>
     </add>
 </patch>
 |]

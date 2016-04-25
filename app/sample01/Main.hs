@@ -55,11 +55,6 @@ customStart sr = do
   -}
   subscribeToEvents app 
 
--- | Helper function that prints profided message when get Nothing
-fromJustTrace :: String -> Maybe a -> a 
-fromJustTrace msg Nothing = error $ "fromJust: " ++ msg 
-fromJustTrace _ (Just a) = a 
-
 -- | Construct a new Text instance, containing the 'Hello World' String, and add it to the UI root element.
 createText :: SharedApplicationPtr -> IO ()
 createText app = do 

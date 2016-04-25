@@ -44,11 +44,6 @@ main :: IO ()
 main = withObject () $ \cntx -> do 
   newSample cntx "HelloGUI" joysticPatch customStart >>= runSample
 
--- | Helper function that prints profided message when get Nothing
-fromJustTrace :: String -> Maybe a -> a 
-fromJustTrace msg Nothing = error $ "fromJust: " ++ msg 
-fromJustTrace _ (Just a) = a 
-
 -- | Setup after engine initialization and before running the main loop.
 customStart :: SampleRef -> IO ()
 customStart sr = do 

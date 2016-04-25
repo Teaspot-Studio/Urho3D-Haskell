@@ -49,11 +49,6 @@ numSprites = 100
 varVelocity :: String 
 varVelocity = "Velocity"
 
--- | Helper function that prints profided message when get Nothing
-fromJustTrace :: String -> Maybe a -> a 
-fromJustTrace msg Nothing = error $ "fromJust: " ++ msg 
-fromJustTrace _ (Just a) = a 
-
 -- | Setup after engine initialization and before running the main loop.
 customStart :: SampleRef -> IO ()
 customStart sr = do 
