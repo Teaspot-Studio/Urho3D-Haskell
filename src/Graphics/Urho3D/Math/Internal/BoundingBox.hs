@@ -13,8 +13,8 @@ import Graphics.Urho3D.Math.Internal.Vector3
 import Control.Lens 
 
 data BoundingBox = BoundingBox {
-  _boundingBoxMinVector :: Vector3 
-, _boundingBoxMaxVector :: Vector3
+  _boundingBoxMinVector :: {-# UNPACK #-} !Vector3 
+, _boundingBoxMaxVector :: {-# UNPACK #-} !Vector3
 } deriving (Eq, Ord, Show)
 makeFields ''BoundingBox
 

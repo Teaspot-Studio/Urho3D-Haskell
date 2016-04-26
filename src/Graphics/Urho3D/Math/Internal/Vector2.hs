@@ -13,15 +13,17 @@ import qualified Data.Map as Map
 import Control.Lens 
 
 data Vector2 = Vector2 {
-  _vector2X :: Float 
-, _vector2Y :: Float  
+  _vector2X :: {-# UNPACK #-} !Float 
+, _vector2Y :: {-# UNPACK #-} !Float  
 } deriving (Eq, Ord, Show)
+
 makeFields ''Vector2
 
 data IntVector2 = IntVector2 {
-  _intVector2X :: Int 
-, _intVector2Y :: Int
+  _intVector2X :: {-# UNPACK #-} !Int 
+, _intVector2Y :: {-# UNPACK #-} !Int
 } deriving (Eq, Ord, Show)
+
 makeFields ''IntVector2
 
 vector2Cntx :: C.Context 

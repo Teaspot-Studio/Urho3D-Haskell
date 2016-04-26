@@ -14,10 +14,11 @@ import Graphics.Urho3D.Math.Internal.Vector2
 import Control.Lens 
 
 data Vector3 = Vector3 {
-  _vector3X :: Float 
-, _vector3Y :: Float 
-, _vector3Z :: Float   
+  _vector3X :: {-# UNPACK #-} !Float 
+, _vector3Y :: {-# UNPACK #-} !Float 
+, _vector3Z :: {-# UNPACK #-} !Float   
 } deriving (Eq, Ord, Show)
+
 makeFields ''Vector3
 
 vector3Cntx :: C.Context 

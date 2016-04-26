@@ -147,6 +147,8 @@ import Data.Proxy
 import Foreign 
 import Foreign.C.String
 import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Container.Str
+import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Core.Variant
 import Graphics.Urho3D.Createable
@@ -154,13 +156,15 @@ import Graphics.Urho3D.Math.Quaternion
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector2
 import Graphics.Urho3D.Math.Vector3
+import Graphics.Urho3D.Math.Matrix3x4
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Scene.Component
+import Graphics.Urho3D.Scene.Internal.Scene
 import Graphics.Urho3D.Scene.Internal.Node
 import Graphics.Urho3D.Network.Connection
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> nodeCntx <> sharedNodePtrCntx <> contextContext <> stringHashContext <> componentContext <> quaternionContext <> vector2Context <> vector3Context <> connectionContext <> variantContext)
+C.context (C.cppCtx <> nodeCntx <> sharedNodePtrCntx <> contextContext <> stringHashContext <> componentContext <> quaternionContext <> vector2Context <> vector3Context <> connectionContext <> variantContext <> stringContext <> sceneCntx <> matrix3x4Context)
 C.include "<Urho3D/Scene/Node.h>"
 C.include "<Urho3D/Scene/Component.h>"
 C.using "namespace Urho3D" 
@@ -619,13 +623,6 @@ nodeGetComponent p = liftIO $ do
       ct = nodeComponentType (Proxy :: Proxy c)
   cp <- [C.exp| Component* { $(Node* ptr)->GetComponent(*$(StringHash* ct)) } |]
   join <$> checkNullPtr' cp (return . castToChild)
-
--- | Returns node rotation in quaternion
-nodeGetRotation :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
-  -> m Quaternion
-nodeGetRotation p = liftIO $ do 
-  let ptr = parentPointer p 
-  peek =<< [C.exp| const Quaternion* { &$(Node* ptr)->GetRotation() } |]
   
 -- | Rotate around the X axis
 nodePitch :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
@@ -976,5 +973,245 @@ nodeRemoveListener p pcmp = liftIO $ do
       cmp = parentPointer pcmp
   [C.exp| void {$(Node* ptr)->($(Component* cmp))} |]
 
+-- | Return ID.
+nodeGetID :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Word
+nodeGetID p = liftIO $ do 
+  let ptr = parentPointer p 
+  fromIntegral <$> [C.exp| unsigned int {$(Node* ptr)->GetID()} |]
+
+-- | Return name.
+nodeGetName :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m String
+nodeGetName p = liftIO $ do 
+  let ptr = parentPointer p 
+  loadConstUrhoString =<< [C.exp| const String* {&$(Node* ptr)->GetName()} |]
+
+-- | Return name hash. You need to delete the hash.
+nodeGetNameHash :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m (Ptr StringHash)
+nodeGetNameHash p = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.exp| StringHash* {new StringHash($(Node* ptr)->GetNameHash())} |]
+
+-- | Return all tags.
+nodeGetTags :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v)
+  => p -- ^ Node pointer or children
+  -> m (v String) -- ^ Container with tags
+nodeGetTags p = liftIO $ do 
+  let ptr = parentPointer p 
+  peekForeignVectorAs =<< [C.exp| StringVector* {&$(Node* ptr)->GetTags()} |]
+
+-- | Return whether has a specific tag.
+nodeHasTag :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> String -- ^ tag
+  -> m Bool
+nodeHasTag p tag = liftIO $ withCString tag $ \tag' -> do 
+  let ptr = parentPointer p 
+  toBool <$> [C.exp| int {(int)$(Node* ptr)->HasTag(String($(const char* tag')))} |]
+
+-- | Return parent scene node.
+nodeGetParent :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m (Ptr Node)
+nodeGetParent p = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.exp| Node* {$(Node* ptr)->GetParent()} |]
+
+-- | Return scene.
+nodeGetScene :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m (Ptr Scene)
+nodeGetScene p = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.exp| Scene* {$(Node* ptr)->GetScene()} |]
+
+-- | Return whether is enabled. Disables nodes effectively disable all their components.
+nodeIsEnabled :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Bool
+nodeIsEnabled p = liftIO $ do 
+  let ptr = parentPointer p 
+  toBool <$> [C.exp| int {(int)$(Node* ptr)->IsEnabled()} |]
+
+-- | Returns the node's last own enabled state. May be different than the value returned by IsEnabled when SetDeepEnabled has been used.
+nodeIsEnabledSelf :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Bool
+nodeIsEnabledSelf p = liftIO $ do 
+  let ptr = parentPointer p 
+  toBool <$> [C.exp| int {(int)$(Node* ptr)->IsEnabledSelf()} |]
+
+-- | Return owner connection in networking.
+nodeGetOwner :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m (Ptr Connection)
+nodeGetOwner p = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.exp| Connection* {$(Node* ptr)->GetOwner()} |]
+
+-- | Return position in parent space.
+nodeGetPosition :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector3
+nodeGetPosition p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector3* {&$(Node* ptr)->GetPosition()} |]
+
+-- | Return position in parent space (for Urho2D).
+nodeGetPosition2D :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector2
+nodeGetPosition2D p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector2* {&$(Node* ptr)->GetPosition2D()} |]
+
+-- | Returns node rotation in quaternion
+nodeGetRotation :: (Parent Node a, Pointer p a, MonadIO m) 
+  => p -- ^ Node pointer or child
+  -> m Quaternion
+nodeGetRotation p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| const Quaternion* { &$(Node* ptr)->GetRotation() } |]
+
+-- | Return rotation in parent space (for Urho2D).
+nodeGetRotation2D :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Float
+nodeGetRotation2D p = liftIO $ do 
+  let ptr = parentPointer p 
+  realToFrac <$> [C.exp| float {$(Node* ptr)->GetRotation2D()} |]
+
+-- | Return forward direction in parent space. Positive Z axis equals identity rotation.
+nodeGetDirection :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector3
+nodeGetDirection p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector3* {&$(Node* ptr)->GetDirection()} |]
+
+-- | Return up direction in parent space. Positive Y axis equals identity rotation.
+nodeGetUp :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector3
+nodeGetUp p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector3* {&$(Node* ptr)->GetUp()} |]
+
+-- | Return right direction in parent space. Positive X axis equals identity rotation.
+nodeGetRight :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector3
+nodeGetRight p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector3* {$(Node* ptr)->GetRight()} |]
+
+-- | Return scale in parent space.
+nodeGetScale :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector3
+nodeGetScale p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector3* {&$(Node* ptr)->GetScale()} |]
+
+-- | Return scale in parent space (for Urho2D).
+nodeGetScale2D :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector2
+nodeGetScale2D p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector2* {&$(Node* ptr)->GetScale2D()} |]
+
+-- | Return parent space transform matrix.
+nodeGetTransform :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Matrix3x4
+nodeGetTransform p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Matrix3x4* {&$(Node* ptr)->GetTransform()} |]
+
+-- | Return position in world space.
+nodeGetWorldPosition :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector3
+nodeGetWorldPosition p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector3* {&$(Node* ptr)->GetWorldPosition()} |]
+
+-- | Return position in world space (for Urho2D).
+nodeGetWorldPosition2D :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector2
+nodeGetWorldPosition2D p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector2* {&$(Node* ptr)->GetWorldPosition2D()} |]
+
+-- | Return rotation in world space.
+nodeGetWorldRotation :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Quaternion
+nodeGetWorldRotation p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Quaternion* {&$(Node* ptr)->GetWorldRotation()} |]
+
+-- | Return rotation in world space (for Urho2D).
+nodeGetWorldRotation2D :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Float
+nodeGetWorldRotation2D p = liftIO $ do 
+  let ptr = parentPointer p 
+  realToFrac <$> [C.exp| float {$(Node* ptr)->GetWorldRotation2D()} |]
+
+-- | Return direction in world space.
+nodeGetWorldDirection :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector3
+nodeGetWorldDirection p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector3* {&$(Node* ptr)->GetWorldDirection()} |]
+
+-- | Return node's up vector in world space.
+nodeGetWorldUp :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector3
+nodeGetWorldUp p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector3* {&$(Node* ptr)->GetWorldUp()} |]
+
+-- | Return node's right vector in world space.
+nodeGetWorldRight :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector3
+nodeGetWorldRight p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector3* {&$(Node* ptr)->GetWorldRight()} |]
+
+-- | Return scale in world space.
+nodeGetWorldScale :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector3
+nodeGetWorldScale p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector3* {&$(Node* ptr)->GetWorldScale()} |]
+
+-- | Return scale in world space (for Urho2D).
+nodeGetWorldScale2D :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Vector2
+nodeGetWorldScale2D p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Vector2* {&$(Node* ptr)->GetWorldScale2D()} |]
+
+-- | Return world space transform matrix.
+nodeGetWorldTransform :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or children
+  -> m Matrix3x4
+nodeGetWorldTransform p = liftIO $ do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| Matrix3x4* {&$(Node* ptr)->GetWorldTransform()} |]
 
 -- Stopped at: https://github.com/urho3d/Urho3D/blob/master/Source/Urho3D/Scene/Node.h#L274

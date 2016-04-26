@@ -3,14 +3,21 @@ module Graphics.Urho3D.Container.ForeignVector(
   , WriteableVector(..)
   , foreignVectorAsList
   , foreignVectorAsList'
+  , foreignVectorAsVector
+  , foreignVectorAsVector'
+  , foreignVectorAsSeq
+  , foreignVectorAsSeq'
   , withForeignVector
   , withForeignVector'
+  , ForeignVectorRepresent(..)
   ) where 
 
 import Foreign 
 import Control.DeepSeq 
 import Control.Monad.IO.Class 
 import Control.Monad.Catch 
+import qualified Data.Vector as V
+import qualified Data.Sequence as S
 
 import Graphics.Urho3D.Createable 
 
@@ -46,12 +53,38 @@ foreignVectorAsList ptr = do
   len <- foreignVectorLength ptr
   mapM (foreignVectorElement ptr) [0 .. len-1]
 
--- | String version of @foreignVectorAsList@
+-- | Strict version of @foreignVectorAsList@
 foreignVectorAsList' :: (MonadIO m, ReadableVector a) => Ptr a -> m [ReadVecElem a]
 foreignVectorAsList' ptr = do 
   len <- foreignVectorLength ptr
   lst <- mapM (foreignVectorElement' ptr) [0 .. len-1]
   return $ length lst `seq` lst 
+
+-- | Lazy loading of foreign vector
+foreignVectorAsVector :: MonadIO m => ReadableVector a => Ptr a -> m (V.Vector (ReadVecElem a))
+foreignVectorAsVector ptr = do 
+  len <- foreignVectorLength ptr
+  V.generateM len $ foreignVectorElement ptr
+
+-- | Strict version of @foreignVectorAsVector@
+foreignVectorAsVector' :: (MonadIO m, ReadableVector a, NFData (ReadVecElem a)) => Ptr a -> m (V.Vector (ReadVecElem a))
+foreignVectorAsVector' ptr = do 
+  len <- foreignVectorLength ptr
+  vec <- V.generateM len $ foreignVectorElement ptr
+  vec `deepseq` return vec 
+
+-- | Lazy loading of foreign vector
+foreignVectorAsSeq :: MonadIO m => ReadableVector a => Ptr a -> m (S.Seq (ReadVecElem a))
+foreignVectorAsSeq ptr = do 
+  len <- foreignVectorLength ptr
+  sequence $ S.fromFunction len (foreignVectorElement ptr)
+
+-- | Strict version of @foreignVectorAsSeq@
+foreignVectorAsSeq' :: (MonadIO m, ReadableVector a, NFData (ReadVecElem a)) => Ptr a -> m (S.Seq (ReadVecElem a))
+foreignVectorAsSeq' ptr = do 
+  len <- foreignVectorLength ptr
+  s <- sequence $ S.fromFunction len (foreignVectorElement ptr)
+  s `deepseq` return s 
 
 -- | Creates vector, fills it with list elements, runs action, deletes vector after action
 -- Note: take into account any lazy operations that uses the vector,
@@ -70,3 +103,22 @@ withForeignVector' :: (MonadIO m, MonadMask m, NFData b, Createable (Ptr a), Wri
   -> (Ptr a -> m b) -- ^ Handler
   -> m b -- ^ Result
 withForeignVector' opts es handler = withObject' opts $ \v -> mapM (foreignVectorAppend v) es >> handler v
+
+-- | Allows to define functions with return results of different representations
+class ForeignVectorRepresent a where 
+  -- | Peek vector to given representation
+  peekForeignVectorAs :: (MonadIO m, ReadableVector v) => Ptr v -> m (a (ReadVecElem v))
+  -- | Peek vector to given representation, strict version
+  peekForeignVectorAs' :: (MonadIO m, ReadableVector v, NFData (ReadVecElem v)) => Ptr v -> m (a (ReadVecElem v))
+
+instance ForeignVectorRepresent [] where 
+  peekForeignVectorAs = foreignVectorAsList
+  peekForeignVectorAs' = foreignVectorAsList'
+
+instance ForeignVectorRepresent V.Vector where 
+  peekForeignVectorAs = foreignVectorAsVector 
+  peekForeignVectorAs' = foreignVectorAsVector' 
+
+instance ForeignVectorRepresent S.Seq where 
+  peekForeignVectorAs = foreignVectorAsSeq
+  peekForeignVectorAs' = foreignVectorAsSeq' 

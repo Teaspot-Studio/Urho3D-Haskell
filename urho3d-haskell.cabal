@@ -75,12 +75,14 @@ library
                        Graphics.Urho3D.Math.BoundingBox
                        Graphics.Urho3D.Math.Color
                        Graphics.Urho3D.Math.Defs
+                       Graphics.Urho3D.Math.Matrix3x4
                        Graphics.Urho3D.Math.Quaternion
                        Graphics.Urho3D.Math.Random
                        Graphics.Urho3D.Math.Rect
                        Graphics.Urho3D.Math.StringHash
                        Graphics.Urho3D.Math.Vector2 
                        Graphics.Urho3D.Math.Vector3
+                       Graphics.Urho3D.Math.Vector4
                        Graphics.Urho3D.Monad
                        Graphics.Urho3D.Network
                        Graphics.Urho3D.Network.Connection
@@ -144,11 +146,13 @@ library
                        Graphics.Urho3D.IO.Internal.FileSystem
                        Graphics.Urho3D.Math.Internal.BoundingBox
                        Graphics.Urho3D.Math.Internal.Color
+                       Graphics.Urho3D.Math.Internal.Matrix3x4
                        Graphics.Urho3D.Math.Internal.Quaternion
                        Graphics.Urho3D.Math.Internal.Rect
                        Graphics.Urho3D.Math.Internal.StringHash
                        Graphics.Urho3D.Math.Internal.Vector2 
                        Graphics.Urho3D.Math.Internal.Vector3
+                       Graphics.Urho3D.Math.Internal.Vector4
                        Graphics.Urho3D.Network.Internal.Connection
                        Graphics.Urho3D.Resource.Internal.Cache
                        Graphics.Urho3D.Resource.Internal.Image
@@ -210,12 +214,14 @@ library
                        src/Graphics/Urho3D/Math/BoundingBox.cpp
                        src/Graphics/Urho3D/Math/Color.cpp
                        src/Graphics/Urho3D/Math/Defs.cpp
+                       src/Graphics/Urho3D/Math/Matrix3x4.cpp
                        src/Graphics/Urho3D/Math/Quaternion.cpp
                        src/Graphics/Urho3D/Math/Random.cpp
                        src/Graphics/Urho3D/Math/Rect.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
                        src/Graphics/Urho3D/Math/Vector2.cpp
                        src/Graphics/Urho3D/Math/Vector3.cpp
+                       src/Graphics/Urho3D/Math/Vector4.cpp
                        src/Graphics/Urho3D/Network/Connection.cpp
                        src/Graphics/Urho3D/Resource/Cache.cpp
                        src/Graphics/Urho3D/Resource/Image.cpp
@@ -262,6 +268,8 @@ library
                       , stm 
                       , hashable
                       , unordered-containers
+                      , vector >= 0.11.0.0
+                      , containers >= 0.5.6.2
 
   default-extensions:
     DeriveGeneric

@@ -1,5 +1,6 @@
 module Graphics.Urho3D.Container.Vector(
     podVectorPtr
+  , podVectorPtr'
   , podVectorPtrImpl
   ) where
 
@@ -22,7 +23,11 @@ import Language.Haskell.TH.Quote
 -- instance ReadableVector PODVectorTPtr
 -- instance WriteableVector PODVectorTPtr
 podVectorPtr :: String -> DecsQ
-podVectorPtr elemName = do 
+podVectorPtr elemName = podVectorPtr' elemName elemName
+
+-- | Same as 'podVectorPtr', but you can provide different names for C-side and Haskell-side.
+podVectorPtr' :: String -> String -> DecsQ
+podVectorPtr' cElemName elemName = do 
   typedef <- C.verbatim $ "typedef " ++ vectorCpp ++ " " ++ vectorT ++ ";"
   createable <- [d|
     instance Createable (Ptr $vectorType) where 
@@ -36,14 +41,14 @@ podVectorPtr elemName = do
       type ReadVecElem $vectorType = Ptr $elemType
 
       foreignVectorLength _ptr = liftIO $ fromIntegral <$> $(quoteExp C.exp $ "unsigned int {$("++vectorT++"* _ptr)->Size()}")
-      foreignVectorElement _ptr _i = liftIO $(quoteExp C.exp $ elemName ++ "* {(*$("++vectorT++"* _ptr))[$(int _i')]}")
+      foreignVectorElement _ptr _i = liftIO $(quoteExp C.exp $ cElemName ++ "* {(*$("++vectorT++"* _ptr))[$(int _i')]}")
         where _i' = fromIntegral _i
     |]
   writeable <- [d|
     instance WriteableVector $vectorType where 
       type WriteVecElem $vectorType = Ptr $elemType 
 
-      foreignVectorAppend _ptr _elem = liftIO $(quoteExp C.exp $ "void {$("++vectorT++"* _ptr)->Push($("++elemName++"* _elem))}")
+      foreignVectorAppend _ptr _elem = liftIO $(quoteExp C.exp $ "void {$("++vectorT++"* _ptr)->Push($("++cElemName++"* _elem))}")
     |]
   return $ typedef ++ createable ++ readable ++ writeable
   where 

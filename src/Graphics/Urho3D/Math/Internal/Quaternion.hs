@@ -19,10 +19,10 @@ import Control.DeepSeq
 import GHC.Generics (Generic)
 
 data Quaternion = Quaternion {
-  _quaternionX :: Float 
-, _quaternionY :: Float 
-, _quaternionZ :: Float 
-, _quaternionW :: Float
+  _quaternionX :: {-# UNPACK #-} !Float 
+, _quaternionY :: {-# UNPACK #-} !Float 
+, _quaternionZ :: {-# UNPACK #-} !Float 
+, _quaternionW :: {-# UNPACK #-} !Float
 } deriving (Show, Eq, Generic)
 
 makeFields ''Quaternion

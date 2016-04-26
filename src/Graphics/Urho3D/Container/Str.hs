@@ -2,6 +2,8 @@
 module Graphics.Urho3D.Container.Str(
     UrhoString
   , UrhoWString
+  , StringVector
+  , WStringVector
   , stringContext
   , loadUrhoString
   , loadUrhoText
@@ -14,6 +16,7 @@ import qualified Language.C.Inline.Cpp as C
 import qualified Data.Text as T 
 
 import Graphics.Urho3D.Container.Internal.Str
+import Graphics.Urho3D.Container.ForeignVector 
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -39,6 +42,44 @@ instance Createable (Ptr UrhoWString) where
 
   newObject s = liftIO $ textAsPtrW32 s $ \s' -> [C.exp| WString* { new WString($(const wchar_t* s')) } |]
   deleteObject ptr = liftIO $ [C.exp| void { delete $(WString* ptr) } |]
+
+instance Createable (Ptr StringVector) where 
+  type CreationOptions (Ptr StringVector) = ()
+
+  newObject _ = liftIO [C.exp| StringVector* { new StringVector() } |]
+  deleteObject ptr = liftIO $ [C.exp| void {delete $(StringVector* ptr)} |]
+
+instance ReadableVector StringVector where 
+  type ReadVecElem StringVector = String
+  foreignVectorLength ptr = fromIntegral <$>
+    liftIO [C.exp| unsigned int {$(StringVector* ptr)->Size()} |]
+  foreignVectorElement ptr i = liftIO $ do 
+    let i' = fromIntegral i 
+    peekCString =<< [C.exp| const char* { (*$(StringVector* ptr)[$(int i')]).CString() } |]
+
+instance WriteableVector StringVector where 
+  type WriteVecElem StringVector = String 
+  foreignVectorAppend ptr s = liftIO $ withCString s $ \s' -> 
+    [C.exp| void { $(StringVector* ptr)->Push(String($(const char* s'))) } |]
+
+instance Createable (Ptr WStringVector) where 
+  type CreationOptions (Ptr WStringVector) = ()
+
+  newObject _ = liftIO [C.exp| WStringVector* { new WStringVector() } |]
+  deleteObject ptr = liftIO $ [C.exp| void {delete $(WStringVector* ptr)} |]
+  
+instance ReadableVector WStringVector where 
+  type ReadVecElem WStringVector = T.Text
+  foreignVectorLength ptr = fromIntegral <$>
+    liftIO [C.exp| unsigned int {$(WStringVector* ptr)->Size()} |]
+  foreignVectorElement ptr i = liftIO $ do 
+    let i' = fromIntegral i 
+    loadConstUrhoText =<< [C.exp| WString* { &(*$(WStringVector* ptr)[$(int i')]) } |]
+
+instance WriteableVector WStringVector where 
+  type WriteVecElem WStringVector = T.Text 
+  foreignVectorAppend ptr s = liftIO $ textAsPtrW32 s $ \s' -> 
+    [C.exp| void { $(WStringVector* ptr)->Push(WString($(const wchar_t* s'))) } |]
 
 -- | Loads given Urho3D::String into Haskell Stirng AND deletes the Urho string after creation
 loadUrhoString :: (MonadMask m, MonadIO m) => Ptr UrhoString -> m String 

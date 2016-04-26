@@ -18,16 +18,16 @@ import Graphics.Urho3D.Math.Internal.Vector2
 import Control.Lens 
 
 data Rect = Rect {
-  _rectMinPoint :: Vector2 
-, _rectMaxPoint :: Vector2  
+  _rectMinPoint :: {-# UNPACK #-} !Vector2 
+, _rectMaxPoint :: {-# UNPACK #-} !Vector2  
 } deriving (Eq, Show)
 makeFields ''Rect
 
 data IntRect = IntRect {
-  _intRectLeft :: Int 
-, _intRectTop :: Int 
-, _intRectRight :: Int 
-, _intRectBottom :: Int
+  _intRectLeft :: {-# UNPACK #-} !Int 
+, _intRectTop :: {-# UNPACK #-} !Int 
+, _intRectRight :: {-# UNPACK #-} !Int 
+, _intRectBottom :: {-# UNPACK #-} !Int
 } deriving (Eq, Show)
 makeFields ''IntRect
 
