@@ -114,6 +114,7 @@ module Graphics.Urho3D.Scene.Node(
   , nodeGetWorldScale
   , nodeGetWorldScale2D
   , nodeGetWorldTransform
+  -- Stoped here
   , NodeLocalToWorld(..)
   , nodeLocalToWorld2D
   , NodeWorldToLocal(..)
@@ -156,6 +157,7 @@ import Graphics.Urho3D.Math.Quaternion
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector2
 import Graphics.Urho3D.Math.Vector3
+import Graphics.Urho3D.Math.Vector4
 import Graphics.Urho3D.Math.Matrix3x4
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Scene.Component
@@ -164,7 +166,22 @@ import Graphics.Urho3D.Scene.Internal.Node
 import Graphics.Urho3D.Network.Connection
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> nodeCntx <> sharedNodePtrCntx <> contextContext <> stringHashContext <> componentContext <> quaternionContext <> vector2Context <> vector3Context <> connectionContext <> variantContext <> stringContext <> sceneCntx <> matrix3x4Context)
+C.context (C.cppCtx 
+  <> nodeCntx 
+  <> sharedNodePtrCntx 
+  <> contextContext 
+  <> stringHashContext 
+  <> componentContext 
+  <> quaternionContext 
+  <> vector2Context 
+  <> vector3Context 
+  <> vector4Context 
+  <> connectionContext 
+  <> variantContext 
+  <> stringContext 
+  <> sceneCntx 
+  <> matrix3x4Context)
+
 C.include "<Urho3D/Scene/Node.h>"
 C.include "<Urho3D/Scene/Component.h>"
 C.using "namespace Urho3D" 
@@ -919,7 +936,7 @@ nodeRemoveAllComponents p = liftIO $ do
 
 -- | Clone scene node, components and child nodes. Return the clone.
 nodeClone :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> CreateMode 
   -> m (Ptr Node)
 nodeClone p cm = liftIO $ do 
@@ -928,7 +945,7 @@ nodeClone p cm = liftIO $ do
 
 -- | Remove from the parent node. If no other shared pointer references exist, causes immediate deletion.
 nodeRemove:: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m ()
 nodeRemove p = liftIO $ do 
   let ptr = parentPointer p
@@ -936,7 +953,7 @@ nodeRemove p = liftIO $ do
 
 -- | Set parent scene node. Retains the world transform.
 nodeSetParent:: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> Ptr Node -- ^ parent
   -> m ()
 nodeSetParent p parent = liftIO $ do 
@@ -945,7 +962,7 @@ nodeSetParent p parent = liftIO $ do
 
 -- | Set a user variable.
 nodeSetVar :: (Parent Node a, Pointer p a, VariantStorable v, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> String -- ^ key
   -> v -- ^ value
   -> m ()
@@ -955,7 +972,7 @@ nodeSetVar p key value = liftIO $ withObject key $ \pkey -> withVariant value $ 
 
 -- | Add listener component that is notified of node being dirtied. Can either be in the same node or another.
 nodeAddListener:: (Parent Node a, Pointer p a, Parent Component b, Pointer pComponent b, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> pComponent -- ^ Pointer to component
   -> m ()
 nodeAddListener p pcmp = liftIO $ do 
@@ -965,7 +982,7 @@ nodeAddListener p pcmp = liftIO $ do
 
 -- | Remove listener component.
 nodeRemoveListener:: (Parent Node a, Pointer p a, Parent Component b, Pointer pComponent b, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> pComponent -- ^ Pointer to component
   -> m ()
 nodeRemoveListener p pcmp = liftIO $ do 
@@ -975,7 +992,7 @@ nodeRemoveListener p pcmp = liftIO $ do
 
 -- | Return ID.
 nodeGetID :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Word
 nodeGetID p = liftIO $ do 
   let ptr = parentPointer p 
@@ -983,7 +1000,7 @@ nodeGetID p = liftIO $ do
 
 -- | Return name.
 nodeGetName :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m String
 nodeGetName p = liftIO $ do 
   let ptr = parentPointer p 
@@ -991,7 +1008,7 @@ nodeGetName p = liftIO $ do
 
 -- | Return name hash. You need to delete the hash.
 nodeGetNameHash :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m (Ptr StringHash)
 nodeGetNameHash p = liftIO $ do 
   let ptr = parentPointer p 
@@ -999,7 +1016,7 @@ nodeGetNameHash p = liftIO $ do
 
 -- | Return all tags.
 nodeGetTags :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m (v String) -- ^ Container with tags
 nodeGetTags p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1007,7 +1024,7 @@ nodeGetTags p = liftIO $ do
 
 -- | Return whether has a specific tag.
 nodeHasTag :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> String -- ^ tag
   -> m Bool
 nodeHasTag p tag = liftIO $ withCString tag $ \tag' -> do 
@@ -1016,7 +1033,7 @@ nodeHasTag p tag = liftIO $ withCString tag $ \tag' -> do
 
 -- | Return parent scene node.
 nodeGetParent :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m (Ptr Node)
 nodeGetParent p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1024,7 +1041,7 @@ nodeGetParent p = liftIO $ do
 
 -- | Return scene.
 nodeGetScene :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m (Ptr Scene)
 nodeGetScene p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1032,7 +1049,7 @@ nodeGetScene p = liftIO $ do
 
 -- | Return whether is enabled. Disables nodes effectively disable all their components.
 nodeIsEnabled :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Bool
 nodeIsEnabled p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1040,7 +1057,7 @@ nodeIsEnabled p = liftIO $ do
 
 -- | Returns the node's last own enabled state. May be different than the value returned by IsEnabled when SetDeepEnabled has been used.
 nodeIsEnabledSelf :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Bool
 nodeIsEnabledSelf p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1048,7 +1065,7 @@ nodeIsEnabledSelf p = liftIO $ do
 
 -- | Return owner connection in networking.
 nodeGetOwner :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m (Ptr Connection)
 nodeGetOwner p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1056,7 +1073,7 @@ nodeGetOwner p = liftIO $ do
 
 -- | Return position in parent space.
 nodeGetPosition :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
 nodeGetPosition p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1064,7 +1081,7 @@ nodeGetPosition p = liftIO $ do
 
 -- | Return position in parent space (for Urho2D).
 nodeGetPosition2D :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector2
 nodeGetPosition2D p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1080,7 +1097,7 @@ nodeGetRotation p = liftIO $ do
 
 -- | Return rotation in parent space (for Urho2D).
 nodeGetRotation2D :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Float
 nodeGetRotation2D p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1088,7 +1105,7 @@ nodeGetRotation2D p = liftIO $ do
 
 -- | Return forward direction in parent space. Positive Z axis equals identity rotation.
 nodeGetDirection :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
 nodeGetDirection p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1096,7 +1113,7 @@ nodeGetDirection p = liftIO $ do
 
 -- | Return up direction in parent space. Positive Y axis equals identity rotation.
 nodeGetUp :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
 nodeGetUp p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1104,7 +1121,7 @@ nodeGetUp p = liftIO $ do
 
 -- | Return right direction in parent space. Positive X axis equals identity rotation.
 nodeGetRight :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
 nodeGetRight p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1112,7 +1129,7 @@ nodeGetRight p = liftIO $ do
 
 -- | Return scale in parent space.
 nodeGetScale :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
 nodeGetScale p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1120,7 +1137,7 @@ nodeGetScale p = liftIO $ do
 
 -- | Return scale in parent space (for Urho2D).
 nodeGetScale2D :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector2
 nodeGetScale2D p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1128,7 +1145,7 @@ nodeGetScale2D p = liftIO $ do
 
 -- | Return parent space transform matrix.
 nodeGetTransform :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Matrix3x4
 nodeGetTransform p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1136,7 +1153,7 @@ nodeGetTransform p = liftIO $ do
 
 -- | Return position in world space.
 nodeGetWorldPosition :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
 nodeGetWorldPosition p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1144,7 +1161,7 @@ nodeGetWorldPosition p = liftIO $ do
 
 -- | Return position in world space (for Urho2D).
 nodeGetWorldPosition2D :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector2
 nodeGetWorldPosition2D p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1152,7 +1169,7 @@ nodeGetWorldPosition2D p = liftIO $ do
 
 -- | Return rotation in world space.
 nodeGetWorldRotation :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Quaternion
 nodeGetWorldRotation p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1160,7 +1177,7 @@ nodeGetWorldRotation p = liftIO $ do
 
 -- | Return rotation in world space (for Urho2D).
 nodeGetWorldRotation2D :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Float
 nodeGetWorldRotation2D p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1168,7 +1185,7 @@ nodeGetWorldRotation2D p = liftIO $ do
 
 -- | Return direction in world space.
 nodeGetWorldDirection :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
 nodeGetWorldDirection p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1176,7 +1193,7 @@ nodeGetWorldDirection p = liftIO $ do
 
 -- | Return node's up vector in world space.
 nodeGetWorldUp :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
 nodeGetWorldUp p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1184,7 +1201,7 @@ nodeGetWorldUp p = liftIO $ do
 
 -- | Return node's right vector in world space.
 nodeGetWorldRight :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
 nodeGetWorldRight p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1192,7 +1209,7 @@ nodeGetWorldRight p = liftIO $ do
 
 -- | Return scale in world space.
 nodeGetWorldScale :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
 nodeGetWorldScale p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1200,7 +1217,7 @@ nodeGetWorldScale p = liftIO $ do
 
 -- | Return scale in world space (for Urho2D).
 nodeGetWorldScale2D :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Vector2
 nodeGetWorldScale2D p = liftIO $ do 
   let ptr = parentPointer p 
@@ -1208,10 +1225,62 @@ nodeGetWorldScale2D p = liftIO $ do
 
 -- | Return world space transform matrix.
 nodeGetWorldTransform :: (Parent Node a, Pointer p a, MonadIO m)
-  => p -- ^ Node pointer or children
+  => p -- ^ Node pointer or pointer to ascentor
   -> m Matrix3x4
 nodeGetWorldTransform p = liftIO $ do 
   let ptr = parentPointer p 
   peek =<< [C.exp| Matrix3x4* {&$(Node* ptr)->GetWorldTransform()} |]
+
+class NodeLocalToWorld a where 
+  -- | Convert a local space position or rotation to world space.
+  nodeLocalToWorld :: (Parent Node n, Pointer p n, MonadIO m)
+    => p -- ^ Node pointer or pointer to ascentor
+    -> a -- ^ position in local space
+    -> m a -- ^ position in world space
+
+instance NodeLocalToWorld Vector3 where 
+  nodeLocalToWorld p v = liftIO $ with v $ \v' -> do 
+    let ptr = parentPointer p 
+    peek =<< [C.exp| const Vector3* {&$(Node* ptr)->LocalToWorld(*$(Vector3* v'))} |]
+
+instance NodeLocalToWorld Vector4 where 
+  nodeLocalToWorld p v = liftIO $ with v $ \v' -> do 
+    let ptr = parentPointer p 
+    peek =<< [C.exp| const Vector4* {&$(Node* ptr)->LocalToWorld(*$(Vector4* v'))} |]
+
+-- | Convert a local space position or rotation to world space (for Urho2D).
+nodeLocalToWorld2D :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or pointer to ascentor
+  -> Vector2
+  -> m Vector2 
+nodeLocalToWorld2D p v = liftIO $ with v $ \v' -> do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| const Vector2* {&$(Node* ptr)->LocalToWorld2D(*$(Vector2* v'))}|]
+
+class NodeWorldToLocal a where 
+  -- | Convert a world space position or rotation to local space.
+  nodeWorldToLocal :: (Parent Node n, Pointer p n, MonadIO m)
+    => p -- ^ Node pointer or pointer to ascentor
+    -> a -- ^ position in local space
+    -> m a -- ^ position in world space
+
+instance NodeWorldToLocal Vector3 where 
+  nodeWorldToLocal p v = liftIO $ with v $ \v' -> do 
+    let ptr = parentPointer p 
+    peek =<< [C.exp| const Vector3* {&$(Node* ptr)->WorldToLocal(*$(Vector3* v'))} |]
+
+instance NodeWorldToLocal Vector4 where 
+  nodeWorldToLocal p v = liftIO $ with v $ \v' -> do 
+    let ptr = parentPointer p 
+    peek =<< [C.exp| const Vector4* {&$(Node* ptr)->WorldToLocal(*$(Vector4* v'))} |]
+
+-- | Convert a world space position or rotation to local space (for Urho2D).
+nodeWorldToLocal2D :: (Parent Node a, Pointer p a, MonadIO m)
+  => p -- ^ Node pointer or pointer to ascentor
+  -> Vector2
+  -> m Vector2 
+nodeWorldToLocal2D p v = liftIO $ with v $ \v' -> do 
+  let ptr = parentPointer p 
+  peek =<< [C.exp| const Vector2* {&$(Node* ptr)->WorldToLocal2D(*$(Vector2* v'))}|]
 
 -- Stopped at: https://github.com/urho3d/Urho3D/blob/master/Source/Urho3D/Scene/Node.h#L274
