@@ -196,6 +196,7 @@ C.verbatim "typedef Vector<SharedPtr<Component> > VectorSharedComponentPtr;"
 C.verbatim "typedef Vector<WeakPtr<Component> > VectorSharedWeakComponentPtr;"
 C.verbatim "typedef PODVector<Node*> PODVectorNodePtr;"
 C.verbatim "typedef PODVector<Component*> PODVectorComponentPtr;"
+C.verbatim "typedef VariantMap HashMapStringHashVariant;"
 
 nodeContext :: C.Context 
 nodeContext = sharedNodePtrCntx <> nodeCntx <> stringHashContext <> componentContext <> podVectorNodePtrCntx
@@ -1561,12 +1562,12 @@ nodeGetVar p key = liftIO $ withObject key $ \pkey -> do
   let ptr = parentPointer p 
   getVariant =<< [C.exp| const Variant* { &$(Node* ptr)->GetVar(*$(StringHash* pkey))} |]
 
--- | 
+-- | Return all user variables.
 nodeGetVars :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
-  -> m ()
+  -> m (Ptr VariantMap)
 nodeGetVars p = liftIO $ do 
   let ptr = parentPointer p 
-  [C.exp| void { $(Node* ptr)->GetVars()} |]
+  [C.exp| const HashMapStringHashVariant* { &$(Node* ptr)->GetVars()} |]
 
--- Stopped at: https://github.com/urho3d/Urho3D/blob/master/Source/Urho3D/Scene/Node.h#L274
+-- Stopped at: https://github.com/urho3d/Urho3D/blob/master/Source/Urho3D/Scene/Node.h#L520
