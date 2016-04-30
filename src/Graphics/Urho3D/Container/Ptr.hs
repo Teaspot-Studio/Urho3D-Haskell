@@ -1,6 +1,8 @@
 module Graphics.Urho3D.Container.Ptr(
     sharedPtr 
-  , sharedPtrImpl 
+  , sharedPtrImpl
+  , sharedWeakPtr
+  , sharedWeakPtrImpl
   , SharedPointer(..)
   , AbstractType
   ) where
@@ -121,6 +123,97 @@ sharedPtr tname = do
   unSharedTPtr = "unShared" ++ tname ++ "Ptr"
   wrapSharedTPtr = "wrap" ++ sharedTPtr
 
+-- | Makes public API of SharedWeakPtr for given type
+-- Makes following symbols:
+-- newSharedWeakTPtr
+-- deleteSharedWeakTPtr
+-- instance Createable SharedWeakT
+-- instance Pointer SharedWeakTPtr T 
+-- 
+-- wrapSharedWeakTPtr :: Ptr SharedWeakT -> IO SharedWeakTPtr
+-- 
+-- Depends on symbols from @sharedWeakPtrImpl@.
+--
+-- Note: if you get something like 'SharedWeakT isn't defined' check if you added sharedWeakTPtrCntx in your
+-- local context.
+sharedWeakPtr :: String -> DecsQ 
+sharedWeakPtr tname = do 
+  -- typedef <- C.verbatim $ "#include <iostream>\ntypedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
+  typedef <- C.verbatim $ "typedef WeakPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
+  deleter <- sequence [
+      deleteSharedTPtr ^:: [t| Ptr $sharedTType -> IO () |]
+    , mkFunc1 deleteSharedTPtr "ptr" $ \ptrName -> 
+        let inlinePtr = "$(" ++ sharedT ++ "* "++show ptrName++")"
+        -- in quoteExp C.exp ("void { std::cout << \"finalizing "++tname++"\" << std::endl; if ("++inlinePtr++") { delete "++inlinePtr++"; } }")
+        in quoteExp C.exp ("void { if ("++inlinePtr++") { delete "++inlinePtr++"; } }")
+    ]
+
+  wrappPointer <- sequence [
+      wrapSharedTPtr ^:: [t| Ptr $sharedTType -> IO $sharedTPtrType |]
+    , mkFunc1 wrapSharedTPtr "ptr" $ \_ -> [e| do
+        fptr <- FC.newForeignPtr $(varE $ mkName "ptr") $ $(varE $ mkName deleteSharedTPtr) $(varE $ mkName "ptr")
+        return $ $(conE $ mkName sharedTPtr) fptr
+      |]
+    ]
+
+  allocator <- sequence [
+      newSharedTPtr ^:: [t| Ptr $tType -> IO $sharedTPtrType |]
+    , mkFunc1 newSharedTPtr "ptr" $ \ptrName -> [e| do
+        sptr <- $(quoteExp C.exp (sharedT ++ "* { new " ++ sharedT ++ "($( "++ tname ++ "* "++show ptrName++")) }")) 
+        $(varE $ mkName wrapSharedTPtr) sptr
+        |]
+    ]
+
+  createable <- [d| 
+    instance Createable $sharedTPtrType where 
+      type CreationOptions $sharedTPtrType = Ptr $tType 
+
+      newObject = liftIO . $(varE $ mkName newSharedTPtr)
+      deleteObject = liftIO . finalizeForeignPtr . $(varE $ mkName unSharedTPtr)
+    |]
+
+  pointerCast <- sequence [
+      pointerCastF ^:: [t| $sharedTPtrType -> Ptr $tType|]
+    , mkFunc1Con pointerCastF sharedTPtr "ptr" $ \ptrName -> [e| unsafePerformIO $ withForeignPtr $(varE ptrName) $ \_ptr ->
+        $(quoteExp C.exp $ tname ++ "* {"++"$("++sharedT++"* _ptr)->Get()}") |]
+    ]
+  pointerInst <- [d|
+    instance Pointer $sharedTPtrType $tType where 
+      pointer = $(varE $ mkName pointerCastF)
+      isNull ptr = pointer ptr == nullPtr
+      makePointer = unsafePerformIO . $(varE $ mkName newSharedTPtr)
+    |]
+
+  sharedPointerIns <- do 
+    ptrTType <- [t|Ptr $tType|]
+    isDefined <- ''Createable `isInstance` [ptrTType]
+    if not isDefined then do 
+      isAbstract <- ''AbstractType `isInstance` [ConT $ mkName tname]
+      unless isAbstract $ 
+        reportWarning $ "No instance Createable for " 
+          <> pprint ptrTType 
+          <> ". Add AbstractType instance to supress the warning."
+      return []
+    else [d|
+      instance SharedPointer $sharedTPtrType $tType where 
+        newSharedObject opts = newObject opts >>= $(varE $ mkName newSharedTPtr)
+      |]
+
+  return $ typedef ++ deleter ++ wrappPointer ++ allocator ++ createable ++ pointerCast ++ pointerInst ++ sharedPointerIns
+
+  where 
+  tType = conT $ mkName tname
+  sharedTType = conT $ mkName sharedT
+  sharedTPtrType = conT $ mkName sharedTPtr
+
+  newSharedTPtr = "newSharedWeak" ++ tname ++ "Ptr"
+  deleteSharedTPtr = "deleteSharedWeak" ++ tname ++ "Ptr"
+  sharedT = "SharedWeak" ++ tname                                 
+  sharedTPtr = sharedT ++ "Ptr"
+  pointerCastF = "pointer" ++ sharedT
+  unSharedTPtr = "unSharedWeak" ++ tname ++ "Ptr"
+  wrapSharedTPtr = "wrap" ++ sharedTPtr
+
 -- | Makes internal representation of SharedPtr for given type
 -- Makes following symbols:
 -- data SharedT
@@ -142,5 +235,29 @@ sharedPtrImpl tname = do
   sharedT = "Shared" ++ tname 
   sharedTPtr = sharedT ++ "Ptr"
   sharedTPtrCntx = "shared" ++ tname  ++ "PtrCntx"
+  cTType = return $ LitE $ StringL sharedT
+  cntxTType = [e| return $ ConT $ mkName $cTType |]
+
+-- | Makes internal representation of SharedWeakPtr for given type
+-- Makes following symbols:
+-- data SharedWeakT
+-- newtype SharedWeakTPtr = SharedWeakTPtr { unSharedWeakTPtr :: ForeignPtr SharedWeakT }
+-- sharedWeakTPtrCntx :: C.Context
+sharedWeakPtrImpl :: String -> DecsQ 
+sharedWeakPtrImpl tname = do 
+  sequence [
+      return $ DataD [] (mkName sharedT) [] [] []
+    , mkNewType sharedTPtr [t| ForeignPtr $(return $ ConT $ mkName sharedT) |]
+    , sharedTPtrCntx ^:: [t| C.Context |]
+    , sharedTPtrCntx ^= [e| mempty { 
+        C.ctxTypesTable = Map.fromList [
+          (C.TypeName $cTType, $cntxTType)
+        ]
+      } |]
+    ]
+  where
+  sharedT = "SharedWeak" ++ tname 
+  sharedTPtr = sharedT ++ "Ptr"
+  sharedTPtrCntx = "sharedWeak" ++ tname  ++ "PtrCntx"
   cTType = return $ LitE $ StringL sharedT
   cntxTType = [e| return $ ConT $ mkName $cTType |]

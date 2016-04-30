@@ -2,9 +2,13 @@ module Graphics.Urho3D.Scene.Internal.Component(
     Component
   , componentCntx
   , sharedComponentPtrCntx
+  , sharedWeakComponentPtrCntx
   , SharedComponent
   , SharedComponentPtr(..)
+  , SharedWeakComponent
+  , SharedWeakComponentPtr(..)
   , VectorSharedComponentPtr
+  , VectorSharedWeakComponentPtr
   , PODVectorComponentPtr
   , podVectorComponentPtrCntx
   ) where
@@ -18,14 +22,17 @@ import qualified Data.Map as Map
 
 data Component
 data VectorSharedComponentPtr
+data VectorSharedWeakComponentPtr
 
 componentCntx :: C.Context 
 componentCntx = mempty {
     C.ctxTypesTable = Map.fromList [
       (C.TypeName "Component", [t| Component |])
     , (C.TypeName "VectorSharedComponentPtr", [t| VectorSharedComponentPtr |])
+    , (C.TypeName "VectorSharedWeakComponentPtr", [t| VectorSharedWeakComponentPtr |])
     ]
   }
 
 sharedPtrImpl "Component" 
+sharedWeakPtrImpl "Component" 
 podVectorPtrImpl "Component"

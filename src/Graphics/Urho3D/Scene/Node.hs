@@ -193,6 +193,7 @@ C.using "namespace Urho3D"
 
 C.verbatim "typedef Vector<SharedPtr<Node> > VectorSharedNodePtr;"
 C.verbatim "typedef Vector<SharedPtr<Component> > VectorSharedComponentPtr;"
+C.verbatim "typedef Vector<WeakPtr<Component> > VectorSharedWeakComponentPtr;"
 C.verbatim "typedef PODVector<Node*> PODVectorNodePtr;"
 C.verbatim "typedef PODVector<Component*> PODVectorComponentPtr;"
 
@@ -1540,22 +1541,25 @@ nodeHasComponent p phash = liftIO $ do
   let ptr = parentPointer p 
   toBool <$> [C.exp| int { (int)$(Node* ptr)->HasComponent(*$(StringHash* phash))} |]
 
--- | 
-nodeGetListeners :: (Parent Node a, Pointer p a, MonadIO m)
+-- | Return listener components.
+nodeGetListeners :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v)
   => p -- ^ Node pointer or pointer to ascentor
-  -> m ()
+  -> m (v SharedWeakComponentPtr)
 nodeGetListeners p = liftIO $ do 
   let ptr = parentPointer p 
-  [C.exp| void { $(Node* ptr)->GetListeners()} |]
+  peekForeignVectorAs =<< [C.block| const VectorSharedWeakComponentPtr* { 
+      static Vector<WeakPtr<Component> > vec = $(Node* ptr)->GetListeners();
+      return &vec;
+    } |]
 
 -- | Return a user variable.
 nodeGetVar :: (Parent Node a, Pointer p a, MonadIO m, VariantStorable b)
   => p -- ^ Node pointer or pointer to ascentor
-  -> Ptr StringHash -- ^ key
+  -> String -- ^ key
   -> m (Maybe b)
-nodeGetVar p phash = liftIO $ do 
+nodeGetVar p key = liftIO $ withObject key $ \pkey -> do 
   let ptr = parentPointer p 
-  getVariant =<< [C.exp| const Variant* { &$(Node* ptr)->GetVar(*$(StringHash* phash))} |]
+  getVariant =<< [C.exp| const Variant* { &$(Node* ptr)->GetVar(*$(StringHash* pkey))} |]
 
 -- | 
 nodeGetVars :: (Parent Node a, Pointer p a, MonadIO m)

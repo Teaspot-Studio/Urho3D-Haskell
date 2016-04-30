@@ -26,6 +26,7 @@ import Foreign
 import Control.Lens hiding (Context, element)
 
 import Graphics.Urho3D
+import Sample 
 
 -- | Custom logic component for moving the animated model and rotating at area edges.
 type Mover = CustomLogicComponent
