@@ -161,7 +161,7 @@ setupViewport app scene cameraNode = do
     use, but now we just use full screen and default render path configured in the engine command line options
   -}
   cntx <- getContext app 
-  (camera :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent cameraNode 
+  (camera :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent' cameraNode False
   (viewport :: SharedViewportPtr) <- newSharedObject (cntx, pointer scene, camera)
   rendererSetViewport renderer 0 viewport
 

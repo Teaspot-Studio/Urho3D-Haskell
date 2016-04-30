@@ -27,6 +27,9 @@ C.context (C.cppCtx <> stringCntx)
 C.include "<Urho3D/Container/Str.h>"
 C.using "namespace Urho3D"
 
+C.verbatim "typedef Vector<String> StringVector;"
+C.verbatim "typedef Vector<WString> WStringVector;"
+
 stringContext :: C.Context 
 stringContext = stringCntx
 
@@ -55,7 +58,7 @@ instance ReadableVector StringVector where
     liftIO [C.exp| unsigned int {$(StringVector* ptr)->Size()} |]
   foreignVectorElement ptr i = liftIO $ do 
     let i' = fromIntegral i 
-    peekCString =<< [C.exp| const char* { (*$(StringVector* ptr)[$(int i')]).CString() } |]
+    peekCString =<< [C.exp| const char* { (*$(StringVector* ptr))[$(int i')].CString() } |]
 
 instance WriteableVector StringVector where 
   type WriteVecElem StringVector = String 
@@ -74,7 +77,7 @@ instance ReadableVector WStringVector where
     liftIO [C.exp| unsigned int {$(WStringVector* ptr)->Size()} |]
   foreignVectorElement ptr i = liftIO $ do 
     let i' = fromIntegral i 
-    loadConstUrhoText =<< [C.exp| WString* { &(*$(WStringVector* ptr)[$(int i')]) } |]
+    loadConstUrhoText =<< [C.exp| WString* { &(*$(WStringVector* ptr))[$(int i')] } |]
 
 instance WriteableVector WStringVector where 
   type WriteVecElem WStringVector = T.Text 
