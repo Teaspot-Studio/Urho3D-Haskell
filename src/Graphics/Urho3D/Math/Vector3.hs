@@ -1,6 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Math.Vector3(
     Vector3(..)
+  , PODVectorVector3
+  , VectorPODVectorVector3
   , HasX(..)
   , HasY(..)
   , HasZ(..)
@@ -20,6 +22,7 @@ import Control.Lens
 import Data.Monoid
 import Foreign 
 import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Math.Defs
 import Graphics.Urho3D.Math.Internal.Vector3
 import Graphics.Urho3D.Monad
@@ -117,3 +120,39 @@ vec3Forward = Vector3 0 0 1
 -- | (0,0,-1) vector.
 vec3Back :: Vector3
 vec3Back = Vector3 0 0 (-1)
+
+
+C.verbatim "typedef PODVector<Vector3> PODVectorVector3;"
+
+instance Createable (Ptr PODVectorVector3) where 
+  type CreationOptions (Ptr PODVectorVector3) = ()
+  newObject _ = liftIO [C.exp| PODVectorVector3* {new PODVectorVector3() } |]
+  deleteObject ptr = liftIO [C.exp| void { delete $(PODVectorVector3* ptr) } |]
+
+instance ReadableVector PODVectorVector3 where 
+  type ReadVecElem PODVectorVector3 = Vector3
+  foreignVectorLength ptr = liftIO $ fromIntegral <$> [C.exp| int {$(PODVectorVector3* ptr)->Size() } |]
+  foreignVectorElement ptr i = liftIO $ peek =<< [C.exp| Vector3* { &((*$(PODVectorVector3* ptr))[$(unsigned int i')]) } |]
+    where i' = fromIntegral i 
+
+instance WriteableVector PODVectorVector3 where 
+  type WriteVecElem PODVectorVector3 = Vector3
+  foreignVectorAppend ptr e = liftIO $ with e $ \e' -> [C.exp| void {$(PODVectorVector3* ptr)->Push(*$(Vector3* e')) } |]
+
+
+C.verbatim "typedef Vector<PODVector<Vector3> > VectorPODVectorVector3;"
+
+instance Createable (Ptr VectorPODVectorVector3) where 
+  type CreationOptions (Ptr VectorPODVectorVector3) = ()
+  newObject _ = liftIO [C.exp| VectorPODVectorVector3* {new VectorPODVectorVector3() } |]
+  deleteObject ptr = liftIO [C.exp| void { delete $(VectorPODVectorVector3* ptr) } |]
+
+instance ReadableVector VectorPODVectorVector3 where 
+  type ReadVecElem VectorPODVectorVector3 = Ptr PODVectorVector3
+  foreignVectorLength ptr = liftIO $ fromIntegral <$> [C.exp| int {$(VectorPODVectorVector3* ptr)->Size() } |]
+  foreignVectorElement ptr i = liftIO $ [C.exp| PODVectorVector3* { &((*$(VectorPODVectorVector3* ptr))[$(unsigned int i')]) } |]
+    where i' = fromIntegral i 
+
+instance WriteableVector VectorPODVectorVector3 where 
+  type WriteVecElem VectorPODVectorVector3 = Ptr PODVectorVector3
+  foreignVectorAppend ptr e = liftIO $ [C.exp| void {$(VectorPODVectorVector3* ptr)->Push(PODVectorVector3(*$(PODVectorVector3* e))) } |]

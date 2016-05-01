@@ -1047,7 +1047,7 @@ nodeGetNameHash p = liftIO $ do
   [C.exp| StringHash* {new StringHash($(Node* ptr)->GetNameHash())} |]
 
 -- | Return all tags.
-nodeGetTags :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v)
+nodeGetTags :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v String)
   => p -- ^ Node pointer or pointer to ascentor
   -> m (v String) -- ^ Container with tags
 nodeGetTags p = liftIO $ do 
@@ -1397,7 +1397,7 @@ nodeGetNumChildren p r = liftIO $ do
   fromIntegral <$> [C.exp| unsigned int { $(Node* ptr)->GetNumChildren($(int r') != 0)} |]
 
 -- | Return immediate child scene nodes.
-nodeGetChildren  :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v)
+nodeGetChildren  :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v SharedNodePtr)
   => p -- ^ Node pointer or pointer to ascentor
   -> m (v SharedNodePtr)
 nodeGetChildren  p = liftIO $ do 
@@ -1405,7 +1405,7 @@ nodeGetChildren  p = liftIO $ do
   peekForeignVectorAs =<< [C.exp| const VectorSharedNodePtr* { &$(Node* ptr)->GetChildren() } |]
 
 -- | Return child scene nodes, optionally recursive.
-nodeGetChildren' :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v)
+nodeGetChildren' :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (Ptr Node))
   => p -- ^ Node pointer or pointer to ascentor
   -> Bool -- ^ Recursive?
   -> m (v (Ptr Node))
@@ -1416,7 +1416,7 @@ nodeGetChildren' p r = liftIO $ withObject () $ \(pvec :: Ptr PODVectorNodePtr) 
   peekForeignVectorAs' pvec
 
 -- | Return child scene nodes with a specific component.
-nodeGetChildrenWithComponent :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v)
+nodeGetChildrenWithComponent :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (Ptr Node))
   => p -- ^ Node pointer or pointer to ascentor
   -> Ptr StringHash -- ^ type
   -> Bool -- ^ Recursive?
@@ -1428,7 +1428,7 @@ nodeGetChildrenWithComponent p phash r = liftIO $ withObject () $ \(pvec :: Ptr 
   peekForeignVectorAs' pvec
 
 -- | Return child scene nodes with a specific tag.
-nodeGetChildrenWithTag  :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v)
+nodeGetChildrenWithTag  :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (Ptr Node))
   => p -- ^ Node pointer or pointer to ascentor
   -> String -- ^ tag 
   -> Bool -- ^ Recursive?
@@ -1488,7 +1488,7 @@ nodeGetNumNetworkComponents p = liftIO $ do
   fromIntegral <$> [C.exp| unsigned int { $(Node* ptr)->GetNumNetworkComponents()} |]
 
 -- | Return all components.
-nodeGetComponents :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v)
+nodeGetComponents :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v SharedComponentPtr)
   => p -- ^ Node pointer or pointer to ascentor
   -> m (v SharedComponentPtr)
 nodeGetComponents p = liftIO $ do 
@@ -1496,7 +1496,7 @@ nodeGetComponents p = liftIO $ do
   peekForeignVectorAs =<< [C.exp| const VectorSharedComponentPtr* { &$(Node* ptr)->GetComponents()} |]
 
 -- | Return all components of type. Optionally recursive.
-nodeGetComponentsByType  :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v)
+nodeGetComponentsByType  :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (Ptr Component))
   => p -- ^ Node pointer or pointer to ascentor
   -> Ptr StringHash -- ^ type
   -> Bool -- ^ Recursive?
@@ -1549,7 +1549,7 @@ nodeHasComponent p phash = liftIO $ do
   toBool <$> [C.exp| int { (int)$(Node* ptr)->HasComponent(*$(StringHash* phash))} |]
 
 -- | Return listener components.
-nodeGetListeners :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v)
+nodeGetListeners :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v SharedWeakComponentPtr)
   => p -- ^ Node pointer or pointer to ascentor
   -> m (v SharedWeakComponentPtr)
 nodeGetListeners p = liftIO $ do 

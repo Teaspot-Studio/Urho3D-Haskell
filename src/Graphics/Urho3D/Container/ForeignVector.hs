@@ -9,9 +9,11 @@ import Control.DeepSeq
 import Control.Monad.IO.Class 
 import Control.Monad.Catch 
 import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as VU
 import qualified Data.Sequence as S
 
 import Graphics.Urho3D.Createable 
+import GHC.Exts 
 
 -- | Foreign vector that we can read
 class ReadableVector a where 
@@ -79,23 +81,29 @@ foreignVectorAsSeq' ptr = do
   s `deepseq` return s 
 
 -- | Allows to define functions with return results of different representations
-class ForeignVectorRepresent a where 
+class ForeignVectorRepresent a where
+  -- | Constraint on elements of vector
+  type ForeignElemConstr a e :: Constraint 
+  type ForeignElemConstr a e = ()
+
   -- | Peek vector to given representation
-  peekForeignVectorAs :: (MonadIO m, ReadableVector v) => Ptr v -> m (a (ReadVecElem v))
+  peekForeignVectorAs :: (MonadIO m, ReadableVector v, ForeignElemConstr a (ReadVecElem v)) 
+    => Ptr v -> m (a (ReadVecElem v))
   -- | Peek vector to given representation, strict version
-  peekForeignVectorAs' :: (MonadIO m, ReadableVector v, NFData (ReadVecElem v)) => Ptr v -> m (a (ReadVecElem v))
+  peekForeignVectorAs' :: (MonadIO m, ReadableVector v, ForeignElemConstr a (ReadVecElem v), NFData (ReadVecElem v)) 
+    => Ptr v -> m (a (ReadVecElem v))
 
   -- | Creates vector, fills it with list elements, runs action, deletes vector after action
   -- Note: take into account any lazy operations that uses the vector,
   --  outside the function should not be any operations with the vector
-  withForeignVector :: (MonadIO m, MonadMask m, Createable (Ptr v), WriteableVector v) 
+  withForeignVector :: (MonadIO m, MonadMask m, Createable (Ptr v), WriteableVector v, ForeignElemConstr a (WriteVecElem v)) 
     => CreationOptions (Ptr v) -- ^ Specific options for vector creation
     -> (a (WriteVecElem v)) -- ^ Elements of the vector
     -> (Ptr v -> m b) -- ^ Handler
     -> m b -- ^ Result
 
   -- | Creates vector, fills it with list elements, runs action, deletes vector after action
-  withForeignVector' :: (MonadIO m, MonadMask m, NFData b, Createable (Ptr v), WriteableVector v) 
+  withForeignVector' :: (MonadIO m, MonadMask m, NFData b, Createable (Ptr v), WriteableVector v, ForeignElemConstr a (WriteVecElem v)) 
     => CreationOptions (Ptr v) -- ^ Specific options for vector creation
     -> (a (WriteVecElem v)) -- ^ Elements of the vector
     -> (Ptr v -> m b) -- ^ Handler
@@ -112,6 +120,21 @@ instance ForeignVectorRepresent V.Vector where
   peekForeignVectorAs' = foreignVectorAsVector' 
   withForeignVector opts es handler = withObject opts $ \v -> mapM (foreignVectorAppend v) es >> handler v
   withForeignVector' opts es handler = withObject' opts $ \v -> mapM (foreignVectorAppend v) es >> handler v
+
+instance ForeignVectorRepresent VU.Vector where 
+  type ForeignElemConstr VU.Vector a = VU.Unbox a 
+
+  peekForeignVectorAs ptr = do 
+    len <- foreignVectorLength ptr
+    VU.generateM len $ foreignVectorElement ptr
+  peekForeignVectorAs' ptr = do 
+    len <- foreignVectorLength ptr
+    vec <- VU.generateM len $ foreignVectorElement ptr
+    vec `deepseq` return vec 
+
+  withForeignVector opts es handler = withObject opts $ \v -> VU.mapM (foreignVectorAppend v) es >> handler v
+  withForeignVector' opts es handler = withObject' opts $ \v -> VU.mapM (foreignVectorAppend v) es >> handler v
+
 
 instance ForeignVectorRepresent S.Seq where 
   peekForeignVectorAs = foreignVectorAsSeq

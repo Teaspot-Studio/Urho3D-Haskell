@@ -57,6 +57,7 @@ library
                        Graphics.Urho3D.Graphics.Animation
                        Graphics.Urho3D.Graphics.AnimationState
                        Graphics.Urho3D.Graphics.Camera
+                       Graphics.Urho3D.Graphics.DebugRenderer
                        Graphics.Urho3D.Graphics.Defs
                        Graphics.Urho3D.Graphics.Drawable
                        Graphics.Urho3D.Graphics.Graphics
@@ -82,10 +83,15 @@ library
                        Graphics.Urho3D.Math.BoundingBox
                        Graphics.Urho3D.Math.Color
                        Graphics.Urho3D.Math.Defs
+                       Graphics.Urho3D.Math.Frustum
                        Graphics.Urho3D.Math.Matrix3x4
+                       Graphics.Urho3D.Math.Matrix4
+                       Graphics.Urho3D.Math.Plane
+                       Graphics.Urho3D.Math.Polyhedron
                        Graphics.Urho3D.Math.Quaternion
                        Graphics.Urho3D.Math.Random
                        Graphics.Urho3D.Math.Rect
+                       Graphics.Urho3D.Math.Sphere
                        Graphics.Urho3D.Math.StringHash
                        Graphics.Urho3D.Math.Vector2 
                        Graphics.Urho3D.Math.Vector3
@@ -141,6 +147,7 @@ library
                        Graphics.Urho3D.Graphics.Internal.Animation
                        Graphics.Urho3D.Graphics.Internal.AnimationState
                        Graphics.Urho3D.Graphics.Internal.Camera
+                       Graphics.Urho3D.Graphics.Internal.DebugRenderer
                        Graphics.Urho3D.Graphics.Internal.Drawable
                        Graphics.Urho3D.Graphics.Internal.Graphics
                        Graphics.Urho3D.Graphics.Internal.Light
@@ -160,9 +167,14 @@ library
                        Graphics.Urho3D.IO.Internal.FileSystem
                        Graphics.Urho3D.Math.Internal.BoundingBox
                        Graphics.Urho3D.Math.Internal.Color
+                       Graphics.Urho3D.Math.Internal.Frustum
                        Graphics.Urho3D.Math.Internal.Matrix3x4
+                       Graphics.Urho3D.Math.Internal.Matrix4
+                       Graphics.Urho3D.Math.Internal.Plane
+                       Graphics.Urho3D.Math.Internal.Polyhedron
                        Graphics.Urho3D.Math.Internal.Quaternion
                        Graphics.Urho3D.Math.Internal.Rect
+                       Graphics.Urho3D.Math.Internal.Sphere
                        Graphics.Urho3D.Math.Internal.StringHash
                        Graphics.Urho3D.Math.Internal.Vector2 
                        Graphics.Urho3D.Math.Internal.Vector3
@@ -213,6 +225,7 @@ library
                        src/Graphics/Urho3D/Graphics/AnimationState.cpp
                        src/Graphics/Urho3D/Graphics/AnimatedModel.cpp
                        src/Graphics/Urho3D/Graphics/Camera.cpp
+                       src/Graphics/Urho3D/Graphics/DebugRenderer.cpp
                        src/Graphics/Urho3D/Graphics/Defs.cpp
                        src/Graphics/Urho3D/Graphics/Drawable.cpp
                        src/Graphics/Urho3D/Graphics/Graphics.cpp
@@ -235,10 +248,15 @@ library
                        src/Graphics/Urho3D/Math/BoundingBox.cpp
                        src/Graphics/Urho3D/Math/Color.cpp
                        src/Graphics/Urho3D/Math/Defs.cpp
+                       src/Graphics/Urho3D/Math/Frustum.cpp
                        src/Graphics/Urho3D/Math/Matrix3x4.cpp
+                       src/Graphics/Urho3D/Math/Matrix4.cpp
+                       src/Graphics/Urho3D/Math/Plane.cpp
+                       src/Graphics/Urho3D/Math/Polyhedron.cpp
                        src/Graphics/Urho3D/Math/Quaternion.cpp
                        src/Graphics/Urho3D/Math/Random.cpp
                        src/Graphics/Urho3D/Math/Rect.cpp
+                       src/Graphics/Urho3D/Math/Sphere.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
                        src/Graphics/Urho3D/Math/Vector2.cpp
                        src/Graphics/Urho3D/Math/Vector3.cpp

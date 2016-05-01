@@ -29,6 +29,7 @@ import Graphics.Urho3D.Math.Vector3
 import Graphics.Urho3D.Math.Quaternion
 import Graphics.Urho3D.Math.Matrix3x4
 import Graphics.Urho3D.Math.BoundingBox
+import Graphics.Urho3D.Math.Internal.Sphere
 import Graphics.Urho3D.Scene.Internal.Node 
 
 data Skeleton 

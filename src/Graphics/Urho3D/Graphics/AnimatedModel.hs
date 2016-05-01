@@ -255,7 +255,7 @@ animatedModelGetSkeleton p = liftIO $ do
   [C.exp| Skeleton* { &$(AnimatedModel* ptr)->GetSkeleton() } |]
 
 -- | Return all animation states.
-animatedModelGetAnimationStates :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
+animatedModelGetAnimationStates :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v SharedAnimationStatePtr) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> m (v SharedAnimationStatePtr)
 animatedModelGetAnimationStates p = liftIO $ do 
@@ -318,7 +318,7 @@ animatedModelGetUpdateInvisible p = liftIO $ do
   toBool <$> [C.exp| int { (int)$(AnimatedModel* ptr)->GetUpdateInvisible() } |]
 
 -- | Return all vertex morphs.
-animatedModelGetMorphs :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
+animatedModelGetMorphs :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v ModelMorph) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> m (v ModelMorph)
 animatedModelGetMorphs p = liftIO $ do 
@@ -326,7 +326,7 @@ animatedModelGetMorphs p = liftIO $ do
   peekForeignVectorAs =<< [C.exp| const VectorModelMorph* { &$(AnimatedModel* ptr)->GetMorphs() } |]
 
 -- | Return all morph vertex buffers.
-animatedModelGetMorphVertexBuffers :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
+animatedModelGetMorphVertexBuffers :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v SharedVertexBufferPtr) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> m (v SharedVertexBufferPtr)
 animatedModelGetMorphVertexBuffers p = liftIO $ do 
@@ -385,7 +385,7 @@ animatedModelSetModelAttr p rref = liftIO $ with rref $ \rref' -> do
   [C.exp| void { $(AnimatedModel* ptr)->SetModelAttr(*$(ResourceRef* rref')) } |]
 
 -- | Set bones' animation enabled attribute.
-animatedModelSetBonesEnabledAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
+animatedModelSetBonesEnabledAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (Ptr Variant)) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> v (Ptr Variant) -- ^ vector of variant's values
   -> m ()
@@ -394,7 +394,7 @@ animatedModelSetBonesEnabledAttr p v = liftIO $ withForeignVector () v $ \(v' ::
   [C.exp| void { $(AnimatedModel* ptr)->SetBonesEnabledAttr(*$(VectorVariant* v')) } |]
 
 -- | Set animation states attribute.
-animatedModelSetAnimationStatesAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
+animatedModelSetAnimationStatesAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (Ptr Variant)) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> v (Ptr Variant) -- ^ vector of variant's values
   -> m ()
@@ -403,7 +403,7 @@ animatedModelSetAnimationStatesAttr p v = liftIO $ withForeignVector () v $ \(v'
   [C.exp| void { $(AnimatedModel* ptr)->SetAnimationStatesAttr(*$(VectorVariant* v')) } |]
 
 -- | Set morphs attribute.
-animatedModelSetMorphsAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
+animatedModelSetMorphsAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v Word8) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> v Word8 -- ^ values of attribute
   -> m ()
@@ -423,7 +423,7 @@ animatedModelGetModelAttr p = liftIO $ do
     } |]
 
 -- | Return bones' animation enabled attribute.
-animatedModelGetBonesEnabledAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
+animatedModelGetBonesEnabledAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (Ptr Variant)) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> m (v (Ptr Variant))
 animatedModelGetBonesEnabledAttr p = liftIO $ do 
@@ -434,7 +434,7 @@ animatedModelGetBonesEnabledAttr p = liftIO $ do
     } |]
 
 -- | Return animation states attribute.
-animatedModelGetAnimationStatesAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
+animatedModelGetAnimationStatesAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (Ptr Variant)) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> m (v (Ptr Variant))
 animatedModelGetAnimationStatesAttr p = liftIO $ do 
@@ -445,7 +445,7 @@ animatedModelGetAnimationStatesAttr p = liftIO $ do
     } |]
 
 -- | Return morphs attribute.
-animatedModelGetMorphsAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
+animatedModelGetMorphsAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v Word8) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> m (v Word8)
 animatedModelGetMorphsAttr p = liftIO $ do 
@@ -453,7 +453,7 @@ animatedModelGetMorphsAttr p = liftIO $ do
   peekForeignVectorAs =<< [C.exp| const PODVectorWord8* { &$(AnimatedModel* ptr)->GetMorphsAttr() } |]
 
 -- | Return per-geometry bone mappings.
-animatedModelGetGeometryBoneMappings :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v1, ForeignVectorRepresent v2, Traversable v1) 
+animatedModelGetGeometryBoneMappings :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v1, ForeignElemConstr v1 (Ptr PODVectorWord), ForeignVectorRepresent v2, ForeignElemConstr v2 Word, Traversable v1) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> m (v1 (v2 Word))
 animatedModelGetGeometryBoneMappings p = liftIO $ do 
@@ -462,7 +462,7 @@ animatedModelGetGeometryBoneMappings p = liftIO $ do
   mapM peekForeignVectorAs vtemp
 
 -- | Return per-geometry skin matrices. If empty, uses global skinning
-animatedModelGetGeometrySkinMatrices :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v1, ForeignVectorRepresent v2, Traversable v1) 
+animatedModelGetGeometrySkinMatrices :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v1, ForeignElemConstr v1 (Ptr PODVectorMatrix3x4), ForeignVectorRepresent v2, ForeignElemConstr v2 Matrix3x4, Traversable v1) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> m (v1 (v2 Matrix3x4))
 animatedModelGetGeometrySkinMatrices p = liftIO $ do 
