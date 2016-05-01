@@ -8,6 +8,7 @@ module Graphics.Urho3D.Graphics.Internal.ModelMorph(
   , HasElementVertexCount(..)
   , HasElementDataSize(..)
   , HasMorphData(..)
+  , VectorModelMorph
   , modelMorphCntx
   ) where
 
@@ -16,6 +17,7 @@ import qualified Language.C.Inline.Context as C
 import qualified Language.C.Types as C
 
 import qualified Data.Map as Map
+import Graphics.Urho3D.Graphics.Internal.Skeleton
 import Control.Lens 
 import GHC.Generics
 import qualified Data.Vector.Unboxed as V 
@@ -44,10 +46,13 @@ makeFields ''ModelMorph
 instance NFData VertexBufferMorph
 instance NFData ModelMorph
 
+data VectorModelMorph 
+
 modelMorphCntx :: C.Context 
 modelMorphCntx = mempty {
     C.ctxTypesTable = Map.fromList [
       (C.TypeName "ModelMorph", [t| ModelMorph |])
     , (C.TypeName "VertexBufferMorph", [t| VertexBufferMorph |])
+    , (C.TypeName "VectorModelMorph", [t| VectorModelMorph |])
     ]
   } 

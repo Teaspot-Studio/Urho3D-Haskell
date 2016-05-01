@@ -3,6 +3,7 @@ module Graphics.Urho3D.Graphics(
   ) where 
 
 import Graphics.Urho3D.Graphics.AnimatedModel as X
+import Graphics.Urho3D.Graphics.Animation as X
 import Graphics.Urho3D.Graphics.AnimationState as X
 import Graphics.Urho3D.Graphics.Camera as X
 import Graphics.Urho3D.Graphics.Defs as X

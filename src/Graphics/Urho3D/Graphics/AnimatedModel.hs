@@ -38,6 +38,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.AnimatedModel
+import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign
@@ -47,13 +48,19 @@ import System.IO.Unsafe (unsafePerformIO)
 import Graphics.Urho3D.Graphics.Model 
 import Graphics.Urho3D.Graphics.Material
 import Graphics.Urho3D.Math.StringHash 
+import Graphics.Urho3D.Math.Matrix3x4
+import Graphics.Urho3D.Core.Variant
 import Graphics.Urho3D.Scene.Node
 
 import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Container.ForeignVector
+import Graphics.Urho3D.Container.Vector.Common
 import Graphics.Urho3D.Scene.Serializable
 import Graphics.Urho3D.Scene.Animatable
 import Graphics.Urho3D.Scene.Component 
+import Graphics.Urho3D.Graphics.Animation
+import Graphics.Urho3D.Graphics.AnimationState
 import Graphics.Urho3D.Graphics.Drawable 
 import Graphics.Urho3D.Graphics.StaticModel
 import Graphics.Urho3D.Graphics.Skeleton
@@ -77,17 +84,21 @@ C.context (C.cppCtx
   <> animationStateContext
   <> modelMorphContext
   <> vertexBufferContext
-  <> vectorContext )
+  <> vectorContext
+  <> matrix3x4Context
+  <> variantContext
+  <> contextContext)
 
 C.include "<Urho3D/Graphics/AnimatedModel.h>"
 C.using "namespace Urho3D"
 
 C.verbatim "typedef Vector<SharedPtr<AnimationState> > VectorSharedAnimationStatePtr;"
-C.verbatim "typedef Vector<ModelMorph> ModelMorphVector;"
+C.verbatim "typedef Vector<ModelMorph> VectorModelMorph;"
 C.verbatim "typedef Vector<SharedPtr<VertexBuffer> > VectorSharedVertexBufferPtr;"
 C.verbatim "typedef PODVector<unsigned char> PODVectorWord8;"
 C.verbatim "typedef Vector<PODVector<unsigned> > VectorPODVectorWord;"
 C.verbatim "typedef Vector<PODVector<Matrix3x4> > VectorPODVectorMatrix3x4;"
+C.verbatim "typedef Vector<Variant> VectorVariant;"
 
 animatedModelContext :: C.Context 
 animatedModelContext = 
@@ -106,7 +117,7 @@ instance NodeComponent AnimatedModel where
 instance Createable (Ptr AnimatedModel) where 
   type CreationOptions (Ptr AnimatedModel) = Ptr Context 
 
-  createObject ptr = liftIO [C.exp| AnimatedModel* { new AnimatedModel($(Context* ptr))} |]
+  newObject ptr = liftIO [C.exp| AnimatedModel* { new AnimatedModel($(Context* ptr))} |]
   deleteObject ptr = liftIO [C.exp| void { delete $(AnimatedModel* ptr) } |]
 
 -- | Set model.
@@ -122,14 +133,14 @@ animatedModelSetModel p pmodel createBones = liftIO $ do
   [C.exp| void { $(AnimatedModel* ptr)->SetModel($(Model* ptrmodel), $(int createBones') != 0) } |]
 
 -- | Add an animation.
-animatedModelAddAnimationState :: (Parent AnimatedModel a, Pointer p a, MonadIO m, Parent Animation b, Pointer p b) 
+animatedModelAddAnimationState :: (Parent AnimatedModel a, Pointer p a, MonadIO m, Parent Animation b, Pointer panimation b) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> panimation -- ^ Pointer to Animation or ascentor
   -> m (Ptr AnimationState)
 animatedModelAddAnimationState p panim = liftIO $ do 
   let ptr = parentPointer p 
       ptranim = parentPointer panim
-  [C.exp| AnimationState* { $(AnimatedModel* ptr)->AddAnimationState($(Animation* panim)) } |]
+  [C.exp| AnimationState* { $(AnimatedModel* ptr)->AddAnimationState($(Animation* ptranim)) } |]
 
 class AnimatedModelRemoveAnimationState a where 
   -- | Remove an animation
@@ -139,29 +150,27 @@ class AnimatedModelRemoveAnimationState a where
     -> m ()
 
 -- | Remove an animation by animation pointer.
-instance (Parent Animation a, Pointer panimation a) => AnimatedModelRemoveAnimationState panimation where
-  animatedModelRemoveAnimationState p panim = liftIO $ do 
-    let ptr = parentPointer p 
-        ptranim = parentPointer panim
+instance AnimatedModelRemoveAnimationState (Ptr Animation) where
+  animatedModelRemoveAnimationState p ptranim = liftIO $ do 
+    let ptr = parentPointer p
     [C.exp| void { $(AnimatedModel* ptr)->RemoveAnimationState($(Animation* ptranim)) } |]
 
 -- | Remove an animation by animation name.
 instance AnimatedModelRemoveAnimationState String where
-  animatedModelRemoveAnimationState p name = liftIO $ withCString name $ \name' -> do 
+  animatedModelRemoveAnimationState p n = liftIO $ withCString n $ \n' -> do 
     let ptr = parentPointer p 
-    [C.exp| void { $(AnimatedModel* ptr)->RemoveAnimationState(String($(const char* name'))) } |]
+    [C.exp| void { $(AnimatedModel* ptr)->RemoveAnimationState(String($(const char* n'))) } |]
 
 -- | Remove an animation by animation name hash.
-instance AnimatedModelRemoveAnimationState (Ptr StingHash) where
+instance AnimatedModelRemoveAnimationState (Ptr StringHash) where
   animatedModelRemoveAnimationState p phash = liftIO $ do 
     let ptr = parentPointer p 
     [C.exp| void { $(AnimatedModel* ptr)->RemoveAnimationState(*$(StringHash* phash)) } |]
 
 -- | Remove an animation by AnimationState pointer.
-instance (Parent AnimationState a, Pointer panimstate a) => AnimatedModelRemoveAnimationState panimstate where
-  animatedModelRemoveAnimationState p panimstate = liftIO $ do 
+instance AnimatedModelRemoveAnimationState (Ptr AnimationState) where
+  animatedModelRemoveAnimationState p pstate = liftIO $ do 
     let ptr = parentPointer p 
-        pstate = parentPointer panimstate
     [C.exp| void { $(AnimatedModel* ptr)->RemoveAnimationState($(AnimationState* pstate)) } |]
 
 -- | Remove an animation by index.
@@ -217,10 +226,10 @@ instance AnimatedModelSetMorphWeight Int where
 
 -- | Set vertex morph weight by name.
 instance AnimatedModelSetMorphWeight String where 
-  animatedModelSetMorphWeight p name w = liftIO $ withCString name $ \name' -> do 
+  animatedModelSetMorphWeight p n w = liftIO $ withCString n $ \n' -> do 
     let ptr = parentPointer p 
         w' = realToFrac w
-    [C.exp| void { $(AnimatedModel* ptr)->SetMorphWeight(String($(const char* name')), $(float w')) } |]
+    [C.exp| void { $(AnimatedModel* ptr)->SetMorphWeight(String($(const char* n')), $(float w')) } |]
 
 -- | Set vertex morph weight by name hash.
 instance AnimatedModelSetMorphWeight (Ptr StringHash) where 
@@ -268,17 +277,16 @@ class AnimatedModelGetAnimationState a where
     -> m (Ptr AnimationState)
 
 -- | Return animation state by animation pointer.
-instance (Parent Animation a, Pointer p a) => AnimatedModelGetAnimationState panim where 
-  animatedModelGetAnimationState p panim = liftIO $ do 
+instance AnimatedModelGetAnimationState (Ptr Animation) where 
+  animatedModelGetAnimationState p ptranim = liftIO $ do 
     let ptr = parentPointer p 
-        ptranim = parentPointer panim
     [C.exp| AnimationState* { $(AnimatedModel* ptr)->GetAnimationState($(Animation* ptranim)) } |]
 
 -- | Return animation state by animation name.
 instance AnimatedModelGetAnimationState String where 
-  animatedModelGetAnimationState p name = liftIO $ withCString name $ \name' -> do 
+  animatedModelGetAnimationState p n = liftIO $ withCString n $ \n' -> do 
     let ptr = parentPointer p
-    [C.exp| AnimationState* { $(AnimatedModel* ptr)->GetAnimationState(String($(const char* name'))) } |]
+    [C.exp| AnimationState* { $(AnimatedModel* ptr)->GetAnimationState(String($(const char* n'))) } |]
 
 -- | Return animation state by animation name hash.
 instance AnimatedModelGetAnimationState (Ptr StringHash) where 
@@ -315,7 +323,7 @@ animatedModelGetMorphs :: (Parent AnimatedModel a, Pointer p a, MonadIO m, Forei
   -> m (v ModelMorph)
 animatedModelGetMorphs p = liftIO $ do 
   let ptr = parentPointer p 
-  peekForeignVectorAs =<< [C.exp| const ModelMorphVector* { &$(AnimatedModel* ptr)->GetMorphs() } |]
+  peekForeignVectorAs =<< [C.exp| const VectorModelMorph* { &$(AnimatedModel* ptr)->GetMorphs() } |]
 
 -- | Return all morph vertex buffers.
 animatedModelGetMorphVertexBuffers :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
@@ -349,9 +357,9 @@ instance AnimatedModelGetMorphWeight Int where
 
 instance AnimatedModelGetMorphWeight String where 
   -- | Return vertex morph weight by name.
-  animatedModelGetMorphWeight p name = liftIO $ withCString name $ \name' -> do 
+  animatedModelGetMorphWeight p n = liftIO $ withCString n $ \n' -> do 
     let ptr = parentPointer p 
-    realToFrac <$> [C.exp| float { $(AnimatedModel* ptr)->GetMorphWeight(String($(const char* name'))) } |]
+    realToFrac <$> [C.exp| float { $(AnimatedModel* ptr)->GetMorphWeight(String($(const char* n'))) } |]
 
 instance AnimatedModelGetMorphWeight (Ptr StringHash) where 
   -- | Return vertex morph weight by name hash.
@@ -365,7 +373,7 @@ animatedModelIsMaster :: (Parent AnimatedModel a, Pointer p a, MonadIO m)
   -> m Bool
 animatedModelIsMaster p = liftIO $ do 
   let ptr = parentPointer p 
-  fromBool <$> [C.exp| int { (int)$(AnimatedModel* ptr)->IsMaster() } |]
+  toBool <$> [C.exp| int { (int)$(AnimatedModel* ptr)->IsMaster() } |]
 
 -- | Set model attribute.
 animatedModelSetModelAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m) 
@@ -381,25 +389,25 @@ animatedModelSetBonesEnabledAttr :: (Parent AnimatedModel a, Pointer p a, MonadI
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> v (Ptr Variant) -- ^ vector of variant's values
   -> m ()
-animatedModelSetBonesEnabledAttr p v = liftIO $ withForeignVector v $ \(v' :: Ptr VariantVector) -> do 
+animatedModelSetBonesEnabledAttr p v = liftIO $ withForeignVector () v $ \(v' :: Ptr VectorVariant) -> do 
   let ptr = parentPointer p 
-  [C.exp| void { $(AnimatedModel* ptr)->SetBonesEnabledAttr(*$(VariantVector* v')) } |]
+  [C.exp| void { $(AnimatedModel* ptr)->SetBonesEnabledAttr(*$(VectorVariant* v')) } |]
 
 -- | Set animation states attribute.
 animatedModelSetAnimationStatesAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> v (Ptr Variant) -- ^ vector of variant's values
   -> m ()
-animatedModelSetAnimationStatesAttr p v = liftIO $ withForeignVector v $ \(v' :: Ptr VariantVector) -> do 
+animatedModelSetAnimationStatesAttr p v = liftIO $ withForeignVector () v $ \(v' :: Ptr VectorVariant) -> do 
   let ptr = parentPointer p 
-  [C.exp| void { $(AnimatedModel* ptr)->SetAnimationStatesAttr(*$(VariantVector* v')) } |]
+  [C.exp| void { $(AnimatedModel* ptr)->SetAnimationStatesAttr(*$(VectorVariant* v')) } |]
 
 -- | Set morphs attribute.
 animatedModelSetMorphsAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> v Word8 -- ^ values of attribute
   -> m ()
-animatedModelSetMorphsAttr p v = liftIO $ withForeignVector v $ \(v' :: Ptr PODVectorWord8) -> do 
+animatedModelSetMorphsAttr p v = liftIO $ withForeignVector () v $ \(v' :: Ptr PODVectorWord8) -> do 
   let ptr = parentPointer p 
   [C.exp| void { $(AnimatedModel* ptr)->SetMorphsAttr(*$(PODVectorWord8* v')) } |]
 
@@ -409,7 +417,10 @@ animatedModelGetModelAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m)
   -> m ResourceRef
 animatedModelGetModelAttr p = liftIO $ do 
   let ptr = parentPointer p 
-  peek =<< [C.exp| ResourceRef* { $(AnimatedModel* ptr)->GetModelAttr() } |]
+  peek =<< [C.block| ResourceRef* { 
+    static ResourceRef ref = $(AnimatedModel* ptr)->GetModelAttr();
+    return &ref;
+    } |]
 
 -- | Return bones' animation enabled attribute.
 animatedModelGetBonesEnabledAttr :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
@@ -417,8 +428,8 @@ animatedModelGetBonesEnabledAttr :: (Parent AnimatedModel a, Pointer p a, MonadI
   -> m (v (Ptr Variant))
 animatedModelGetBonesEnabledAttr p = liftIO $ do 
   let ptr = parentPointer p 
-  peekForeignVectorAs =<< [C.block| VariantVector* { 
-    static VariantVector v = $(AnimatedModel* ptr)->GetBonesEnabledAttr();
+  peekForeignVectorAs =<< [C.block| VectorVariant* { 
+    static VectorVariant v = $(AnimatedModel* ptr)->GetBonesEnabledAttr();
     return &v;
     } |]
 
@@ -427,9 +438,9 @@ animatedModelGetAnimationStatesAttr :: (Parent AnimatedModel a, Pointer p a, Mon
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> m (v (Ptr Variant))
 animatedModelGetAnimationStatesAttr p = liftIO $ do 
-  let ptr = parentPointer 
-  peekForeignVectorAs =<< [C.block| VariantVector* { 
-    static VariantVector v = $(AnimatedModel* ptr)->GetAnimationStatesAttr();
+  let ptr = parentPointer p
+  peekForeignVectorAs =<< [C.block| VectorVariant* { 
+    static VectorVariant v = $(AnimatedModel* ptr)->GetAnimationStatesAttr();
     return &v;
     } |]
 
@@ -442,7 +453,7 @@ animatedModelGetMorphsAttr p = liftIO $ do
   peekForeignVectorAs =<< [C.exp| const PODVectorWord8* { &$(AnimatedModel* ptr)->GetMorphsAttr() } |]
 
 -- | Return per-geometry bone mappings.
-animatedModelGetGeometryBoneMappings :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v1, ForeignVectorRepresent v2, Functor v1) 
+animatedModelGetGeometryBoneMappings :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v1, ForeignVectorRepresent v2, Traversable v1) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> m (v1 (v2 Word))
 animatedModelGetGeometryBoneMappings p = liftIO $ do 
@@ -451,7 +462,7 @@ animatedModelGetGeometryBoneMappings p = liftIO $ do
   mapM peekForeignVectorAs vtemp
 
 -- | Return per-geometry skin matrices. If empty, uses global skinning
-animatedModelGetGeometrySkinMatrices :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v1, ForeignVectorRepresent v2, Functor v1) 
+animatedModelGetGeometrySkinMatrices :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v1, ForeignVectorRepresent v2, Traversable v1) 
   => p -- ^ Pointer to AnimatedModel or ascentor
   -> m (v1 (v2 Matrix3x4))
 animatedModelGetGeometrySkinMatrices p = liftIO $ do 

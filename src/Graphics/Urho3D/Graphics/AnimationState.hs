@@ -1,6 +1,9 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Graphics.AnimationState(
     AnimationState
+  , SharedAnimationState 
+  , SharedAnimationStatePtr
+  , wrapSharedAnimationStatePtr
   , AnimationBlendMode(..)
   , animationStateContext
   , animationStateSetStartBone
@@ -32,42 +35,38 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.AnimationState
+import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Container.ForeignVector
+import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign
 import Foreign.C.String 
-import System.IO.Unsafe (unsafePerformIO) 
 import GHC.Generics
 import Control.DeepSeq
-import Data.Word 
 
-import Graphics.Urho3D.Graphics.Model 
-import Graphics.Urho3D.Graphics.Material
 import Graphics.Urho3D.Math.StringHash 
 import Graphics.Urho3D.Scene.Node
 
-import Graphics.Urho3D.Core.Object
-import Graphics.Urho3D.Scene.Serializable
-import Graphics.Urho3D.Scene.Animatable
-import Graphics.Urho3D.Scene.Component 
-import Graphics.Urho3D.Scene.Node
-import Graphics.Urho3D.Graphics.Drawable 
-import Graphics.Urho3D.Graphics.StaticModel
+import Graphics.Urho3D.Graphics.Animation
 import Graphics.Urho3D.Graphics.Internal.AnimatedModel
 import Graphics.Urho3D.Graphics.Skeleton
-import Graphics.Urho3D.Parent
 
 C.context (C.cppCtx 
   <> animationStateCntx
   <> animatedModelCntx
   <> nodeContext
-  <> skeletonContext )
+  <> skeletonContext
+  <> animationContext 
+  <> sharedAnimationStatePtrCntx)
 
+C.include "<Urho3D/Scene/Node.h>"
+C.include "<Urho3D/Math/StringHash.h>"
 C.include "<Urho3D/Graphics/AnimationState.h>"
 C.using "namespace Urho3D"
 
 animationStateContext :: C.Context 
-animationStateContext = animationStateCntx 
+animationStateContext = animationStateCntx <> sharedAnimationStatePtrCntx
 
 -- | Animation blending mode
 data AnimationBlendMode = 
@@ -79,11 +78,31 @@ instance NFData AnimationBlendMode
 
 -- | Construct with root scene node or animated model and animation pointers.
 instance Createable (Ptr AnimationState) where 
-  type CreationsOptions (Ptr AnimationState) = (Either (Ptr AnimatedModel) (Ptr Node), Ptr Animation)
+  type CreationOptions (Ptr AnimationState) = (Either (Ptr AnimatedModel) (Ptr Node), Ptr Animation)
 
   newObject (Left pmodel, panim) = liftIO [C.exp| AnimationState* { new AnimationState($(AnimatedModel* pmodel), $(Animation* panim))} |]
   newObject (Right pnode, panim) = liftIO [C.exp| AnimationState* { new AnimationState($(Node* pnode), $(Animation* panim))} |]
-  deleteObject ptr = liftIO [C.exp| delete $(AnimationState* ptr) |]
+  deleteObject ptr = liftIO [C.exp| void { delete $(AnimationState* ptr) } |]
+
+sharedPtr "AnimationState"
+
+C.verbatim "typedef Vector<SharedPtr<AnimationState> > VectorSharedAnimationStatePtr;"
+
+instance Createable (Ptr VectorSharedAnimationStatePtr) where 
+  type CreationOptions (Ptr VectorSharedAnimationStatePtr) = ()
+  newObject _ = liftIO [C.exp| VectorSharedAnimationStatePtr* {new Vector<SharedPtr<AnimationState> >() } |]
+  deleteObject ptr = liftIO [C.exp| void { delete $(VectorSharedAnimationStatePtr* ptr) } |]
+
+instance ReadableVector VectorSharedAnimationStatePtr where 
+  type ReadVecElem VectorSharedAnimationStatePtr = SharedAnimationStatePtr
+  foreignVectorLength ptr = liftIO $ fromIntegral <$> [C.exp| int {$(VectorSharedAnimationStatePtr* ptr)->Size() } |]
+  foreignVectorElement ptr i = liftIO $ wrapSharedAnimationStatePtr =<< [C.exp| SharedAnimationState* { new SharedPtr<AnimationState>((*$(VectorSharedAnimationStatePtr* ptr))[$(unsigned int i')]) } |]
+    where i' = fromIntegral i 
+
+instance WriteableVector VectorSharedAnimationStatePtr where 
+  type WriteVecElem VectorSharedAnimationStatePtr = SharedAnimationStatePtr
+  foreignVectorAppend ptr e = liftIO $ [C.exp| void {$(VectorSharedAnimationStatePtr* ptr)->Push(SharedPtr<AnimationState>($(AnimationState* e'))) } |]
+    where e' = parentPointer e 
 
 -- | Set start bone. Not supported in node animation mode. Resets any assigned per-bone weights.
 animationStateSetStartBone :: (Parent AnimationState a, Pointer p a, MonadIO m, Parent Bone b, Pointer pbone b)
@@ -162,7 +181,7 @@ instance AnimationStateSetBoneWeight String where
     [C.exp| void { $(AnimationState* ptr)->SetBoneWeight(String($(const char* n')), $(float w'), $(int r') != 0) } |]
 
 -- | Set per-bone blending weight by name hash.
-instance AnimationStateSetBoneWeight String where 
+instance AnimationStateSetBoneWeight (Ptr StringHash) where 
   animationStateSetBoneWeight p nhash w r = liftIO $ do 
     let ptr = parentPointer p
         w' = realToFrac w 
@@ -223,9 +242,17 @@ animationStateGetNode p = liftIO $ do
   let ptr = parentPointer p
   [C.exp| Node* { $(AnimationState* ptr)->GetNode() } |]
 
+-- | Return start bone.
+animationStateGetStartBone :: (Parent AnimationState a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to AnimationState or ascentor
+  -> m (Ptr Bone)
+animationStateGetStartBone p = liftIO $ do 
+  let ptr = parentPointer p 
+  [C.exp| Bone* { $(AnimationState* ptr)->GetStartBone() } |]
+
 class AnimationStateGetBoneWeight a where 
   -- | Return per-bone blending weight
-  animationStateGetStartBone :: (Parent AnimationState b, Pointer p b, MonadIO m)
+  animationStateGetBoneWeight :: (Parent AnimationState b, Pointer p b, MonadIO m)
     => p -- ^ Pointer to AnimationState or ascentor
     -> a -- ^ Value to identify bone
     -> m Float 
@@ -247,7 +274,7 @@ instance AnimationStateGetBoneWeight String where
 instance AnimationStateGetBoneWeight (Ptr StringHash) where 
   animationStateGetBoneWeight p nhash = liftIO $ do 
     let ptr = parentPointer p
-    realToFrac <$> [C.exp| float { $(AnimationState* ptr)->GetBoneWeight($(StringHash* nhash)) } |]
+    realToFrac <$> [C.exp| float { $(AnimationState* ptr)->GetBoneWeight(*$(StringHash* nhash)) } |]
 
 class AnimationStateGetTrackIndex a where 
   -- | Return per-bone blending weight
@@ -261,19 +288,19 @@ instance (Parent Node a, Pointer pnode a) => AnimationStateGetTrackIndex pnode w
   animationStateGetTrackIndex p pnode = liftIO $ do 
     let ptr = parentPointer p
         ptrnode = parentPointer pnode
-    fromIntegral <$> [C.exp| float { $(AnimationState* ptr)->GetTrackIndex($(Node* ptrnode)) } |]
+    fromIntegral <$> [C.exp| unsigned int { $(AnimationState* ptr)->GetTrackIndex($(Node* ptrnode)) } |]
 
 -- | Return per-bone blending weight by name.
 instance AnimationStateGetTrackIndex String where 
   animationStateGetTrackIndex p n = liftIO $ withCString n $ \n' -> do 
     let ptr = parentPointer p
-    fromIntegral <$> [C.exp| float { $(AnimationState* ptr)->GetTrackIndex(String($(const char* n'))) } |]
+    fromIntegral <$> [C.exp| unsigned int { $(AnimationState* ptr)->GetTrackIndex(String($(const char* n'))) } |]
 
 -- | Return per-bone blending weight by name hash.
 instance AnimationStateGetTrackIndex (Ptr StringHash) where 
   animationStateGetTrackIndex p nhash = liftIO $ do 
     let ptr = parentPointer p
-    fromIntegral <$> [C.exp| float { $(AnimationState* ptr)->GetTrackIndex($(StringHash* nhash)) } |]
+    fromIntegral <$> [C.exp| unsigned int { $(AnimationState* ptr)->GetTrackIndex(*$(StringHash* nhash)) } |]
 
 -- | Return whether weight is nonzero.
 animationStateIsEnabled :: (Parent AnimationState a, Pointer p a, MonadIO m)

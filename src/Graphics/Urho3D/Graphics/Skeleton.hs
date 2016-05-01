@@ -47,6 +47,8 @@ C.context (C.cppCtx
 C.include "<Urho3D/Graphics/Skeleton.h>"
 C.using "namespace Urho3D"
 
+C.verbatim "typedef WeakPtr<Node> SharedWeakNode;"
+
 skeletonContext :: C.Context 
 skeletonContext = skeletonCntx
 

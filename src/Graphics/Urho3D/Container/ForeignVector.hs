@@ -1,14 +1,6 @@
 module Graphics.Urho3D.Container.ForeignVector(
     ReadableVector(..)
   , WriteableVector(..)
-  , foreignVectorAsList
-  , foreignVectorAsList'
-  , foreignVectorAsVector
-  , foreignVectorAsVector'
-  , foreignVectorAsSeq
-  , foreignVectorAsSeq'
-  , withForeignVector
-  , withForeignVector'
   , ForeignVectorRepresent(..)
   ) where 
 
@@ -86,24 +78,6 @@ foreignVectorAsSeq' ptr = do
   s <- sequence $ S.fromFunction len (foreignVectorElement ptr)
   s `deepseq` return s 
 
--- | Creates vector, fills it with list elements, runs action, deletes vector after action
--- Note: take into account any lazy operations that uses the vector,
---  outside the function should not be any operations with the vector
-withForeignVector :: (MonadIO m, MonadMask m, Createable (Ptr a), WriteableVector a) 
-  => CreationOptions (Ptr a) -- ^ Specific options for vector creation
-  -> [WriteVecElem a] -- ^ Elements of the vector
-  -> (Ptr a -> m b) -- ^ Handler
-  -> m b -- ^ Result
-withForeignVector opts es handler = withObject opts $ \v -> mapM (foreignVectorAppend v) es >> handler v
-
--- | Creates vector, fills it with list elements, runs action, deletes vector after action
-withForeignVector' :: (MonadIO m, MonadMask m, NFData b, Createable (Ptr a), WriteableVector a) 
-  => CreationOptions (Ptr a) -- ^ Specific options for vector creation
-  -> [WriteVecElem a] -- ^ Elements of the vector
-  -> (Ptr a -> m b) -- ^ Handler
-  -> m b -- ^ Result
-withForeignVector' opts es handler = withObject' opts $ \v -> mapM (foreignVectorAppend v) es >> handler v
-
 -- | Allows to define functions with return results of different representations
 class ForeignVectorRepresent a where 
   -- | Peek vector to given representation
@@ -111,14 +85,36 @@ class ForeignVectorRepresent a where
   -- | Peek vector to given representation, strict version
   peekForeignVectorAs' :: (MonadIO m, ReadableVector v, NFData (ReadVecElem v)) => Ptr v -> m (a (ReadVecElem v))
 
+  -- | Creates vector, fills it with list elements, runs action, deletes vector after action
+  -- Note: take into account any lazy operations that uses the vector,
+  --  outside the function should not be any operations with the vector
+  withForeignVector :: (MonadIO m, MonadMask m, Createable (Ptr v), WriteableVector v) 
+    => CreationOptions (Ptr v) -- ^ Specific options for vector creation
+    -> (a (WriteVecElem v)) -- ^ Elements of the vector
+    -> (Ptr v -> m b) -- ^ Handler
+    -> m b -- ^ Result
+
+  -- | Creates vector, fills it with list elements, runs action, deletes vector after action
+  withForeignVector' :: (MonadIO m, MonadMask m, NFData b, Createable (Ptr v), WriteableVector v) 
+    => CreationOptions (Ptr v) -- ^ Specific options for vector creation
+    -> (a (WriteVecElem v)) -- ^ Elements of the vector
+    -> (Ptr v -> m b) -- ^ Handler
+    -> m b -- ^ Result
+
 instance ForeignVectorRepresent [] where 
   peekForeignVectorAs = foreignVectorAsList
   peekForeignVectorAs' = foreignVectorAsList'
+  withForeignVector opts es handler = withObject opts $ \v -> mapM (foreignVectorAppend v) es >> handler v
+  withForeignVector' opts es handler = withObject' opts $ \v -> mapM (foreignVectorAppend v) es >> handler v
 
 instance ForeignVectorRepresent V.Vector where 
   peekForeignVectorAs = foreignVectorAsVector 
   peekForeignVectorAs' = foreignVectorAsVector' 
+  withForeignVector opts es handler = withObject opts $ \v -> mapM (foreignVectorAppend v) es >> handler v
+  withForeignVector' opts es handler = withObject' opts $ \v -> mapM (foreignVectorAppend v) es >> handler v
 
 instance ForeignVectorRepresent S.Seq where 
   peekForeignVectorAs = foreignVectorAsSeq
   peekForeignVectorAs' = foreignVectorAsSeq' 
+  withForeignVector opts es handler = withObject opts $ \v -> mapM (foreignVectorAppend v) es >> handler v
+  withForeignVector' opts es handler = withObject' opts $ \v -> mapM (foreignVectorAppend v) es >> handler v

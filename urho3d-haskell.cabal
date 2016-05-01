@@ -36,6 +36,7 @@ library
                        Graphics.Urho3D.Container.Ptr
                        Graphics.Urho3D.Container.Str
                        Graphics.Urho3D.Container.Vector
+                       Graphics.Urho3D.Container.Vector.Common
                        Graphics.Urho3D.Core
                        Graphics.Urho3D.Core.Context
                        Graphics.Urho3D.Core.CustomFactory
@@ -53,6 +54,7 @@ library
                        Graphics.Urho3D.Engine.Engine
                        Graphics.Urho3D.Graphics
                        Graphics.Urho3D.Graphics.AnimatedModel
+                       Graphics.Urho3D.Graphics.Animation
                        Graphics.Urho3D.Graphics.AnimationState
                        Graphics.Urho3D.Graphics.Camera
                        Graphics.Urho3D.Graphics.Defs
@@ -123,6 +125,7 @@ library
                        Graphics.Urho3D.UI.Window
 
   other-modules:       Graphics.Urho3D.Container.Internal.Str
+                       Graphics.Urho3D.Container.Vector.Internal.Common
                        Graphics.Urho3D.Core.Internal.Context
                        Graphics.Urho3D.Core.Internal.CustomFactory
                        Graphics.Urho3D.Core.Internal.Object
@@ -135,6 +138,7 @@ library
                        Graphics.Urho3D.Engine.Internal.DebugHud
                        Graphics.Urho3D.Engine.Internal.Engine
                        Graphics.Urho3D.Graphics.Internal.AnimatedModel
+                       Graphics.Urho3D.Graphics.Internal.Animation
                        Graphics.Urho3D.Graphics.Internal.AnimationState
                        Graphics.Urho3D.Graphics.Internal.Camera
                        Graphics.Urho3D.Graphics.Internal.Drawable
@@ -191,6 +195,7 @@ library
                        Graphics.Urho3D.UI.Internal.Window
 
   c-sources:           src/Graphics/Urho3D/Container/Str.cpp
+                       src/Graphics/Urho3D/Container/Vector/Common.cpp
                        src/Graphics/Urho3D/Core/Context.cpp
                        src/Graphics/Urho3D/Core/CustomFactory.cpp
                        src/Graphics/Urho3D/Core/Events.cpp
@@ -204,6 +209,7 @@ library
                        src/Graphics/Urho3D/Engine/Console.cpp
                        src/Graphics/Urho3D/Engine/DebugHud.cpp
                        src/Graphics/Urho3D/Engine/Engine.cpp
+                       src/Graphics/Urho3D/Graphics/Animation.cpp
                        src/Graphics/Urho3D/Graphics/AnimationState.cpp
                        src/Graphics/Urho3D/Graphics/AnimatedModel.cpp
                        src/Graphics/Urho3D/Graphics/Camera.cpp

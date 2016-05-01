@@ -2,6 +2,11 @@
 module Graphics.Urho3D.Core.Variant(
     Variant
   , VariantType
+  , ResourceRef(..)
+  , ResourceRefList
+  , HasObjectType(..)
+  , HasObjectName(..)
+  , HasObjectNames(..)
   , variantContext
   , variantType
   , VariantStorable(..)
@@ -14,11 +19,13 @@ module Graphics.Urho3D.Core.Variant(
   , variantMapGet
   , variantMapGet'
   , variantMapGetDefault
+  , VectorVariant
   ) where
 
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
 import qualified Data.Text as T 
+import Text.RawString.QQ
 
 import Control.DeepSeq
 import Data.Maybe (fromMaybe)
@@ -27,6 +34,7 @@ import Foreign
 import Foreign.C.String 
 import Graphics.Urho3D.Container.HashMap
 import Graphics.Urho3D.Container.Str
+import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Core.Internal.Variant
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Math.Rect 
@@ -218,3 +226,65 @@ variantMapGetDefault :: VariantStorable a => Ptr VariantMap -> a -> Ptr StringHa
 variantMapGetDefault mp defValue keyHash = do
   variantM <- hashMapLookup keyHash mp
   fromMaybe defValue . join <$> whenJust variantM getVariant
+
+C.verbatim [r|
+template <class T>
+class Traits
+{
+public:
+    struct AlignmentFinder
+    {
+      char a; 
+      T b;
+    };
+
+    enum {AlignmentOf = sizeof(AlignmentFinder) - sizeof(T)};
+};
+|]
+
+instance Storable ResourceRef where 
+  sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(ResourceRef) } |]
+  alignment _ = fromIntegral $ [C.pure| int { (int)Traits<ResourceRef>::AlignmentOf } |]
+  peek ptr = do 
+    _resourceRefObjectType <- peek =<< [C.exp| StringHash* { &$(ResourceRef* ptr)->type_ } |]
+    _resourceRefObjectName <- peekCString =<< [C.exp| const char* { $(ResourceRef* ptr)->name_.CString() } |]
+    return $ ResourceRef {..}
+  poke ptr ResourceRef {..} = 
+    with _resourceRefObjectType $ \_resourceRefObjectType' -> 
+    withCString _resourceRefObjectName $ \_resourceRefObjectName' ->
+      [C.block| void { 
+      $(ResourceRef* ptr)->type_ = *$(StringHash* _resourceRefObjectType');
+      $(ResourceRef* ptr)->name_ = String($(const char * _resourceRefObjectName'));
+      } |]
+
+instance Storable ResourceRefList where 
+  sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(ResourceRefList) } |]
+  alignment _ = fromIntegral $ [C.pure| int { (int)Traits<ResourceRefList>::AlignmentOf } |]
+  peek ptr = do 
+    _resourceRefListObjectType <- peek =<< [C.exp| StringHash* { &$(ResourceRefList* ptr)->type_ } |]
+    _resourceRefListObjectNames <- peekForeignVectorAs =<< [C.exp| StringVector* { &$(ResourceRefList* ptr)->names_ } |]
+    return $ ResourceRefList {..}
+  poke ptr ResourceRefList {..} = 
+    with _resourceRefListObjectType $ \_resourceRefListObjectType' -> 
+      withForeignVector () _resourceRefListObjectNames $ \_resourceRefListObjectNames' -> do 
+        [C.block| void { 
+        $(ResourceRefList* ptr)->type_ = *$(StringHash* _resourceRefListObjectType');
+        $(ResourceRefList* ptr)->names_ = StringVector(*$(StringVector* _resourceRefListObjectNames'));
+        } |]
+
+C.verbatim "typedef Vector<Variant> VectorVariant;"
+
+instance Createable (Ptr VectorVariant) where 
+  type CreationOptions (Ptr VectorVariant) = ()
+  newObject _ = liftIO [C.exp| VectorVariant* {new Vector<Variant>() } |]
+  deleteObject ptr = liftIO [C.exp| void { delete $(VectorVariant* ptr) } |]
+
+instance ReadableVector VectorVariant where 
+  type ReadVecElem VectorVariant = Ptr Variant
+  foreignVectorLength ptr = liftIO $ fromIntegral <$> [C.exp| int {$(VectorVariant* ptr)->Size() } |]
+  foreignVectorElement ptr i = liftIO $ [C.exp| Variant* { &((*$(VectorVariant* ptr))[$(unsigned int i')]) } |]
+    where i' = fromIntegral i 
+
+instance WriteableVector VectorVariant where 
+  type WriteVecElem VectorVariant = Ptr Variant
+  foreignVectorAppend ptr e = liftIO $ [C.exp| void {$(VectorVariant* ptr)->Push(*$(Variant* e)) } |]

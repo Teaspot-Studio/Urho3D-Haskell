@@ -1365,15 +1365,15 @@ uiElementGetChildByVariable p key ma b = liftIO $ withObject key $ \key' -> with
 podVectorPtr "UIElement"
 
 -- | Return child elements either recursively or non-recursively.
-uiElementGetChildren :: (Parent UIElement a, Pointer p a, MonadIO m) 
+uiElementGetChildren :: (Parent UIElement a, Pointer p a, MonadIO m, ForeignVectorRepresent v) 
   => p -- ^ Pointer to UI element
   -> Bool -- ^ recusive? Default false
-  -> m [Ptr UIElement]
-uiElementGetChildren p b = liftIO $ withObject' () $ \v -> do 
+  -> m (v (Ptr UIElement))
+uiElementGetChildren p b = liftIO $ withObject () $ \v -> do 
   let ptr = parentPointer p 
       b' = fromBool b 
   [C.exp| void { $(UIElement* ptr)->GetChildren(*$(PODVectorUIElementPtr* v), $(int b') != 0) } |]
-  foreignVectorAsList' v
+  peekForeignVectorAs v
   
 -- | Return parent element.
 uiElementGetParent :: (Parent UIElement a, Pointer p a, MonadIO m) 

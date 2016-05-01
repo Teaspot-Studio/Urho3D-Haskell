@@ -9,6 +9,7 @@ module Graphics.Urho3D.Graphics.ModelMorph(
   , HasElementVertexCount(..)
   , HasElementDataSize(..)
   , HasMorphData(..)
+  , VectorModelMorph
   , modelMorphContext
   ) where
 
@@ -19,6 +20,8 @@ import Data.Monoid
 import Foreign 
 import Foreign.C.String
 import Graphics.Urho3D.Graphics.Internal.ModelMorph
+import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Monad
 import Text.RawString.QQ
 import Data.IORef 
@@ -55,15 +58,14 @@ instance Storable VertexBufferMorph where
     elMask <- fromIntegral <$> [C.exp| unsigned int { $(VertexBufferMorph* ptr)->elementMask_ } |]
     vertCount <- fromIntegral <$> [C.exp| unsigned int { $(VertexBufferMorph* ptr)->vertexCount_ } |]
     dSize <- fromIntegral <$> [C.exp| unsigned int { $(VertexBufferMorph* ptr)->dataSize_ } |]
-    mData <- peekVector
+    mData <- peekVector $ fromIntegral dSize
     return $ VertexBufferMorph elMask vertCount dSize mData
     where 
-    peekVector = do 
-      n <- fromIntegral <$> [C.exp| unsigned int { $(VertexBufferMorph* ptr)->morphData_.Size() } |]
+    peekVector n = do 
       mref <- newIORef $ V.replicate n 0 
       let setValue i v = modifyIORef' mref $ \vec -> V.unsafeUpd vec [(fromIntegral i, fromIntegral v)]
       [C.block| void {
-        int n = $(VertexBufferMorph* ptr)->morphData_->Size();
+        int n = $(VertexBufferMorph* ptr)->dataSize_;
         for(unsigned i = 0; i < n; i++) {
           $funConst:(void (*setValue)(unsigned int, unsigned char))(i, $(VertexBufferMorph* ptr)->morphData_[i]);
         }
@@ -103,7 +105,7 @@ instance Storable ModelMorph where
             v' <- peek v
             modifyIORef' mref $ H.insert (fromIntegral k) v'
       [C.block| void {
-        HashMap<unsigned, VertexBufferMorph>.Iterator it = $(ModelMorph* ptr)->buffers_.Begin();
+        HashMap<unsigned, VertexBufferMorph>::Iterator it = $(ModelMorph* ptr)->buffers_.Begin();
         while(it != $(ModelMorph* ptr)->buffers_.End()) {
           $funConst:(void (*addValue)(unsigned int, VertexBufferMorph*))(it->first_, &it->second_);
         }
@@ -123,3 +125,20 @@ instance Storable ModelMorph where
       }|]
     where
     weight' = realToFrac mweight 
+
+C.verbatim "typedef Vector<ModelMorph> VectorModelMorph;"
+
+instance Createable (Ptr VectorModelMorph) where 
+  type CreationOptions (Ptr VectorModelMorph) = ()
+  newObject _ = liftIO [C.exp| VectorModelMorph* {new Vector<ModelMorph>() } |]
+  deleteObject ptr = liftIO [C.exp| void { delete $(VectorModelMorph* ptr) } |]
+
+instance ReadableVector VectorModelMorph where 
+  type ReadVecElem VectorModelMorph = ModelMorph
+  foreignVectorLength ptr = liftIO $ fromIntegral <$> [C.exp| int {$(VectorModelMorph* ptr)->Size() } |]
+  foreignVectorElement ptr i = liftIO $ peek =<< [C.exp| ModelMorph* { &(*$(VectorModelMorph* ptr))[$(unsigned int i')] } |]
+    where i' = fromIntegral i 
+
+instance WriteableVector VectorModelMorph where 
+  type WriteVecElem VectorModelMorph = ModelMorph
+  foreignVectorAppend ptr e = liftIO $ with e $ \e' -> [C.exp| void {$(VectorModelMorph* ptr)->Push(*$(ModelMorph* e')) } |]
