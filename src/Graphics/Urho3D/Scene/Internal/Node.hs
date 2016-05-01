@@ -2,8 +2,11 @@ module Graphics.Urho3D.Scene.Internal.Node(
     Node
   , nodeCntx
   , sharedNodePtrCntx
+  , sharedWeakNodePtrCntx
   , SharedNode
   , SharedNodePtr(..)
+  , SharedWeakNode
+  , SharedWeakNodePtr(..)
   , VectorSharedNodePtr
   , PODVectorNodePtr
   , podVectorNodePtrCntx
@@ -28,4 +31,5 @@ nodeCntx = mempty {
   }
 
 sharedPtrImpl "Node" 
+sharedWeakPtrImpl "Node" 
 podVectorPtrImpl "Node"

@@ -12,13 +12,16 @@ import qualified Language.C.Types as C
 import qualified Data.Map as Map
 import Graphics.Urho3D.Math.Internal.Vector2
 import Control.Lens 
+import GHC.Generics
+import Control.DeepSeq
 
 data Vector3 = Vector3 {
   _vector3X :: {-# UNPACK #-} !Float 
 , _vector3Y :: {-# UNPACK #-} !Float 
 , _vector3Z :: {-# UNPACK #-} !Float   
-} deriving (Eq, Ord, Show)
+} deriving (Eq, Ord, Show, Generic)
 
+instance NFData Vector3
 makeFields ''Vector3
 
 vector3Cntx :: C.Context 

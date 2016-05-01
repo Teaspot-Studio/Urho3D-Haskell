@@ -4,6 +4,10 @@ module Graphics.Urho3D.Scene.Node(
   , nodeContext
   , SharedNode
   , SharedNodePtr
+  , SharedWeakNode
+  , SharedWeakNodePtr
+  , wrapSharedNodePtr
+  , wrapSharedWeakNodePtr
   , VectorSharedNodePtr
   , PODVectorNodePtr
   , CreateMode(..)
@@ -173,6 +177,7 @@ import System.IO.Unsafe (unsafePerformIO)
 C.context (C.cppCtx 
   <> nodeCntx 
   <> sharedNodePtrCntx 
+  <> sharedWeakNodePtrCntx
   <> contextContext 
   <> stringHashContext 
   <> componentContext 
@@ -199,7 +204,7 @@ C.verbatim "typedef PODVector<Component*> PODVectorComponentPtr;"
 C.verbatim "typedef VariantMap HashMapStringHashVariant;"
 
 nodeContext :: C.Context 
-nodeContext = sharedNodePtrCntx <> nodeCntx <> stringHashContext <> componentContext <> podVectorNodePtrCntx
+nodeContext = sharedNodePtrCntx <> sharedWeakNodePtrCntx <> nodeCntx <> stringHashContext <> componentContext <> podVectorNodePtrCntx
 
 newNode :: Ptr Context -> IO (Ptr Node)
 newNode ptr = [C.exp| Node* { new Node($(Context* ptr)) } |]
@@ -214,6 +219,7 @@ instance Createable (Ptr Node) where
   deleteObject = liftIO . deleteNode
 
 sharedPtr "Node" 
+sharedWeakPtr "Node" 
 podVectorPtr "Node"
 
 -- | Component and child node creation mode for networking.

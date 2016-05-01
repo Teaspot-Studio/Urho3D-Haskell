@@ -18,9 +18,7 @@ import Foreign
 
 import Graphics.Urho3D.Graphics.Internal.VertexBuffer
 
-import Graphics.Urho3D.Core.Object 
-import Graphics.Urho3D.Graphics.Camera
-import Graphics.Urho3D.Scene.Scene 
+import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Parent 
 
 C.context (C.cppCtx <> sharedVertexBufferPtrCntx <> vertexBufferCntx <> contextContext <> objectContext)
