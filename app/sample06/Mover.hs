@@ -46,7 +46,13 @@ type MoverType = ForeignPtr StringHash
 -- | Register mover within Urho engine, resulting type is used for creation of 
 -- the component instances.
 registerMover :: MonadIO m => Ptr Context -> m MoverType
-registerMover cntx = registerCustomComponent cntx "Mover" 0 moverDef 
+registerMover cntx = registerCustomComponent cntx "Mover" state moverDef 
+  where 
+  state = MoverState {
+      moverSpeed = 0
+    , moverRotateSpeed = 0
+    , moverBounds = 0
+    }
 
 -- | Update internal state of mover. Set motion parameters: forward movement speed, rotation speed, and movement boundaries.
 setMoverParameters :: MonadIO m => Ptr Mover -> Float -> Float -> BoundingBox -> m ()
@@ -93,8 +99,8 @@ moverDef = defaultCustomLogicComponent {
 
       -- Get the model's first (only) animation state and advance its time. Note the convenience accessor to other components
       -- in the same scene node
-      (model :: Ptr AnimatedModel) <- fromJustTrace "AnimatedModel mover" <$> nodeGetComponent node
+      (model :: Ptr AnimatedModel) <- fromJustTrace "AnimatedModel mover" <$> nodeGetComponent' node False
       whenM ((> 0) <$> animatedModelGetNumAnimationStates model) $ do 
         states <- animatedModelGetAnimationStates model
-        animationStateAddTime (head states) timeStep
+        animationStateAddTime (head states) t
   }

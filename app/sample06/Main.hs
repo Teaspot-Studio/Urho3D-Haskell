@@ -116,7 +116,7 @@ createScene app moverType = do
       modelRotateSpeed = 100.0
       bounds = BoundingBox (Vector3 (-47) 0 (-47)) (Vector3 47 0 47)
 
-  _ <- replicateM numObjects $ do 
+  _ <- replicateM numModels $ do 
 
     modelNode <- nodeCreateChild scene "Jack" CM'Replicated 0
     [r1, r2] <- replicateM 2 (randomUp 90)
@@ -137,7 +137,7 @@ createScene app moverType = do
     (walkAnimation :: Ptr Animation) <- fromJustTrace "Jack_Walk.ani" <$> cacheGetResource cache "Models/Jack_Walk.ani" True 
     (state :: Ptr AnimationState) <- animatedModelAddAnimationState walkAnimation
     -- The state would fail to create (return null) if the animation was not found
-    unless (isNullPtr state) $ do 
+    unless (isNull state) $ do 
       -- Enable full blending weight and looping
       animationStateSetWeight state 1
       animationStateSetLooped state True
@@ -233,7 +233,7 @@ moveCamera app cameraNode timeStep camData = do
       nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * timeStep)) TS'Local
 
     -- Toggle debug geometry with space
-    spacePressed <- inputGetKeyPress input Key'Space
+    spacePressed <- inputGetKeyPress input KeySpace
 
     return camData {
         camYaw = yaw 
