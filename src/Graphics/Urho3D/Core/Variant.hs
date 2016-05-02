@@ -45,7 +45,7 @@ import Graphics.Urho3D.Math.Vector2
 import Graphics.Urho3D.Math.Vector3
 import Graphics.Urho3D.Monad
 
-C.context (C.cppCtx <> variantCntx <> variantMapCntx <> stringHashContext <> stringContext <> vector2Context <> vector3Context <> rectContext)
+C.context (C.cppCtx <> C.funConstCtx <> variantCntx <> variantMapCntx <> stringHashContext <> stringContext <> vector2Context <> vector3Context <> rectContext)
 C.include "<Urho3D/Core/Variant.h>"
 C.using "namespace Urho3D"
 

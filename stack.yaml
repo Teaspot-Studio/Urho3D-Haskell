@@ -3,7 +3,7 @@ packages:
 - '.'
 - location:
     git: git@github.com:Teaspot-Studio/inline-c.git
-    commit: 1541964fa9d31ce9e474b39b9f0ad3b842362093
+    commit: 5498d66c3ead457bf2de034bf31e6de9ff7e9667
 - location:
     git: git@github.com:fpco/inline-c-cpp.git
     commit: 12319586f19f08f6b32984e2a1f15c76db290e0c

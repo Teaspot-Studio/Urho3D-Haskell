@@ -18,6 +18,9 @@ module Graphics.Urho3D.Graphics.Internal.Animation(
   , sharedAnimationPtrCntx
   , SharedAnimation
   , SharedAnimationPtr(..)
+  , HashMapStringHashAnimationTrack
+  , hashMapStringHashAnimationTrackCntx
+  , VectorAnimationTriggerPoint
   ) where
 
 import qualified Language.C.Inline as C
@@ -26,6 +29,7 @@ import qualified Language.C.Types as C
 
 import Graphics.Urho3D.Container.Ptr 
 import Graphics.Urho3D.Container.Vector
+import Graphics.Urho3D.Container.HashMap
 import qualified Data.Map as Map
 
 import Control.DeepSeq
@@ -76,6 +80,9 @@ data AnimationTriggerPointImpl
 -- | Skeletal animation resource.
 data Animation
 
+-- | Vector<AnimationTriggerPoint>
+data VectorAnimationTriggerPoint
+
 animationCntx :: C.Context 
 animationCntx = mempty {
     C.ctxTypesTable = Map.fromList [
@@ -83,7 +90,9 @@ animationCntx = mempty {
     , (C.TypeName "AnimationKeyFrame", [t| AnimationKeyFrame |])
     , (C.TypeName "AnimationTrack", [t| AnimationTrack |])
     , (C.TypeName "AnimationTriggerPoint", [t| AnimationTriggerPointImpl |])
+    , (C.TypeName "VectorAnimationTriggerPoint", [t| VectorAnimationTriggerPoint |])
     ]
   }
 
 sharedPtrImpl "Animation"
+hashMapImpl "StringHash" "AnimationTrack"

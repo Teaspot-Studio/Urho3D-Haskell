@@ -9,11 +9,13 @@ import qualified Language.C.Types as C
 import qualified Data.Map as Map
 import GHC.Generics 
 import Control.DeepSeq 
+import Data.Hashable
 
 newtype StringHash = StringHash { stringHashValue :: Word }
   deriving (Generic, Show, Eq)
 
 instance NFData StringHash
+instance Hashable StringHash
 
 stringHashCntx :: C.Context 
 stringHashCntx = mempty {

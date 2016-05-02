@@ -1,5 +1,6 @@
 module Graphics.Urho3D.Container.ForeignVector(
     ReadableVector(..)
+  , foreignVectorForeach
   , WriteableVector(..)
   , ForeignVectorRepresent(..)
   ) where 
@@ -11,6 +12,7 @@ import Control.Monad.Catch
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as VU
 import qualified Data.Sequence as S
+import Control.Monad (forM_)
 
 import Graphics.Urho3D.Createable 
 import GHC.Exts 
@@ -33,6 +35,12 @@ class ReadableVector a where
   foreignVectorElement' ptr i = do 
     v <- foreignVectorElement ptr i 
     return $! v 
+
+-- | Traverse all elements of foreign vector
+foreignVectorForeach :: (ReadableVector v, MonadIO m) => Ptr v -> (Int -> ReadVecElem v -> m ()) -> m ()
+foreignVectorForeach ptr handler = do 
+  n <- foreignVectorLength ptr
+  forM_ [0 .. n-1] $ \i -> handler i =<< foreignVectorElement ptr i
 
 -- | Foreign vector that we can append
 class WriteableVector a where 
