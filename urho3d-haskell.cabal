@@ -56,6 +56,7 @@ library
                        Graphics.Urho3D.Graphics.AnimatedModel
                        Graphics.Urho3D.Graphics.Animation
                        Graphics.Urho3D.Graphics.AnimationState
+                       Graphics.Urho3D.Graphics.Batch
                        Graphics.Urho3D.Graphics.Camera
                        Graphics.Urho3D.Graphics.DebugRenderer
                        Graphics.Urho3D.Graphics.Defs
@@ -147,6 +148,7 @@ library
                        Graphics.Urho3D.Graphics.Internal.AnimatedModel
                        Graphics.Urho3D.Graphics.Internal.Animation
                        Graphics.Urho3D.Graphics.Internal.AnimationState
+                       Graphics.Urho3D.Graphics.Internal.Batch
                        Graphics.Urho3D.Graphics.Internal.Camera
                        Graphics.Urho3D.Graphics.Internal.DebugRenderer
                        Graphics.Urho3D.Graphics.Internal.Defs
@@ -227,6 +229,7 @@ library
                        src/Graphics/Urho3D/Graphics/Animation.cpp
                        src/Graphics/Urho3D/Graphics/AnimationState.cpp
                        src/Graphics/Urho3D/Graphics/AnimatedModel.cpp
+                       src/Graphics/Urho3D/Graphics/Batch.cpp
                        src/Graphics/Urho3D/Graphics/Camera.cpp
                        src/Graphics/Urho3D/Graphics/DebugRenderer.cpp
                        src/Graphics/Urho3D/Graphics/Defs.cpp
