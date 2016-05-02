@@ -1,260 +1,152 @@
-module Graphics.Urho3D.Graphics.Defs where
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+module Graphics.Urho3D.Graphics.Defs(
+    graphDefsContext
+  , PrimitiveType(..)
+  , GeometryType(..)
+  , BlendMode(..)
+  , CompareMode(..)
+  , CullMode(..)
+  , Fillmode(..)
+  , StencilOp(..)
+  , LockState(..)
+  , LegacyVertexElement(..)
+  , VertexElementType(..)
+  , VertexElementSemantic(..)
+  , VertexElement(..)
+  , HasElementType(..)
+  , HasSemantic(..)
+  , HasIndex(..)
+  , HasPerInstance(..)
+  , HasOffset(..)
+  , TextureFilterMode(..)
+  , TextureAddressMode(..)
+  , TextureCoordinate(..)
+  , TextureUsage(..)
+  , CubeMapFace(..)
+  , CubeMapLayout(..)
+  , RenderSurfaceUpdateMode(..)
+  , ShaderType(..)
+  , ShaderParameterGroup(..)
+  , TextureUnit(..)
+  , maxMatrialTextureUnits
+  , maxTextureUnits
+  , vspAmbientstartcolor
+  , vspAmbientendcolor
+  , vspBillboardrot
+  , vspCamerapos
+  , vspClipplane
+  , vspNearclip
+  , vspFarclip
+  , vspDepthmode
+  , vspDeltatime
+  , vspElapsedtime
+  , vspFrustumsize
+  , vspGbufferoffsets
+  , vspLightdir
+  , vspLightpos
+  , vspModel
+  , vspView
+  , vspViewInv
+  , vspViewproj
+  , vspUoffset
+  , vspVoffset
+  , vspZone
+  , vspLightmatrices
+  , vspSkinmatrices
+  , vspVertexlights
+  , pspAmbientcolor
+  , pspCamerapos
+  , pspDeltatime
+  , pspDepthreconstruct
+  , pspElapsedtime
+  , pspFogcolor
+  , pspFogparams
+  , pspGbufferinvsize
+  , pspLightcolor
+  , pspLightdir
+  , pspLightpos
+  , pspMatdiffcolor
+  , pspMatemissivecolor
+  , pspMatenvmapcolor
+  , pspMatspeccolor
+  , pspNearclip
+  , pspFarclip
+  , pspShadowcubeadjust
+  , pspShadowdepthfade
+  , pspShadowintensity
+  , pspShadowmapinvsize
+  , pspShadowsplits
+  , pspLightmatrices
+  , pspVSMShadowParams
+  , pspRoughness
+  , pspMetallic
+  , dotScale
+  , Quality(..)
+  , ShadowQuality(..)
+  , Mask(..)
+  , maxRenderTargets
+  , maxVertexStreams
+  , maxConstantRegisters
+  , bitsPerComponent
+  ) where
 
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
+import Text.RawString.QQ
+
+import Graphics.Urho3D.Graphics.Internal.Defs 
 
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector3
 import System.IO.Unsafe (unsafePerformIO)
 import Data.Monoid
-import Foreign 
+import Foreign
 
-C.context (C.cppCtx <> stringHashContext <> vector3Context)
+C.context (C.cppCtx <> stringHashContext <> vector3Context <> graphDefsCntx)
 C.include "<Urho3D/Graphics/GraphicsDefs.h>"
 C.using "namespace Urho3D"
 
--- | Primitive type
-data PrimitiveType = 
-    TriangleList
-  | LineList
-  | PointList
-  | TriangleStrip
-  | LineStrip
-  | TriangleFan
-  deriving (Eq, Ord, Show, Enum, Bounded)
+C.verbatim [r|
+template <class T>
+class Traits
+{
+public:
+    struct AlignmentFinder
+    {
+      char a; 
+      T b;
+    };
 
--- | Geometry type
-data GeometryType =
-    GeomStatic
-  | GeomSkinned
-  | GeomInstanced
-  | GeomBillboard
-  | GeomStaticNoInstancing
-  deriving (Eq, Ord, Show, Enum, Bounded)
+    enum {AlignmentOf = sizeof(AlignmentFinder) - sizeof(T)};
+};
+|]
 
--- | Blending mode
-data BlendMode = 
-    BlendReplace
-  | BlendAdd
-  | BlendMultiply
-  | BlendAlpha
-  | BlendAddAlpha
-  | BlendPreMulAlpha
-  | BlendInvDestAlpha
-  | BlendSubtract
-  | BlendSubtractAlpha
-  deriving (Eq, Ord, Show, Enum, Bounded)
+graphDefsContext :: C.Context 
+graphDefsContext = graphDefsCntx
 
--- | Depht or stencil compare mode
-data CompareMode = 
-    CmpAlways
-  | CmpEqual
-  | CmpNotEqual
-  | CmpLess
-  | CmpLessEqual
-  | CmpGreater
-  | CmpGreaterEqual
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Culling mode
-data CullMode = 
-    CullNone
-  | CullCCW
-  | CullCW 
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Fill mode
-data Fillmode =
-    FillSolid
-  | FillWireFrame
-  | FillPoint
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Stencil operation
-data StencilOp = 
-    StencilKeep
-  | StencilZero
-  | StencilRef
-  | StencilIncr
-  | StencilDecr
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Vertex/index buffer lock state
-data LockState = 
-    LockNone
-  | LockHardware
-  | LockShadow
-  | LockScratch
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Vertex elements
-data VertexElement = 
-    ElementPosition
-  | ElementNormal
-  | ElementColor
-  | ElementTexCoord1
-  | ElementTexCoord2
-  | ElementCubeTexCoord1
-  | ElementCubeTexCoord2
-  | ElementTangent
-  | ElementBlendWeights
-  | ElementBlendIndices
-  | ElementInstanceMatrix1
-  | ElementInstanceMatrix2
-  | ElementInstanceMatrix3
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Texture filtering mode
-data TextureFilterMode =
-    FilterNearest
-  | FilterBiLinear
-  | FilterTriLinear
-  | FilterAnisotropic
-  | FilterDefault
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Texture addressing mode
-data TextureAddressMode = 
-    AddressWrap
-  | AddressMirror
-  | AddressClamp
-  | AddressBorder
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Texture coordinates
-data TextureCoordinate =
-    CoordU
-  | CoordV
-  | CoordW
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Texture usage types
-data TextureUsage =
-    TextureStatic
-  | TextureDynamic
-  | TextureRenderTarget
-  | TextureDepthStencil
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Cube map faces
-data CubeMapFace = 
-    FacePositiveX 
-  | FaceNegativeX
-  | FacePositiveY
-  | FaceNegativeY
-  | FacePositiveZ
-  | FaceNegativeZ
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Cubemap single image layout modes
-data CubeMapLayout = 
-    CubeMapLayoutHorizontal
-  | CubeMapLayoutHorizontalNVIDIA
-  | CubeMapLaoyutHorizontalCross 
-  | CubeMapLayoutVerticalCross
-  | CubeMapLayoutBlender
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Update mode fo render serface viewports
-data RenderSurfaceUpdateMode =
-    SurfaceManualUpdate
-  | SurfaceUpdateVisible
-  | SurfaceUpdateAlways
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- Shader types
-data ShaderType =
-    ShaderVertex
-  | ShaderFragment
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Shader parameter groups for determining need to update. On APIs that support constant buffers, these correspond to different constant buffers.
-data ShaderParameterGroup = 
-    SP'Frame 
-  | SP'Camera
-  | SP'Zone
-  | SP'Light
-  | SP'Material
-  | SP'Object
-  | SP'Custom
-  deriving (Eq, Ord, Show, Enum, Bounded)
-
--- | Texture units
-data TextureUnit =
-    TU'Diffuse
-  | TU'AlbedoBuffer
-  | TU'Normal 
-  | TU'NormalBuffer
-  | TU'Specular
-  | TU'Emissive
-  | TU'Environment
-  | TU'VolumeMap
-  | TU'Custom1
-  | TU'Custom2
-  | TU'LightRamp
-  | TU'LightShape
-  | TU'ShadowMap
-  | TU'FaceSelect
-  | TU'InDirection
-  | TU'DepthBuffer
-  | TU'LightBuffer
-  | TU'Zone
-  deriving (Eq, Ord, Show, Bounded)
-
-maxMatrialTextureUnits :: Integral a => a 
-maxMatrialTextureUnits = 8
-
-maxTextureUnits :: Integral a => a 
-maxTextureUnits = 16
-
-instance Enum TextureUnit where 
-  toEnum i = case i of 
-    0 -> TU'Diffuse
-    1 -> TU'Normal
-    2 -> TU'Specular
-    3 -> TU'Emissive
-    4 -> TU'Environment
-    5 -> TU'VolumeMap
-    6 -> TU'Custom1
-    7 -> TU'Custom2
-    8 -> TU'LightRamp
-    9 -> TU'LightShape
-    10 -> TU'ShadowMap
-    11 -> TU'FaceSelect
-    12 -> TU'InDirection
-    13 -> TU'DepthBuffer
-    14 -> TU'LightBuffer
-    15 -> TU'Zone
-    _ -> TU'Diffuse
-
-  fromEnum e = case e of 
-    TU'Diffuse -> 0
-    TU'AlbedoBuffer -> 0
-    TU'Normal -> 1
-    TU'NormalBuffer -> 1
-    TU'Specular -> 2
-    TU'Emissive -> 3
-    TU'Environment -> 4
-    TU'VolumeMap -> 5
-    TU'Custom1 -> 6
-    TU'Custom2 -> 7
-    TU'LightRamp -> 8
-    TU'LightShape -> 9
-    TU'ShadowMap -> 10
-    TU'FaceSelect -> 11
-    TU'InDirection -> 12
-    TU'DepthBuffer -> 13
-    TU'LightBuffer -> 14
-    TU'Zone -> 15
-
--- | Billboard camera facing modes
-data FaceCameraMode = 
-    FC'None 
-  | FC'RotateXYZ
-  | FC'RotateY 
-  | FC'LookAtXYZ
-  | FC'LookAtY 
-  deriving (Eq, Ord, Show, Enum, Bounded)
+instance Storable VertexElement where 
+  sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(VertexElement) } |]
+  alignment _ = fromIntegral $ [C.pure| int { (int)Traits<VertexElement>::AlignmentOf } |]
+  peek ptr = do 
+    _vertexElementElementType <- toEnum . fromIntegral <$> [C.exp| int {$(VertexElement* ptr)->type_} |]
+    _vertexElementSemantic <- toEnum . fromIntegral <$> [C.exp| int {$(VertexElement* ptr)->semantic_} |]
+    _vertexElementIndex <- fromIntegral <$> [C.exp| unsigned char {$(VertexElement* ptr)->index_} |]
+    _vertexElementPerInstance <- toBool <$> [C.exp| int {(int)$(VertexElement* ptr)->perInstance_} |]
+    _vertexElementOffset <- fromIntegral <$> [C.exp| unsigned int {$(VertexElement* ptr)->offset_} |]
+    return VertexElement {..}
+  poke ptr (VertexElement {..}) = [C.block| void { 
+      $(VertexElement* ptr)->type_ = (VertexElementType)$(int _vertexElementElementType');
+      $(VertexElement* ptr)->semantic_ = (VertexElementSemantic)$(int _vertexElementSemantic');
+      $(VertexElement* ptr)->index_ = $(unsigned char _vertexElementIndex');
+      $(VertexElement* ptr)->perInstance_ = $(int _vertexElementPerInstance') != 0;
+      $(VertexElement* ptr)->offset_ = $(unsigned int _vertexElementOffset');
+    } |]
+    where
+    _vertexElementElementType' = fromIntegral . fromEnum $ _vertexElementElementType
+    _vertexElementSemantic' = fromIntegral . fromEnum $ _vertexElementSemantic
+    _vertexElementIndex' = fromIntegral _vertexElementIndex
+    _vertexElementPerInstance' = fromBool _vertexElementPerInstance
+    _vertexElementOffset' = fromIntegral _vertexElementOffset
 
 -- Inbuilt shader parameters.
 vspAmbientstartcolor :: Ptr StringHash
@@ -301,6 +193,12 @@ vspLightpos = [C.pure| const StringHash* { &VSP_LIGHTPOS } |]
 
 vspModel :: Ptr StringHash
 vspModel = [C.pure| const StringHash* { &VSP_MODEL } |]
+
+vspView :: Ptr StringHash
+vspView = [C.pure| const StringHash* { &VSP_VIEW } |]
+
+vspViewInv :: Ptr StringHash
+vspViewInv = [C.pure| const StringHash* { &VSP_VIEWINV } |]
 
 vspViewproj :: Ptr StringHash
 vspViewproj = [C.pure| const StringHash* { &VSP_VIEWPROJ } |]
@@ -392,116 +290,15 @@ pspShadowsplits = [C.pure| const StringHash* { &PSP_SHADOWSPLITS } |]
 pspLightmatrices :: Ptr StringHash
 pspLightmatrices = [C.pure| const StringHash* { &PSP_LIGHTMATRICES } |]
 
+pspVSMShadowParams :: Ptr StringHash
+pspVSMShadowParams = [C.pure| const StringHash* { &PSP_VSMSHADOWPARAMS } |]
+
+pspRoughness :: Ptr StringHash
+pspRoughness = [C.pure| const StringHash* { &PSP_ROUGHNESS } |]
+
+pspMetallic :: Ptr StringHash
+pspMetallic = [C.pure| const StringHash* { &PSP_METALLIC } |]
+
 -- | Scale calculation from bounding box diagonal.
 dotScale :: Vector3 
 dotScale = unsafePerformIO $ peek =<< [C.exp| const Vector3* { &DOT_SCALE } |]
-
-data Quality = 
-    Quality'Low
-  | Quality'Medium
-  | Quality'High
-  | Quality'Max
-  deriving (Eq, Ord, Show, Bounded)
-
-instance Enum Quality where 
-  fromEnum q = case q of 
-    Quality'Low -> 0 
-    Quality'Medium -> 1 
-    Quality'High -> 2 
-    Quality'Max -> 15
-
-  toEnum i = case i of 
-    0 -> Quality'Low 
-    1 -> Quality'Medium 
-    2 -> Quality'High
-    15 -> Quality'Max 
-    _ -> Quality'Low 
-
-data ShadowQuality = 
-    ShadowQuality'Low16Bit 
-  | ShadowQuality'Low24Bit
-  | ShadowQuality'High16Bit
-  | ShadowQuality'High24Bit
-  deriving (Eq, Ord, Show, Bounded)
-
-instance Enum ShadowQuality where 
-  fromEnum q = case q of 
-    ShadowQuality'Low16Bit -> 0
-    ShadowQuality'Low24Bit -> 1
-    ShadowQuality'High16Bit -> 2
-    ShadowQuality'High24Bit -> 3
-
-  toEnum i = case i of 
-    0 -> ShadowQuality'Low16Bit
-    1 -> ShadowQuality'Low24Bit
-    2 -> ShadowQuality'High16Bit
-    3 -> ShadowQuality'High24Bit
-    _ -> ShadowQuality'Low16Bit
-
-data Mask = 
-    MaskNone
-  | MaskPosition
-  | MaskNormal
-  | MaskColor
-  | MaskTexCoord1
-  | MaskTexCoord2 
-  | MaskCubeTexCoord1
-  | MaskCubeTexCoord2
-  | MaskTangent
-  | MaskBlendWeights
-  | MaskBlendIndices
-  | MaskInstanceMatrix1
-  | MaskInstanceMatrix2
-  | MaskInstanceMatrix3
-  | MaskDefault 
-  | MaskNoElement
-  deriving (Eq, Ord, Show, Bounded)
-
-instance Enum Mask where 
-  fromEnum q = case q of 
-    MaskNone -> 0x0
-    MaskPosition -> 0x1
-    MaskNormal -> 0x2
-    MaskColor -> 0x4
-    MaskTexCoord1 -> 0x8
-    MaskTexCoord2  -> 0x10
-    MaskCubeTexCoord1 -> 0x20
-    MaskCubeTexCoord2 -> 0x40
-    MaskTangent -> 0x80
-    MaskBlendWeights -> 0x100
-    MaskBlendIndices -> 0x200
-    MaskInstanceMatrix1 -> 0x400
-    MaskInstanceMatrix2 -> 0x800
-    MaskInstanceMatrix3 -> 0x1000
-    MaskDefault -> 0xffffffff
-    MaskNoElement -> 0xffffffff
-
-  toEnum i = case i of 
-    0x0 -> MaskNone 
-    0x1 -> MaskPosition
-    0x2 -> MaskNormal
-    0x4 -> MaskColor
-    0x8 -> MaskTexCoord1
-    0x10 -> MaskTexCoord2
-    0x20 -> MaskCubeTexCoord1
-    0x40 -> MaskCubeTexCoord2
-    0x80 -> MaskTangent
-    0x100 -> MaskBlendWeights
-    0x200 -> MaskBlendIndices
-    0x400 -> MaskInstanceMatrix1
-    0x800 -> MaskInstanceMatrix2
-    0x1000 -> MaskInstanceMatrix3
-    0xffffffff -> MaskDefault
-    _ -> MaskDefault
-
-maxRenderTargets :: Integral a => a 
-maxRenderTargets = 4
-
-maxVertexStreams :: Integral a => a 
-maxVertexStreams = 4
-
-maxConstantRegisters :: Integral a => a 
-maxConstantRegisters = 256
-
-bitsPerComponent :: Integral a => a 
-bitsPerComponent = 8

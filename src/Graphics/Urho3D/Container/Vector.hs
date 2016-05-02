@@ -2,6 +2,9 @@ module Graphics.Urho3D.Container.Vector(
     podVectorPtr
   , podVectorPtr'
   , podVectorPtrImpl
+  , simpleVector
+  , simpleVector'
+  , simpleVectorImpl
   ) where
 
 import qualified Data.Map as Map
@@ -74,5 +77,66 @@ podVectorPtrImpl elemName = sequence [
   where 
     vectorT = "PODVector" ++ elemName ++ "Ptr"
     podVectorTPtrCntx = "podVector" ++ elemName ++ "PtrCntx"
+    cTType = return $ LitE $ StringL vectorT
+    cntxTType = [e| return $ ConT $ mkName $cTType |]
+
+
+-- | Makes Vector<T> for given type. You need Storable instance for T.
+-- Makes following symbols:
+-- instance Createable VectorT
+-- instance ReadableVector VectorT
+-- instance WriteableVector VectorT
+simpleVector :: String -> DecsQ
+simpleVector elemName = simpleVector' elemName elemName
+
+-- | Same as 'simpleVector', but you can provide different names for C-side and Haskell-side.
+simpleVector' :: String -> String -> DecsQ
+simpleVector' cElemName elemName = do 
+  typedef <- C.verbatim $ "typedef " ++ vectorCpp ++ " " ++ vectorT ++ ";"
+  createable <- [d|
+    instance Createable (Ptr $vectorType) where 
+      type CreationOptions (Ptr $vectorType) = ()
+
+      newObject _ = liftIO $(quoteExp C.exp $ vectorT++"* {new "++vectorCpp++"()}")
+      deleteObject _ptr = liftIO $ $(quoteExp C.exp $ "void { delete $("++vectorT++"* _ptr)}")
+    |]
+  readable <- [d|
+    instance ReadableVector $vectorType where 
+      type ReadVecElem $vectorType = $elemType
+
+      foreignVectorLength _ptr = liftIO $ fromIntegral <$> $(quoteExp C.exp $ "unsigned int {$("++vectorT++"* _ptr)->Size()}")
+      foreignVectorElement _ptr _i = liftIO $ peek =<< $(quoteExp C.exp $ cElemName ++ "* {&((*$("++vectorT++"* _ptr))[$(int _i')])}")
+        where _i' = fromIntegral _i
+    |]
+  writeable <- [d|
+    instance WriteableVector $vectorType where 
+      type WriteVecElem $vectorType = $elemType 
+
+      foreignVectorAppend _ptr _elem = liftIO $ with _elem $ \_elem' ->  $(quoteExp C.exp $ "void {$("++vectorT++"* _ptr)->Push(*$("++cElemName++"* _elem'))}")
+    |]
+  return $ typedef ++ createable ++ readable ++ writeable
+  where 
+    vectorType = conT $ mkName vectorT
+    elemType = conT $ mkName elemName 
+    vectorT = "Vector" ++ elemName ++ ""
+    vectorCpp = "Vector<" ++ elemName ++ ">"
+
+-- | Makes internal representation of Vector<T> for given type
+-- Makes following symbols:
+-- data VectorT
+-- vectorTCntx :: C.Context
+simpleVectorImpl :: String -> DecsQ
+simpleVectorImpl elemName = sequence [
+    return $ DataD [] (mkName vectorT) [] [] []
+  , vectorTPtrCntx ^:: [t| C.Context |]
+  , vectorTPtrCntx ^= [e| mempty {
+        C.ctxTypesTable = Map.fromList [
+          (C.TypeName $cTType, $cntxTType)
+        ]
+    } |]
+  ]
+  where 
+    vectorT = "Vector" ++ elemName
+    vectorTPtrCntx = "vector" ++ elemName ++ "Cntx"
     cTType = return $ LitE $ StringL vectorT
     cntxTType = [e| return $ ConT $ mkName $cTType |]

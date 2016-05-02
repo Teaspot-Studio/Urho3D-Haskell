@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Graphics.Light(
     Light
+  , PODVectorLightPtr
   , LightType(..)
   , lightContext
   , lightSetLightType
@@ -19,15 +20,18 @@ import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Scene.Node
 
 import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Container.Vector
 import Graphics.Urho3D.Scene.Serializable
 import Graphics.Urho3D.Scene.Animatable
-import Graphics.Urho3D.Graphics.Drawable 
+import Graphics.Urho3D.Graphics.Internal.Drawable 
 import Graphics.Urho3D.Scene.Component 
 import Graphics.Urho3D.Parent
 
-C.context (C.cppCtx <> lightCntx <> componentContext <> stringHashContext <> drawableContext <> animatableContext <> serializableContext <> objectContext)
+C.context (C.cppCtx <> lightCntx <> componentContext <> stringHashContext <> drawableCntx <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/Graphics/Light.h>"
 C.using "namespace Urho3D"
+
+podVectorPtr "Light"
 
 lightContext :: C.Context 
 lightContext = lightCntx <> componentContext <> stringHashContext

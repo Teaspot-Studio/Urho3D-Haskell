@@ -21,6 +21,8 @@ import Data.Monoid
 import Data.Maybe 
 import Control.Lens 
 
+import Graphics.Urho3D.Graphics.Internal.Drawable
+
 C.context (C.cppCtx <> stringHashContext)
 C.include "<Urho3D/Core/CoreEvents.h>"
 C.using "namespace Urho3D"

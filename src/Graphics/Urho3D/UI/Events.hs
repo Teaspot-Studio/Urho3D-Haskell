@@ -90,6 +90,8 @@ import Data.Monoid
 import Foreign 
 import Control.Lens 
 
+import Graphics.Urho3D.Graphics.Internal.Defs
+
 C.context (C.cppCtx <> stringHashContext)
 C.include "<Urho3D/UI/UIEvents.h>"
 C.using "namespace Urho3D"
