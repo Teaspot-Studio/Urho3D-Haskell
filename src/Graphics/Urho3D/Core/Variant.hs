@@ -10,6 +10,7 @@ module Graphics.Urho3D.Core.Variant(
   , variantContext
   , variantType
   , VariantStorable(..)
+  , getVariantOrError
   , newVariant
   , newVariantMaybe
   , withVariant
@@ -26,6 +27,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 import qualified Data.Text as T 
 import Text.RawString.QQ
+import Data.Typeable 
 
 import Control.DeepSeq
 import Data.Maybe (fromMaybe)
@@ -71,6 +73,18 @@ variantType ptr = toEnum.fromIntegral <$> [C.exp| int { (int)$(Variant* ptr)->Ge
 class VariantStorable a where 
   setVariant :: MonadIO m => a -> Ptr Variant -> m ()
   getVariant :: MonadIO m => Ptr Variant -> m (Maybe a)
+
+-- | Fail with error with cannot get value from variant
+getVariantOrError :: forall a m . (VariantStorable a, Typeable a, MonadIO m) => Ptr Variant -> m a 
+getVariantOrError ptr = do 
+  mval <- getVariant ptr
+  case mval of 
+    Nothing -> do 
+      t <- liftIO $ variantType ptr
+      fail $ "Failed to get value from Variant, expected " <> aname <> ", but got " <> show t 
+    Just val -> return val 
+  where 
+    aname = show $ typeRep (Proxy :: Proxy a)
 
 instance VariantStorable Bool where 
   setVariant a ptr = let val = fromBool a
