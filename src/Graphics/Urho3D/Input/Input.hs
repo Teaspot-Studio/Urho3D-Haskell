@@ -111,8 +111,8 @@ import Foreign
 import Foreign.C.String
 import Text.RawString.QQ
 import Control.Lens 
-import Data.Char 
 import System.IO.Unsafe (unsafePerformIO)
+import Graphics.Urho3D.Input.Events
 
 C.context (C.cppCtx 
   <> inputCntx 
@@ -440,39 +440,39 @@ inputRemoveAllGestures p = liftIO $ do
 inputGetKeyFromName :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
   -> String -- ^ name
-  -> m Int
+  -> m Key
 inputGetKeyFromName p n = liftIO $ withCString n $ \n' -> do 
   let ptr = parentPointer p 
-  fromIntegral <$> [C.exp| int { $(Input* ptr)->GetKeyFromName(String($(const char* n'))) } |]
+  fromUrhoKey . fromIntegral <$> [C.exp| int { $(Input* ptr)->GetKeyFromName(String($(const char* n'))) } |]
 
 -- | Return keycode from scancode.
 inputGetKeyFromScancode :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
   -> Int -- ^ scancode
-  -> m Int
+  -> m Key
 inputGetKeyFromScancode p sc = liftIO $ do 
   let ptr = parentPointer p 
       sc' = fromIntegral sc
-  fromIntegral <$> [C.exp| int { $(Input* ptr)->GetKeyFromScancode($(int sc')) } |]
+  fromUrhoKey . fromIntegral <$> [C.exp| int { $(Input* ptr)->GetKeyFromScancode($(int sc')) } |]
 
 -- | Return name of key from keycode.
 inputGetKeyName :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> Int -- ^ key
+  -> Key -- ^ key
   -> m String
 inputGetKeyName p k = liftIO $ do 
   let ptr = parentPointer p 
-      k' = fromIntegral k
+      k' = fromIntegral . toUrhoKey $ k
   peekCString =<< [C.exp| const char* { $(Input* ptr)->GetKeyName($(int k')).CString() } |]
 
 -- | Return scancode from keycode.
 inputGetScancodeFromKey :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> Int -- ^ key
+  -> Key -- ^ key
   -> m Int
 inputGetScancodeFromKey p k = liftIO $ do 
   let ptr = parentPointer p 
-      k' = fromIntegral k
+      k' = fromIntegral . toUrhoKey $ k
   fromIntegral <$> [C.exp| int { $(Input* ptr)->GetScancodeFromKey($(int k')) } |]
 
 -- | Return scancode from key name.
@@ -497,21 +497,21 @@ inputGetScancodeName p sc = liftIO $ do
 -- | Check if a key is held down.
 inputGetKeyDown :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> Char -- ^ Key to test
+  -> Key -- ^ Key to test
   -> m Bool
 inputGetKeyDown p k = liftIO $ do 
   let ptr = parentPointer p 
-      ki = fromIntegral . ord $ k
+      ki = fromIntegral . toUrhoKey $ k
   toBool <$> [C.exp| int { (int)$(Input* ptr)->GetKeyDown($(int ki)) } |]
 
 -- | Check if a key has been pressed on this frame.
 inputGetKeyPress :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> Int -- ^ key
+  -> Key -- ^ key
   -> m Bool
 inputGetKeyPress p k = liftIO $ do 
   let ptr = parentPointer p 
-      k' = fromIntegral k 
+      k' = fromIntegral . toUrhoKey $ k 
   toBool <$> [C.exp| int { (int)$(Input* ptr)->GetKeyPress($(int k')) } |]
 
 -- | Check if a key is held down by scancode.

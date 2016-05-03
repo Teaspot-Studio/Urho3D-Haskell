@@ -20,6 +20,7 @@ module Graphics.Urho3D.Graphics.Renderer(
   , rendererSetMaxOccluderTriangles
   , rendererGetDynamicInstancing
   , rendererSetDynamicInstancing
+  , rendererDrawDebugGeometry
   ) where
 
 import qualified Language.C.Inline as C 
@@ -196,3 +197,13 @@ rendererSetDynamicInstancing p flag = liftIO $ do
   let ptr = parentPointer p 
       flag' = fromBool flag
   [C.exp| void {$(Renderer* ptr)->SetDynamicInstancing($(int flag') != 0)}|]
+
+-- | Add debug geometry to the debug renderer.
+rendererDrawDebugGeometry :: (Parent Renderer a, Pointer p a, MonadIO m) 
+  => p -- ^ Pointer to renderer or ascentoer
+  -> Bool -- ^ Flag
+  -> m ()
+rendererDrawDebugGeometry p depthTest = liftIO $ do 
+  let ptr = parentPointer p 
+      depthTest' = fromBool depthTest
+  [C.exp| void {$(Renderer* ptr)->DrawDebugGeometry($(int depthTest') != 0)}|]

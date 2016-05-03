@@ -108,10 +108,10 @@ createScene app moverType = do
   drawableSetCastShadows light True 
   lightSetShadowBias light $ BiasParameters 0.00025 0.5
   -- Set cascade splits at 10, 50 and 200 world units, fade shadows out at 80% of maximum shadow distance
-  lightSetShadowCascade light $ CascadeParameters 10 50 200 0 0.8
+  lightSetShadowCascade light $ CascadeParameters 10 50 200 0 0.8 1.0
 
   -- Create animated models
-  let numModels = 2000
+  let numModels = 100
       modelMoveSpeed = 2.0
       modelRotateSpeed = 100.0
       bounds = BoundingBox (Vector3 (-47) 0 (-47)) (Vector3 47 0 47)
@@ -126,7 +126,7 @@ createScene app moverType = do
 
     (modelObject :: Ptr AnimatedModel) <- fromJustTrace "Jack model" <$> nodeCreateComponent modelNode Nothing Nothing
     (modelModel :: Ptr Model) <- fromJustTrace "Jack.mdl" <$> cacheGetResource cache "Models/Jack.mdl" True
-    animatedModelSetModel modelObject modelModel 
+    animatedModelSetModel modelObject modelModel True
     (modelMaterial :: Ptr Material) <- fromJustTrace "Jack.xml" <$> cacheGetResource cache "Materials/Jack.xml" True
     staticModelSetMaterial modelObject modelMaterial
     drawableSetCastShadows modelObject True 
@@ -135,13 +135,13 @@ createScene app moverType = do
     -- animation, The alternative would be to use an AnimationController component which updates the animation automatically,
     -- but we need to update the model's position manually in any case
     (walkAnimation :: Ptr Animation) <- fromJustTrace "Jack_Walk.ani" <$> cacheGetResource cache "Models/Jack_Walk.ani" True 
-    (state :: Ptr AnimationState) <- animatedModelAddAnimationState walkAnimation
+    (state :: Ptr AnimationState) <- animatedModelAddAnimationState modelObject walkAnimation
     -- The state would fail to create (return null) if the animation was not found
     unless (isNull state) $ do 
       -- Enable full blending weight and looping
       animationStateSetWeight state 1
       animationStateSetLooped state True
-      animationStateSetTime =<< randomUp =<< animationGetLength walkAnimation
+      animationStateSetTime state =<< randomUp =<< animationGetLength walkAnimation
 
     -- Create our custom Mover component that will move & animate the model during each frame's update
     (mover :: Ptr Mover) <- fromJustTrace "Mover" <$> nodeCreateCustomComponent modelNode moverType Nothing Nothing
@@ -188,7 +188,7 @@ setupViewport app scene cameraNode = do
     use, but now we just use full screen and default render path configured in the engine command line options
   -}
   cntx <- getContext app 
-  (camera :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent cameraNode 
+  (camera :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent' cameraNode False
   (viewport :: SharedViewportPtr) <- newSharedObject (cntx, pointer scene, camera)
   rendererSetViewport renderer 0 viewport
 
@@ -223,13 +223,13 @@ moveCamera app cameraNode timeStep camData = do
 
     -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     -- Use the Translate() function (default local space) to move relative to the node's orientation.
-    whenM (inputGetKeyDown input 'W') $ 
+    whenM (inputGetKeyDown input KeyW) $ 
       nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * timeStep)) TS'Local
-    whenM (inputGetKeyDown input 'S') $ 
+    whenM (inputGetKeyDown input KeyS) $ 
       nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * timeStep)) TS'Local
-    whenM (inputGetKeyDown input 'A') $ 
+    whenM (inputGetKeyDown input KeyA) $ 
       nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * timeStep)) TS'Local
-    whenM (inputGetKeyDown input 'D') $ 
+    whenM (inputGetKeyDown input KeyD) $ 
       nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * timeStep)) TS'Local
 
     -- Toggle debug geometry with space
@@ -266,4 +266,4 @@ handlePostRenderUpdate app camDataRef _ = do
   -- If draw debug mode is enabled, draw viewport debug geometry, which will show eg. drawable bounding boxes and skeleton
   -- bones. Note that debug geometry has to be separately requested each frame. Disable depth test so that we can see the
   -- bones properly
-  when (camDebugGeometry camData) $ rendererDrawDebugGeometry app False
+  when (camDebugGeometry camData) $ rendererDrawDebugGeometry renderer False

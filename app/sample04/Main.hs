@@ -195,13 +195,13 @@ moveCamera app cameraNode timeStep camData = do
 
     -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     -- Use the Translate() function (default local space) to move relative to the node's orientation.
-    whenM (inputGetKeyDown input 'W') $ 
+    whenM (inputGetKeyDown input KeyW) $ 
       nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * timeStep)) TS'Local
-    whenM (inputGetKeyDown input 'S') $ 
+    whenM (inputGetKeyDown input KeyS) $ 
       nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * timeStep)) TS'Local
-    whenM (inputGetKeyDown input 'A') $ 
+    whenM (inputGetKeyDown input KeyA) $ 
       nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * timeStep)) TS'Local
-    whenM (inputGetKeyDown input 'D') $ 
+    whenM (inputGetKeyDown input KeyD) $ 
       nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * timeStep)) TS'Local
 
     return camData {
