@@ -80,7 +80,9 @@ library
                        Graphics.Urho3D.Input.Events
                        Graphics.Urho3D.Input.Input
                        Graphics.Urho3D.IO
+                       Graphics.Urho3D.IO.Deserializer
                        Graphics.Urho3D.IO.FileSystem
+                       Graphics.Urho3D.IO.Serializer
                        Graphics.Urho3D.Math
                        Graphics.Urho3D.Math.BoundingBox
                        Graphics.Urho3D.Math.Color
@@ -169,7 +171,9 @@ library
                        Graphics.Urho3D.Graphics.Internal.Viewport
                        Graphics.Urho3D.Graphics.Internal.Zone
                        Graphics.Urho3D.Input.Internal.Input
+                       Graphics.Urho3D.IO.Internal.Deserializer
                        Graphics.Urho3D.IO.Internal.FileSystem
+                       Graphics.Urho3D.IO.Internal.Serializer
                        Graphics.Urho3D.Math.Internal.BoundingBox
                        Graphics.Urho3D.Math.Internal.Color
                        Graphics.Urho3D.Math.Internal.Frustum
@@ -251,7 +255,9 @@ library
                        src/Graphics/Urho3D/Graphics/Zone.cpp
                        src/Graphics/Urho3D/Input/Events.cpp
                        src/Graphics/Urho3D/Input/Input.cpp
+                       src/Graphics/Urho3D/IO/Deserializer.cpp
                        src/Graphics/Urho3D/IO/FileSystem.cpp
+                       src/Graphics/Urho3D/IO/Serializer.cpp
                        src/Graphics/Urho3D/Math/BoundingBox.cpp
                        src/Graphics/Urho3D/Math/Color.cpp
                        src/Graphics/Urho3D/Math/Defs.cpp

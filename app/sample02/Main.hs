@@ -52,7 +52,7 @@ customStart sr = do
 
   -- Enable OS cursor
   (input :: Ptr Input) <- fromJustTrace "Input system" <$> getSubsystem app 
-  inputSetMouseVisible input True 
+  inputSetMouseVisible input True False
 
   -- Load XML file containing default UI style sheet 
   (cache :: Ptr ResourceCache) <- fromJustTrace "Resource Cache" <$> getSubsystem app 

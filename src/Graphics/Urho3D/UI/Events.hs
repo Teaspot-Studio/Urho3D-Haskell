@@ -91,6 +91,7 @@ import Foreign
 import Control.Lens 
 
 import Graphics.Urho3D.Graphics.Internal.Defs
+import Graphics.Urho3D.Input.Internal.Input
 
 C.context (C.cppCtx <> stringHashContext)
 C.include "<Urho3D/UI/UIEvents.h>"

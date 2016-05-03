@@ -22,6 +22,7 @@ module Graphics.Urho3D.Input.Internal.Input(
   , SDL.JoystickID
   , SDL.Joystick
   , SDL_Joystick
+  , SDL.GameController
   , SDL_GameController
   , toSDLJoystick
   , toSDLController
@@ -43,6 +44,8 @@ import Foreign
 
 import qualified Data.Vector.Unboxed as VU 
 import qualified SDL.Raw.Types as SDL 
+
+import Graphics.Urho3D.Graphics.Internal.Skeleton
 
 data Input 
 

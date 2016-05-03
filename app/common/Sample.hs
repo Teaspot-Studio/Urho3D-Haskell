@@ -100,8 +100,8 @@ sampleStart sr = do
   if platform == "Android" || platform == "iOS" 
   then initTouchInput sr
   else do 
-    is <- fromJustTrace "sampleStart:InputSystem" <$> getSubsystem app
-    jcount <- getNumJoysticks is
+    (is :: Ptr Input) <- fromJustTrace "sampleStart:InputSystem" <$> getSubsystem app
+    jcount <- inputGetNumJoysticks is
     when (jcount == 0) $ subscribeToEvent app $ handleTouchBegin sr
 
   createLogo sr
@@ -119,7 +119,7 @@ initTouchInput sr = do
   liftIO $ modifyIORef' sr (set sampleTouchEnabled True)
 
   resCache <- fromJustTrace "initTouchInput:ResourceCache" <$> getSubsystem app
-  input <- fromJustTrace "initTouchInput:InputSystem" <$> getSubsystem app 
+  (input :: Ptr Input) <- fromJustTrace "initTouchInput:InputSystem" <$> getSubsystem app 
   layoutM <- cacheGetResource resCache "UI/ScreenJoystick_Samples.xml" True 
   case layoutM of 
     Nothing -> error "Cannot open UI/ScreenJoystick_Samples.xml"
@@ -132,8 +132,8 @@ initTouchInput sr = do
 
       defStyleM <- cacheGetResource resCache "UI/DefaultStyle.xml" True
       _ <- whenJust defStyleM $ \defStyle -> do
-        joystick <- addScreenJoystick input layout defStyle
-        setScreenJoystickVisible input joystick True
+        joystick <- inputAddScreenJoystick input layout defStyle
+        inputSetScreenJoystickVisible input joystick True
       return ()
 
 setLogoVisible :: SampleRef -> Bool -> IO ()
@@ -245,10 +245,10 @@ handleKeyDown sr (EventKeyDown{..}) = do
                 layoutM <- cacheGetResource cache "UI/ScreenJoystickSettings_Samples.xml" True 
                 styleM <- cacheGetResource cache "UI/DefaultStyle.xml" True 
                 _ <- whenJust (liftM2 (,) layoutM styleM) $ \(layout, style) -> do
-                  ji <- addScreenJoystick input layout style
+                  ji <- inputAddScreenJoystick input layout style
                   modifyIORef' sr $ set sampleScreenSettingsIndex ji
                 return ()
-             | otherwise -> setScreenJoystickVisible input settIndex $ s ^. samplePaused
+             | otherwise -> inputSetScreenJoystickVisible input settIndex $ s ^. samplePaused
          | key == Key1 -> do -- Texture quality
           quality <- rendererGetTextureQuality renderer
           rendererSetTextureQuality renderer $ cycleEnum quality
