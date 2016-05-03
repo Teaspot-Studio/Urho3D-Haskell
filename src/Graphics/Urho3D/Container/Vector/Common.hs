@@ -3,6 +3,9 @@ module Graphics.Urho3D.Container.Vector.Common(
     PODVectorWord8
   , PODVectorWord
   , PODVectorMatrix3x4
+  , PODVectorBool
+  , PODVectorFloat
+  , PODVectorInt
   , VectorPODVectorWord
   , VectorPODVectorMatrix3x4
   , vectorContext
@@ -29,7 +32,10 @@ vectorContext = vectorCntx
 
 C.verbatim "typedef PODVector<unsigned char> PODVectorWord8;"
 C.verbatim "typedef PODVector<unsigned> PODVectorWord;"
-C.verbatim "typedef PODVector<Matrix3x4> PODVectorMatrix3x4;;"
+C.verbatim "typedef PODVector<Matrix3x4> PODVectorMatrix3x4;"
+C.verbatim "typedef PODVector<bool> PODVectorBool;"
+C.verbatim "typedef PODVector<float> PODVectorFloat;"
+C.verbatim "typedef PODVector<int> PODVectorInt;"
 C.verbatim "typedef Vector<PODVector<unsigned> > VectorPODVectorWord;"
 C.verbatim "typedef Vector<PODVector<Matrix3x4> > VectorPODVectorMatrix3x4;"
 
@@ -96,6 +102,73 @@ instance WriteableVector PODVectorMatrix3x4 where
 
   foreignVectorAppend ptr mtx = liftIO $ with mtx $ \mtx' -> do
     [C.exp| void {$(PODVectorMatrix3x4* ptr)->Push(*$(Matrix3x4* mtx'))} |]
+
+
+
+instance Createable (Ptr PODVectorBool) where 
+  type CreationOptions (Ptr PODVectorBool) = ()
+
+  newObject _ = liftIO [C.exp| PODVectorBool* { new PODVector<bool>() } |]
+  deleteObject ptr = liftIO [C.exp| void { delete $(PODVectorBool* ptr)} |]
+
+instance ReadableVector PODVectorBool where 
+  type ReadVecElem PODVectorBool = Bool
+
+  foreignVectorLength ptr = liftIO $ fromIntegral <$> [C.exp| int {$(PODVectorBool* ptr)->Size()} |]
+  foreignVectorElement ptr i = liftIO $ do 
+    let i' = fromIntegral i 
+    toBool <$> [C.exp| int { (int)(*$(PODVectorBool* ptr))[$(unsigned int i')] } |]
+
+instance WriteableVector PODVectorBool where 
+  type WriteVecElem PODVectorBool = Bool 
+
+  foreignVectorAppend ptr w = liftIO $ do 
+    let w' = fromBool w 
+    [C.exp| void {$(PODVectorBool* ptr)->Push($(int w') != 0)} |]
+
+instance Createable (Ptr PODVectorFloat) where 
+  type CreationOptions (Ptr PODVectorFloat) = ()
+
+  newObject _ = liftIO [C.exp| PODVectorFloat* { new PODVector<float>() } |]
+  deleteObject ptr = liftIO [C.exp| void { delete $(PODVectorFloat* ptr)} |]
+
+instance ReadableVector PODVectorFloat where 
+  type ReadVecElem PODVectorFloat = Float
+
+  foreignVectorLength ptr = liftIO $ fromIntegral <$> [C.exp| int {$(PODVectorFloat* ptr)->Size()} |]
+  foreignVectorElement ptr i = liftIO $ do 
+    let i' = fromIntegral i 
+    realToFrac <$> [C.exp| float { (*$(PODVectorFloat* ptr))[$(unsigned int i')] } |]
+
+instance WriteableVector PODVectorFloat where 
+  type WriteVecElem PODVectorFloat = Float 
+
+  foreignVectorAppend ptr w = liftIO $ do 
+    let w' = realToFrac w 
+    [C.exp| void {$(PODVectorFloat* ptr)->Push($(float w'))} |]
+
+
+
+instance Createable (Ptr PODVectorInt) where 
+  type CreationOptions (Ptr PODVectorInt) = ()
+
+  newObject _ = liftIO [C.exp| PODVectorInt* { new PODVector<int>() } |]
+  deleteObject ptr = liftIO [C.exp| void { delete $(PODVectorInt* ptr)} |]
+
+instance ReadableVector PODVectorInt where 
+  type ReadVecElem PODVectorInt = Int
+
+  foreignVectorLength ptr = liftIO $ fromIntegral <$> [C.exp| int {$(PODVectorInt* ptr)->Size()} |]
+  foreignVectorElement ptr i = liftIO $ do 
+    let i' = fromIntegral i 
+    fromIntegral <$> [C.exp| int { (*$(PODVectorInt* ptr))[$(unsigned int i')] } |]
+
+instance WriteableVector PODVectorInt where 
+  type WriteVecElem PODVectorInt = Int 
+
+  foreignVectorAppend ptr w = liftIO $ do 
+    let w' = fromIntegral w 
+    [C.exp| void {$(PODVectorInt* ptr)->Push($(int w'))} |]
 
 
 

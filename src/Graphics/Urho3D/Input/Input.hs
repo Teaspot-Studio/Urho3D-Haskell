@@ -29,6 +29,8 @@ import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Input.Internal.Input
 import Graphics.Urho3D.Core.Object 
+import Graphics.Urho3D.Container.ForeignVector
+import Graphics.Urho3D.Container.Vector.Common
 import Graphics.Urho3D.Resource.XMLFile
 import Graphics.Urho3D.Math.Vector2 
 import Graphics.Urho3D.UI.Element
@@ -36,16 +38,20 @@ import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Parent
 import Data.Monoid
 import Foreign 
+import Foreign.C.String
 import Text.RawString.QQ
 import Control.Lens 
 import Data.Char 
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx <> inputCntx <> objectContext <> xmlFileContext <> vector2Context <> uiElementContext)
+C.context (C.cppCtx <> inputCntx <> objectContext <> xmlFileContext <> vector2Context <> uiElementContext <> vectorContext)
 C.include "<Urho3D/Input/Input.h>"
 C.using "namespace Urho3D"
 
 C.verbatim "typedef WeakPtr<UIElement> SharedWeakUIElement;"
+C.verbatim "typedef PODVector<bool> PODVectorBool;"
+C.verbatim "typedef PODVector<float> PODVectorFloat;"
+C.verbatim "typedef PODVector<int> PODVectorInt;"
 
 inputContext :: C.Context 
 inputContext = objectContext <> inputCntx <> vector2Context
@@ -97,6 +103,44 @@ instance Storable TouchState where
             $(TouchState* ptr)->pressure_ = $(float pr);
             $(TouchState* ptr)->touchedElement_ = WeakPtr<UIElement>($(UIElement* e));
           } |]
+
+instance Storable JoystickState where 
+  sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(JoystickState) } |]
+  alignment _ = fromIntegral $ [C.pure| int { (int)Traits<JoystickState>::AlignmentOf } |]
+  peek ptr = do 
+    _joystickStateJoystick <- toSDLJoystick <$> [C.exp| SDL_Joystick* {$(JoystickState* ptr)->joystick_} |]
+    _joystickStateJoystickID <- fromIntegral <$> [C.exp| int {(int)$(JoystickState* ptr)->joystickID_} |]
+    _joystickStateController <- toSDLController <$> [C.exp| SDL_GameController* {$(JoystickState* ptr)->controller_} |]
+    _joystickStateScreenJoystick <- [C.exp| UIElement* {$(JoystickState* ptr)->screenJoystick_} |]
+    _joystickStateName <- peekCString =<< [C.exp| const char* {$(JoystickState* ptr)->name_.CString()} |]
+    _joystickStateButtons <- peekForeignVectorAs =<< [C.exp| PODVectorBool* {&$(JoystickState* ptr)->buttons_} |]
+    _joystickStateButtonPress <- peekForeignVectorAs =<< [C.exp| PODVectorBool* {&$(JoystickState* ptr)->buttonPress_} |]
+    _joystickStateAxes <- peekForeignVectorAs =<< [C.exp| PODVectorFloat* {&$(JoystickState* ptr)->axes_} |]
+    _joystickStateHats <- peekForeignVectorAs =<< [C.exp| PODVectorInt* {&$(JoystickState* ptr)->hats_} |]
+    return $ JoystickState {..}
+
+  poke ptr JoystickState{..} = 
+    withCString _joystickStateName $ \_joystickStateName' -> 
+    withForeignVector () _joystickStateButtons $ \_joystickStateButtons' ->
+    withForeignVector () _joystickStateButtonPress $ \_joystickStateButtonPress' ->
+    withForeignVector () _joystickStateAxes $ \_joystickStateAxes' ->
+    withForeignVector () _joystickStateHats $ \_joystickStateHats' ->
+      [C.block| void { 
+        $(JoystickState* ptr)->joystick_ = $(SDL_Joystick* _joystickStateJoystick');
+        $(JoystickState* ptr)->joystickID_ = (SDL_JoystickID)$(int _joystickStateJoystickID');
+        $(JoystickState* ptr)->controller_ = $(SDL_GameController* _joystickStateController');
+        $(JoystickState* ptr)->screenJoystick_ = $(UIElement* _joystickStateScreenJoystick');
+        $(JoystickState* ptr)->name_ = String($(const char* _joystickStateName'));
+        $(JoystickState* ptr)->buttons_ = PODVectorBool(*$(PODVectorBool* _joystickStateButtons'));
+        $(JoystickState* ptr)->buttonPress_ = PODVectorBool(*$(PODVectorBool* _joystickStateButtonPress'));
+        $(JoystickState* ptr)->axes_ = PODVectorFloat(*$(PODVectorFloat* _joystickStateAxes'));
+        $(JoystickState* ptr)->hats_ = PODVectorInt(*$(PODVectorInt* _joystickStateHats'));
+      } |]
+    where 
+    _joystickStateJoystick' = fromSDLJoystick _joystickStateJoystick
+    _joystickStateJoystickID' = fromIntegral _joystickStateJoystickID
+    _joystickStateController' = fromSDLController _joystickStateController
+    _joystickStateScreenJoystick' = _joystickStateScreenJoystick
 
 mousePoistionOffscreen :: IntVector2 
 mousePoistionOffscreen = unsafePerformIO $ peek =<< [C.exp| const IntVector2* {&MOUSE_POSITION_OFFSCREEN} |]

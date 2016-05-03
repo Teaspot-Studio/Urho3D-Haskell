@@ -21,6 +21,12 @@ module Graphics.Urho3D.Input.Internal.Input(
   , HasHats(..)
   , SDL.JoystickID
   , SDL.Joystick
+  , SDL_Joystick
+  , SDL_GameController
+  , toSDLJoystick
+  , toSDLController
+  , fromSDLJoystick
+  , fromSDLController
   ) where
 
 import qualified Language.C.Inline as C
@@ -93,13 +99,29 @@ instance NFData TouchState where
     _touchDelta `deepseq`
     _touchPressure `deepseq` ()
 
+data SDL_Joystick
+data SDL_GameController
+
+toSDLJoystick :: Ptr SDL_Joystick -> SDL.Joystick
+toSDLJoystick = castPtr 
+
+toSDLController :: Ptr SDL_GameController -> SDL.GameController
+toSDLController = castPtr 
+
+fromSDLJoystick :: SDL.Joystick -> Ptr SDL_Joystick
+fromSDLJoystick = castPtr
+
+fromSDLController :: SDL.GameController -> Ptr SDL_GameController
+fromSDLController = castPtr
+
 inputCntx :: C.Context 
 inputCntx = mempty {
     C.ctxTypesTable = Map.fromList [
       (C.TypeName "Input", [t| Input |])
     , (C.TypeName "TouchState", [t| TouchState |])
+    , (C.TypeName "JoystickState", [t| JoystickState |])
     , (C.TypeName "SDL_JoystickID", [t| SDL.JoystickID |])
-    , (C.TypeName "SDL_Joystick", [t| SDL.Joystick |])
-    , (C.TypeName "SDL_GameController", [t| SDL.GameController |])
+    , (C.TypeName "SDL_Joystick", [t| SDL_Joystick |])
+    , (C.TypeName "SDL_GameController", [t| SDL_GameController |])
     ]
   } 
