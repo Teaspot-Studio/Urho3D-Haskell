@@ -1,6 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Input.Input(
     Input
+  , MouseMode(..)
+  , JoystickID
   -- | Touch State
   , TouchState
   , touchedElement 
@@ -11,6 +13,7 @@ module Graphics.Urho3D.Input.Input(
   , touchPressure
   -- | Input API
   , inputContext
+  , mousePoistionOffscreen
   , getNumJoysticks
   , addScreenJoystick
   , setScreenJoystickVisible
@@ -35,12 +38,14 @@ import Data.Monoid
 import Foreign 
 import Text.RawString.QQ
 import Control.Lens 
-import Data.Maybe
 import Data.Char 
+import System.IO.Unsafe (unsafePerformIO)
 
 C.context (C.cppCtx <> inputCntx <> objectContext <> xmlFileContext <> vector2Context <> uiElementContext)
 C.include "<Urho3D/Input/Input.h>"
 C.using "namespace Urho3D"
+
+C.verbatim "typedef WeakPtr<UIElement> SharedWeakUIElement;"
 
 inputContext :: C.Context 
 inputContext = objectContext <> inputCntx <> vector2Context
@@ -74,8 +79,7 @@ instance Storable TouchState where
     lpv <- peek =<< [C.exp| IntVector2* { &$(TouchState* ptr)->lastPosition_ } |]
     dv <- peek =<< [C.exp| IntVector2* { &$(TouchState* ptr)->delta_ } |]
     pr <- realToFrac <$> [C.exp| float { $(TouchState* ptr)->pressure_ } |]
-    me <- [C.exp| UIElement* { $(TouchState* ptr)->touchedElement_.Get() }|]
-    e <- checkNullPtr' me return
+    e <- wrapSharedWeakUIElementPtr =<< [C.exp| SharedWeakUIElement* { new WeakPtr<UIElement>($(TouchState* ptr)->touchedElement_) }|]
     return $ TouchState e tid pv lpv dv pr 
 
   poke ptr ts = do 
@@ -84,7 +88,7 @@ instance Storable TouchState where
         with (ts ^. touchDelta) $ \dv -> do
           let tid = fromIntegral $ ts ^. touchID 
               pr = realToFrac $ ts ^. touchPressure
-              e = fromMaybe nullPtr $ ts ^. touchedElement
+              e = parentPointer $ ts ^. touchedElement
           [C.block| void { 
             $(TouchState* ptr)->touchID_ = $(float tid);
             $(TouchState* ptr)->position_ = *$(IntVector2* pv);
@@ -94,6 +98,8 @@ instance Storable TouchState where
             $(TouchState* ptr)->touchedElement_ = WeakPtr<UIElement>($(UIElement* e));
           } |]
 
+mousePoistionOffscreen :: IntVector2 
+mousePoistionOffscreen = unsafePerformIO $ peek =<< [C.exp| const IntVector2* {&MOUSE_POSITION_OFFSCREEN} |]
 
 -- | Returns number of known joysticks
 getNumJoysticks :: MonadIO m => Ptr Input -> m Int 

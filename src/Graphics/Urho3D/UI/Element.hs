@@ -4,6 +4,10 @@ module Graphics.Urho3D.UI.Element(
   , uiElementContext
   , SharedUIElement
   , SharedUIElementPtr 
+  , wrapSharedUIElementPtr
+  , SharedWeakUIElement
+  , SharedWeakUIElementPtr 
+  , wrapSharedWeakUIElementPtr
   , UIElem(..)
 
   -- | Setters
@@ -185,12 +189,12 @@ import Foreign
 import Foreign.C.String 
 import Data.Proxy 
 
-C.context (C.cppCtx <> sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context <> rectContext <> contextContext <> xmlFileContext <> xmlElementContext <> stringContext <> colorContext <> variantContext <> podVectorUIElementPtrCntx)
+C.context (C.cppCtx <> sharedUIElementPtrCntx  <> sharedWeakUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context <> rectContext <> contextContext <> xmlFileContext <> xmlElementContext <> stringContext <> colorContext <> variantContext <> podVectorUIElementPtrCntx)
 C.include "<Urho3D/UI/UIElement.h>"
 C.using "namespace Urho3D"
 
 uiElementContext :: C.Context 
-uiElementContext = sharedUIElementPtrCntx <> uiElementCntx <> stringHashContext <> podVectorUIElementPtrCntx
+uiElementContext = sharedUIElementPtrCntx <> sharedWeakUIElementPtrCntx <> uiElementCntx <> stringHashContext <> podVectorUIElementPtrCntx
 
 C.verbatim "typedef HashMap<StringHash, Variant> HashMapStringHashVariant;"
 
@@ -201,6 +205,7 @@ instance Createable (Ptr UIElement) where
   deleteObject ptr = liftIO $ [C.exp| void { delete $(UIElement* ptr) } |]
 
 sharedPtr "UIElement" 
+sharedWeakPtr "UIElement"
 
 -- | Create and add a child element and return it.
 uiElementCreateChild :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element

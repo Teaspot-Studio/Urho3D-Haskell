@@ -300,7 +300,7 @@ handleSceneUpdate sr _ = do
     ni <- inputGetNumTouches input 
     forM_ [0 .. ni] $ \i -> do 
       state <- fromJustTrace "handleSceneUpdate:TouchState" <$> inputGetTouch input i 
-      unless (isNothing $ state ^. touchedElement) $ do -- touch on empty space
+      unless (isNull $ state ^. touchedElement) $ do -- touch on empty space
         if state^.touchDelta.x /= 0 || state^.touchDelta.y /= 0 then do 
           mcam <- nodeGetComponent' cameraNode False
           Monad.void $ whenJust mcam $ \(camera :: Ptr Camera) -> do 

@@ -4,6 +4,9 @@ module Graphics.Urho3D.UI.Internal.Element(
   , sharedUIElementPtrCntx
   , SharedUIElement
   , SharedUIElementPtr(..)
+  , sharedWeakUIElementPtrCntx
+  , SharedWeakUIElement
+  , SharedWeakUIElementPtr(..)
   , PODVectorUIElementPtr
   , podVectorUIElementPtrCntx
   ) where
@@ -25,4 +28,5 @@ uiElementCntx = mempty {
   } 
 
 sharedPtrImpl "UIElement"
+sharedWeakPtrImpl "UIElement"
 podVectorPtrImpl "UIElement"
