@@ -49,19 +49,19 @@ class AbstractType a
 -- local context.
 sharedPtr :: String -> DecsQ 
 sharedPtr tname = do 
-#ifdef DEBUG_SHARED
-  typedef <- C.verbatim $ "#include <iostream>\ntypedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
-#else
+#ifndef SHARED_DEBUG
   typedef <- C.verbatim $ "typedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
+#else
+  typedef <- C.verbatim $ "#include <iostream>\ntypedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
 #endif
   deleter <- sequence [
       deleteSharedTPtr ^:: [t| Ptr $sharedTType -> IO () |]
     , mkFunc1 deleteSharedTPtr "ptr" $ \ptrName -> [e|runInMainThread $ do
         $(let inlinePtr = "$(" ++ sharedT ++ "* "++show ptrName++")"
-#ifdef DEBUG_SHARED
-          in quoteExp C.exp ("void { std::cout << \"finalizing shared "++tname++" \" << "++inlinePtr++"->Refs() << std::endl; if ("++inlinePtr++") { delete "++inlinePtr++"; } }") )
-#else
+#ifndef SHARED_DEBUG
           in quoteExp C.exp ("void { if ("++inlinePtr++") { delete "++inlinePtr++"; } }") )
+#else
+          in quoteExp C.exp ("void { std::cout << \"finalizing shared "++tname++" \" << "++inlinePtr++"->Refs() << std::endl; if ("++inlinePtr++") { delete "++inlinePtr++"; } }") )
 #endif
         |]
     ]
@@ -147,19 +147,19 @@ sharedPtr tname = do
 -- local context.
 sharedWeakPtr :: String -> DecsQ 
 sharedWeakPtr tname = do 
-#ifdef DEBUG_SHARED
-  typedef <- C.verbatim $ "#include <iostream>\ntypedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
-#else
+#ifndef SHARED_DEBUG
   typedef <- C.verbatim $ "typedef WeakPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
+#else
+  typedef <- C.verbatim $ "#include <iostream>\ntypedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
 #endif
   deleter <- sequence [
       deleteSharedTPtr ^:: [t| Ptr $sharedTType -> IO () |]
     , mkFunc1 deleteSharedTPtr "ptr" $ \ptrName -> [e|runInMainThread $ do
         $(let inlinePtr = "$(" ++ sharedT ++ "* "++show ptrName++")"
-#ifdef DEBUG_SHARED
-          in quoteExp C.exp ("void { std::cout << \"finalizing weak "++tname++"\" << std::endl; if ("++inlinePtr++") { delete "++inlinePtr++"; } }") )
-#else
+#ifndef SHARED_DEBUG
           in quoteExp C.exp ("void { if ("++inlinePtr++") { delete "++inlinePtr++"; } }") )
+#else
+          in quoteExp C.exp ("void { std::cout << \"finalizing weak "++tname++"\" << std::endl; if ("++inlinePtr++") { delete "++inlinePtr++"; } }") )
 #endif
         |]
     ]

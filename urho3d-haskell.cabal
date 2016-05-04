@@ -27,7 +27,7 @@ flag Urho3DD3D11
 
 flag examples
   description: build engine examples 
-  default: True 
+  default: False 
 
 flag debug-shared
   description: Debug shared pointers. Print when they garbage collected.
@@ -354,14 +354,15 @@ library
   ghc-options:         -Wall 
   extra-libraries:     Urho3D, stdc++
 
+  if flag(debug-shared)
+    cpp-options: -DSHARED_DEBUG
+
   if flag(Urho3DOpenGL)
-    cc-options: -DURHO3D_OPENGL
+    cpp-options: -DURHO3D_OPENGL
   else 
     if flag(Urho3DD3D11)
-      cc-options: -DURHO3D_D3D11
+      cpp-options: -DURHO3D_D3D11
 
-  if flag(debug-shared)
-    cc-options: -DDEBUG_SHARED
 
 executable urho3d-haskell-sample01
   hs-source-dirs:      app/sample01, app/common

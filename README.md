@@ -5,8 +5,9 @@ Haskell bindings to Urho3D engine
 
 * Partial bindings
 * Sample class is ported to Haskell
-* Five samples are ported
+* Six samples are ported
 * Custom logic components in Haskell
+* Shared pointers support
 
 ## Compilation of Urho3D
 
@@ -47,3 +48,11 @@ URHO3D_PREFIX_PATH=/usr/share/Urho3D/Resources
 You need [stack](http://stackage.org):
 
 1. `stack install`
+
+You can enable debugging printing for shared pointers with:
+
+`stack install --flag urho3d-haskell:debug-shared`
+
+In order to build examples:
+
+`stack install --flag urho3d-haskell:examples`
