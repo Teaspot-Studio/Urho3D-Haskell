@@ -3,7 +3,6 @@ module Graphics.Urho3D.Scene.Internal.LogicComponent(
   , logicComponentCntx
   , sharedLogicComponentPtrCntx
   , SharedLogicComponent
-  , SharedLogicComponentPtr(..)
   ) where 
 
 import qualified Language.C.Inline as C

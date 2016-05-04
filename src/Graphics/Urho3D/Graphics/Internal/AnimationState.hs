@@ -2,7 +2,6 @@ module Graphics.Urho3D.Graphics.Internal.AnimationState(
     AnimationState
   , animationStateCntx
   , SharedAnimationState
-  , SharedAnimationStatePtr(..)
   , sharedAnimationStatePtrCntx
   , VectorSharedAnimationStatePtr
   ) where

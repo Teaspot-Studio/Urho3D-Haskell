@@ -28,11 +28,9 @@
 -}
 module Main where
 
-import qualified Data.Text as T
 import Control.Lens hiding (Context, element)
 import Control.Monad 
 import Data.IORef
-import Data.Monoid
 import Foreign
 import Graphics.Urho3D
 import Sample
@@ -61,28 +59,28 @@ customStart sr = do
   subscribeToEvents app srpites
 
 -- | Construct the sprites.
-createSprites :: SharedApplicationPtr -> IO [SharedSpritePtr]
+createSprites :: SharedPtr Application -> IO [SharedPtr Sprite]
 createSprites app = do 
   (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
   (graphics :: Ptr Graphics) <- fromJustTrace "Graphics" <$> getSubsystem app 
   (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app 
 
   -- Get rendering window size as floats
-  width <- fromIntegral <$> graphicsGetWidth graphics
-  height <- fromIntegral <$> graphicsGetHeight graphics
+  gw <- fromIntegral <$> graphicsGetWidth graphics
+  gh <- fromIntegral <$> graphicsGetHeight graphics
 
   -- Get the Urho3D fish texture
   (decalTex :: Ptr Texture2D) <- fromJustTrace "UrhoDecal.dds" <$> cacheGetResource cache "Textures/UrhoDecal.dds" True 
 
-  root <- uiRoot ui 
+  roote <- uiRoot ui 
   forM [1 .. numSprites] $ const $ do 
     -- Create a new sprite, set it to use the texture
-    (sprite :: SharedSpritePtr) <- newSharedObject =<< getContext app
+    (sprite :: SharedPtr Sprite) <- newSharedObject =<< getContext app
     spriteSetTexture sprite decalTex
 
     -- The UI root element is as big as the rendering window, set random position within it 
     [r1, r2] <- replicateM 2 random
-    spriteSetPosition sprite $ Vector2 (r1 * width) (r2 * height) 
+    spriteSetPosition sprite $ Vector2 (r1 * gw) (r2 * gh) 
 
     -- Set sprite size & hotspot in its center
     uiElementSetSize sprite 128
@@ -91,8 +89,8 @@ createSprites app = do
     -- Set random rotation in degrees and random scale 
     rot <- random 
     spriteSetRotation sprite $ 360 * rot
-    scale <- randomUp 1.0
-    spriteSetScale' sprite (scale + 0.5) (scale + 0.5)
+    s <- randomUp 1.0
+    spriteSetScale' sprite (s + 0.5) (s + 0.5)
 
     -- Set random color and additive blending mode
     [cr1, cr2, cr3] <- replicateM 3 $ randomUp 0.5
@@ -100,7 +98,7 @@ createSprites app = do
     spriteSetBlendMode sprite BlendAdd 
 
     -- Add as a child of the root UI element
-    uiElementAddChild root sprite 
+    uiElementAddChild roote sprite 
 
     -- Store sprite's velocity as a custom variable 
     [vr1, vr2] <- replicateM 2 $ randomUp 200
@@ -110,37 +108,37 @@ createSprites app = do
     return sprite 
 
 -- | Move the sprites using the delta time step given.
-moveSprites :: SharedApplicationPtr -> [SharedSpritePtr] -> Float -> IO ()
-moveSprites app sprites timeStep = do 
+moveSprites :: SharedPtr Application -> [SharedPtr Sprite] -> Float -> IO ()
+moveSprites app sprites t = do 
   (graphics :: Ptr Graphics) <- fromJustTrace "Graphics" <$> getSubsystem app 
-  width <- fromIntegral <$> graphicsGetWidth graphics
-  height <- fromIntegral <$> graphicsGetHeight graphics 
+  gw <- fromIntegral <$> graphicsGetWidth graphics
+  gh <- fromIntegral <$> graphicsGetHeight graphics 
 
   -- Go through all sprites
   forM_ sprites $ \sprite -> do 
     -- Rotate 
     rot <- spriteGetRotation sprite
-    spriteSetRotation sprite $ timeStep * 30 + rot
+    spriteSetRotation sprite $ t * 30 + rot
 
     -- Move, wrap around rendering window edges 
     p <- spriteGetPosition sprite 
     v <- fromJustTrace "Velocity var" <$> uiElementGetVar sprite varVelocity 
-    let newPos = p + v * realToFrac timeStep
+    let newPos = p + v * realToFrac t
         wrapedPos = Vector2 
-          (if newPos^.x < 0 then newPos^.x + width else 
-            if newPos^.x >= width then newPos^.x - width else newPos^.x) 
-          (if newPos^.y < 0 then newPos^.y + height else 
-            if newPos^.y >= height then newPos^.y - height else newPos^.y)
+          (if newPos^.x < 0 then newPos^.x + gw else 
+            if newPos^.x >= gw then newPos^.x - gw else newPos^.x) 
+          (if newPos^.y < 0 then newPos^.y + gh else 
+            if newPos^.y >= gh then newPos^.y - gh else newPos^.y)
     spriteSetPosition sprite wrapedPos
 
 -- | Subscribe to application-wide logic update events.
-subscribeToEvents :: SharedApplicationPtr -> [SharedSpritePtr] -> IO ()
+subscribeToEvents :: SharedPtr Application -> [SharedPtr Sprite] -> IO ()
 subscribeToEvents app sprites = do 
   -- Subscribe HandleUpdate() function for processing update events
   subscribeToEvent app $ handleUpdate app sprites
 
 -- | Handle the logic update event.
-handleUpdate :: SharedApplicationPtr -> [SharedSpritePtr] -> EventUpdate -> IO ()
+handleUpdate :: SharedPtr Application -> [SharedPtr Sprite] -> EventUpdate -> IO ()
 handleUpdate app sprites e = do 
   -- Take the frame time step, which is stored as a float
   let t = e^.timeStep 

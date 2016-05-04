@@ -4,7 +4,6 @@ module Graphics.Urho3D.Engine.Internal.Application(
   , applicationCntx
   , sharedApplicationHPtrCntx
   , SharedApplicationH
-  , SharedApplicationHPtr(..)
   ) where 
 
 import qualified Language.C.Inline as C

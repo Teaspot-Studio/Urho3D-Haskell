@@ -3,7 +3,6 @@ module Graphics.Urho3D.UI.Button(
     Button 
   , buttonContext
   , SharedButton
-  , SharedButtonPtr 
   ) where
 
 import qualified Language.C.Inline as C 

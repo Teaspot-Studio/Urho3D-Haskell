@@ -11,9 +11,9 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Core.Internal.Context
-import Graphics.Urho3D.Core.Internal.Object
-import Graphics.Urho3D.Core.Internal.SharedObject
 import Graphics.Urho3D.Core.Internal.ObjectFactory 
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Createable
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
@@ -21,7 +21,7 @@ import Data.Monoid
 import Foreign 
 import Foreign.C.String 
 
-C.context (C.cppCtx <> contextCntx <> objectFactoryCntx <> objectCntx <> sharedObjectPtrCntx <> stringHashContext)
+C.context (C.cppCtx <> contextCntx <> objectFactoryCntx <> objectContext <> stringHashContext)
 C.include "<Urho3D/Core/Context.h>"
 C.using "namespace Urho3D"
 
@@ -46,10 +46,10 @@ instance Createable (Ptr Context) where
 contextCreateObject :: (Parent Context a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to context
   -> Ptr StringHash -- ^ Type hash
-  -> m (Maybe SharedObjectPtr)
+  -> m (Maybe (SharedPtr Object))
 contextCreateObject p phash = liftIO $ do 
   let ptr = parentPointer p 
-  op <- wrapSharedObjectPtr =<< [C.exp| SharedObject* { new SharedPtr<Object>( $(Context* ptr)->CreateObject(*$(StringHash* phash)) ) } |]
+  op <- peekSharedPtr =<< [C.exp| SharedObject* { new SharedPtr<Object>( $(Context* ptr)->CreateObject(*$(StringHash* phash)) ) } |]
   checkNullPtr' op return
 
 -- | Register a factory for an object type.

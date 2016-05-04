@@ -3,10 +3,8 @@ module Graphics.Urho3D.UI.Internal.Element(
   , uiElementCntx
   , sharedUIElementPtrCntx
   , SharedUIElement
-  , SharedUIElementPtr(..)
-  , sharedWeakUIElementPtrCntx
-  , SharedWeakUIElement
-  , SharedWeakUIElementPtr(..)
+  , weakUIElementPtrCntx
+  , WeakUIElement
   , PODVectorUIElementPtr
   , podVectorUIElementPtrCntx
   ) where

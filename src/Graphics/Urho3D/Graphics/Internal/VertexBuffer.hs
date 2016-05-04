@@ -3,7 +3,6 @@ module Graphics.Urho3D.Graphics.Internal.VertexBuffer(
   , vertexBufferCntx
   , sharedVertexBufferPtrCntx
   , SharedVertexBuffer
-  , SharedVertexBufferPtr(..)
   , VectorSharedVertexBufferPtr
   ) where
 

@@ -3,8 +3,6 @@ module Graphics.Urho3D.Engine.Engine(
     Engine
   , engineContext
   , SharedEngine 
-  , SharedEnginePtr(..)
-  , wrapSharedEnginePtr
   , engineDumpResources
   , engineCreateConsole
   , engineCreateDebugHud

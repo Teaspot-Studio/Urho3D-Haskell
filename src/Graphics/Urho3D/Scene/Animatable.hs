@@ -3,7 +3,6 @@ module Graphics.Urho3D.Scene.Animatable(
     Animatable
   , animatableContext
   , SharedAnimatable
-  , SharedAnimatablePtr
   ) where 
 
 import qualified Language.C.Inline as C 
@@ -25,9 +24,6 @@ C.using "namespace Urho3D"
 
 animatableContext :: C.Context 
 animatableContext = sharedAnimatablePtrCntx <> animatableCntx <> stringHashContext
-
--- Cannot create pure animatable
-instance AbstractType Animatable 
 
 sharedPtr "Animatable"
 

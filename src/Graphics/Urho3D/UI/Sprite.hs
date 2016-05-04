@@ -3,7 +3,6 @@ module Graphics.Urho3D.UI.Sprite(
     Sprite 
   , spriteContext
   , SharedSprite
-  , SharedSpritePtr 
   -- | Setters
   , spriteSetPosition
   , spriteSetPosition'

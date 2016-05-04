@@ -29,6 +29,7 @@ import Text.RawString.QQ
 
 import Graphics.Urho3D.Graphics.Internal.Skeleton
 
+import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.Vector3
 import Graphics.Urho3D.Math.Quaternion
 import Graphics.Urho3D.Math.Matrix3x4
@@ -47,7 +48,7 @@ C.context (C.cppCtx
 C.include "<Urho3D/Graphics/Skeleton.h>"
 C.using "namespace Urho3D"
 
-C.verbatim "typedef WeakPtr<Node> SharedWeakNode;"
+C.verbatim "typedef WeakPtr<Node> WeakNode;"
 
 skeletonContext :: C.Context 
 skeletonContext = skeletonCntx
@@ -87,7 +88,7 @@ instance Storable Bone where
     _boneCollisionMask <- fromIntegral <$> [C.exp| unsigned char { $(Bone* ptr)->collisionMask_} |]
     _boneRadius <- realToFrac <$> [C.exp| float { $(Bone* ptr)->radius_} |]
     _boneBoundingBox <- peek =<< [C.exp| BoundingBox* { &$(Bone* ptr)->boundingBox_} |]
-    _boneNode <- wrapSharedWeakNodePtr =<< [C.exp| SharedWeakNode* { new WeakPtr<Node>($(Bone* ptr)->node_)} |]
+    _boneNode <- peekWeakPtr =<< [C.exp| WeakNode* { new WeakPtr<Node>($(Bone* ptr)->node_)} |]
     return $ Bone {..}
 
   poke ptr Bone{..} = 

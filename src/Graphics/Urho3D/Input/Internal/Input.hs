@@ -34,6 +34,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Context as C
 import qualified Language.C.Types as C
 
+import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.UI.Internal.Element
 import Graphics.Urho3D.Math.Internal.Vector2
 import qualified Data.Map as Map
@@ -63,7 +64,7 @@ instance NFData MouseMode
 -- | Input state for a finger touch.
 data TouchState = TouchState {
 -- | Last touched UI element from screen joystick.
-  _touchedElement :: !SharedWeakUIElementPtr
+  _touchedElement :: !(WeakPtr UIElement)
 -- | Touch (finger) ID.
 , _touchID :: !Int 
 -- | Position in screen coordinates.

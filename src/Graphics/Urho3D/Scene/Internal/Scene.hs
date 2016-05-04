@@ -2,8 +2,7 @@ module Graphics.Urho3D.Scene.Internal.Scene(
     Scene
   , sceneCntx
   , sharedScenePtrCntx
-  , SharedScene 
-  , SharedScenePtr(..)
+  , SharedScene
   ) where
 
 import qualified Language.C.Inline as C

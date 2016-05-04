@@ -4,7 +4,6 @@ module Graphics.Urho3D.Core.Internal.Object(
   , objectCntx
   , sharedObjectPtrCntx
   , SharedObject
-  , SharedObjectPtr(..)
   ) where
 
 import qualified Language.C.Inline as C

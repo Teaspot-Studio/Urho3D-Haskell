@@ -28,11 +28,9 @@
 -}
 module Main where
 
-import qualified Data.Text as T
 import Control.Lens hiding (Context, element)
 import Control.Monad 
 import Data.IORef
-import Data.Monoid
 import Foreign
 import Graphics.Urho3D
 import Sample
@@ -63,10 +61,10 @@ customStart cntx sr = do
   writeIORef sr $ sampleScene .~ scene $ s 
 
 -- | Construct the scene content.
-createScene :: SharedApplicationPtr -> RotatorType -> IO (SharedScenePtr, Ptr Node)
+createScene :: SharedPtr Application -> RotatorType -> IO (SharedPtr Scene, Ptr Node)
 createScene app rotatorType = do 
   (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
-  (scene :: SharedScenePtr) <- newSharedObject =<< getContext app 
+  (scene :: SharedPtr Scene) <- newSharedObject =<< getContext app 
 
   {-
    Create the Octree component to the scene. This is required before adding any drawable components, or else nothing will
@@ -116,8 +114,8 @@ createScene app rotatorType = do
   -- Create the camera. Let the starting position be at the world origin. As the fog limits maximum visible distance, we can
   -- bring the far clip plane closer for more effective culling of distant objects
   cameraNode <- nodeCreateChild scene "Camera" CM'Replicated 0
-  (camera :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
-  cameraSetFarClip camera 100 
+  (cam :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
+  cameraSetFarClip cam 100 
 
   -- Create a point light to the camera scene node
   (light :: Ptr Light) <- fromJustTrace "Light" <$> nodeCreateComponent cameraNode Nothing Nothing
@@ -127,25 +125,25 @@ createScene app rotatorType = do
   return (scene, cameraNode)
 
 -- | Construct an instruction text to the UI.
-createInstructions :: SharedApplicationPtr -> IO ()
+createInstructions :: SharedPtr Application -> IO ()
 createInstructions app = do 
   (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
   (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app
-  root <- uiRoot ui 
+  roote <- uiRoot ui 
 
   -- Construct new Text object, set string to display and font to use
-  (instructionText :: Ptr Text) <- createChildSimple root
+  (instructionText :: Ptr Text) <- createChildSimple roote
   textSetText instructionText "Use WASD keys and mouse/touch to move"
   (font :: Ptr Font) <- fromJustTrace "Anonymous Pro.ttf" <$> cacheGetResource cache "Fonts/Anonymous Pro.ttf" True
   textSetFont instructionText font 15
 
   -- Position the text relative to the screen center
   uiElementSetAlignment instructionText AlignmentHorizontalCenter AlignmentVerticalCenter
-  rootHeight <- uiElementGetHeight root 
+  rootHeight <- uiElementGetHeight roote
   uiElementSetPosition instructionText $ IntVector2 0 (rootHeight `div` 4)
 
 -- | Set up a viewport for displaying the scene.
-setupViewport :: SharedApplicationPtr -> SharedScenePtr -> Ptr Node -> IO ()
+setupViewport :: SharedPtr Application -> SharedPtr Scene -> Ptr Node -> IO ()
 setupViewport app scene cameraNode = do 
   (renderer :: Ptr Renderer) <- fromJustTrace "Renderer" <$> getSubsystem app
 
@@ -155,8 +153,8 @@ setupViewport app scene cameraNode = do
     use, but now we just use full screen and default render path configured in the engine command line options
   -}
   cntx <- getContext app 
-  (camera :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent' cameraNode False
-  (viewport :: SharedViewportPtr) <- newSharedObject (cntx, pointer scene, camera)
+  (cam :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent' cameraNode False
+  (viewport :: SharedPtr Viewport) <- newSharedObject (cntx, pointer scene, cam)
   rendererSetViewport renderer 0 viewport
 
 data CameraData = CameraData {
@@ -165,8 +163,8 @@ data CameraData = CameraData {
 }
 
 -- | Read input and moves the camera.
-moveCamera :: SharedApplicationPtr -> Ptr Node -> Float -> CameraData -> IO CameraData
-moveCamera app cameraNode timeStep camData = do 
+moveCamera :: SharedPtr Application -> Ptr Node -> Float -> CameraData -> IO CameraData
+moveCamera app cameraNode t camData = do 
   (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app 
 
   -- Do not move if the UI has a focused element (the console)
@@ -190,13 +188,13 @@ moveCamera app cameraNode timeStep camData = do
     -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     -- Use the Translate() function (default local space) to move relative to the node's orientation.
     whenM (inputGetKeyDown input KeyW) $ 
-      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * timeStep)) TS'Local
+      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TS'Local
     whenM (inputGetKeyDown input KeyS) $ 
-      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * timeStep)) TS'Local
+      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TS'Local
     whenM (inputGetKeyDown input KeyA) $ 
-      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * timeStep)) TS'Local
+      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TS'Local
     whenM (inputGetKeyDown input KeyD) $ 
-      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * timeStep)) TS'Local
+      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TS'Local
       
     return camData {
         camYaw = yaw 
@@ -206,13 +204,13 @@ moveCamera app cameraNode timeStep camData = do
     mul (Vector3 a b c) v = Vector3 (a*v) (b*v) (c*v)
 
 -- | Subscribe to application-wide logic update events.
-subscribeToEvents :: SharedApplicationPtr -> Ptr Node -> IO ()
+subscribeToEvents :: SharedPtr Application -> Ptr Node -> IO ()
 subscribeToEvents app cameraNode = do 
   camDataRef <- newIORef $ CameraData 0 0
   subscribeToEvent app $ handleUpdate app cameraNode camDataRef
 
 -- | Handle the logic update event.
-handleUpdate :: SharedApplicationPtr -> Ptr Node -> IORef CameraData -> EventUpdate -> IO ()
+handleUpdate :: SharedPtr Application -> Ptr Node -> IORef CameraData -> EventUpdate -> IO ()
 handleUpdate app cameraNode camDataRef e = do 
   -- Take the frame time step, which is stored as a float
   let t = e ^. timeStep

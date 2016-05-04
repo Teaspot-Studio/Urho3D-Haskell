@@ -3,7 +3,6 @@ module Graphics.Urho3D.UI.Internal.CheckBox(
   , checkBoxCntx
   , sharedCheckBoxPtrCntx
   , SharedCheckBox
-  , SharedCheckBoxPtr(..)
   ) where
 
 import qualified Language.C.Inline as C

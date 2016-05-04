@@ -3,7 +3,6 @@ module Graphics.Urho3D.Graphics.Viewport(
     Viewport 
   , viewportContext
   , SharedViewport
-  , SharedViewportPtr 
   ) where 
 
 import qualified Language.C.Inline as C 

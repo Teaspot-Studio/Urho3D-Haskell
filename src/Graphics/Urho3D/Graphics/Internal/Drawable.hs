@@ -28,6 +28,7 @@ import qualified Data.Map as Map
 import Foreign 
 
 import Graphics.Urho3D.Container.Vector
+import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.Internal.Vector2 
 import Graphics.Urho3D.Math.Internal.Matrix3x4
 import Graphics.Urho3D.Graphics.Internal.Camera 
@@ -42,7 +43,7 @@ data Drawable
 data SourceBatch = SourceBatch {
   _sourceBatchDistance :: {-# UNPACK #-} !Float -- ^ Distance from camera
 , _sourceBatchGeometry :: {-# UNPACK #-} !(Ptr Geometry) -- ^ Geometry
-, _sourceBatchMaterial :: {-# UNPACK #-} !SharedMaterialPtr -- ^ Material
+, _sourceBatchMaterial :: {-# UNPACK #-} !(SharedPtr Material) -- ^ Material
 , _sourceBatchWorldTransform :: {-# UNPACK #-} !(Ptr Matrix3x4) -- ^ World transform(s). For a skinned model, these are the bone transforms.
 , _sourceBatchNumWorldTransforms :: {-# UNPACK #-} !Word -- ^ Number of world transforms.
 , _sourceBatchGeometryType :: !GeometryType -- ^ Geometry type.

@@ -25,6 +25,7 @@ import Control.DeepSeq
 import Control.Lens 
 import Data.Word 
 
+import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.Vector3
 import Graphics.Urho3D.Math.Quaternion
 import Graphics.Urho3D.Math.Matrix3x4
@@ -46,7 +47,7 @@ data Bone = Bone {
 , _boneCollisionMask :: {-# UNPACK #-} !Word8 -- ^ Supported collision types
 , _boneRadius :: {-# UNPACK #-} !Float -- ^ Radius
 , _boneBoundingBox :: {-# UNPACK #-} !BoundingBox -- ^ Local-space bounding box
-, _boneNode :: {-# UNPACK #-} !SharedWeakNodePtr -- ^ Scene node
+, _boneNode :: {-# UNPACK #-} !(WeakPtr Node) -- ^ Scene node
 } deriving (Generic)
 
 makeFields ''Bone

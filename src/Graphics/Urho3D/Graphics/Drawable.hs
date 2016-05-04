@@ -83,6 +83,7 @@ import Graphics.Urho3D.Scene.Node
 import Graphics.Urho3D.Container.ForeignVector
 
 import Graphics.Urho3D.Container.Vector
+import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Graphics.Camera
 import Graphics.Urho3D.Graphics.Geometry
@@ -157,7 +158,7 @@ instance Storable SourceBatch where
   peek ptr = do 
     _sourceBatchDistance <- realToFrac <$> [C.exp| float {$(SourceBatch* ptr)->distance_}|]
     _sourceBatchGeometry <- [C.exp| Geometry* {$(SourceBatch* ptr)->geometry_}|]
-    _sourceBatchMaterial <- wrapSharedMaterialPtr =<< [C.exp| SharedMaterial* {new SharedPtr<Material>($(SourceBatch* ptr)->material_)}|]
+    _sourceBatchMaterial <- peekSharedPtr =<< [C.exp| SharedMaterial* {new SharedPtr<Material>($(SourceBatch* ptr)->material_)}|]
     _sourceBatchWorldTransform <- [C.exp| const Matrix3x4* {$(SourceBatch* ptr)->worldTransform_}|]
     _sourceBatchNumWorldTransforms <- fromIntegral <$> [C.exp| unsigned int {$(SourceBatch* ptr)->numWorldTransforms_}|]
     _sourceBatchGeometryType <- toEnum . fromIntegral <$> [C.exp| int {(int)$(SourceBatch* ptr)->geometryType_}|]

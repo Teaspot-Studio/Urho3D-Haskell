@@ -2,9 +2,7 @@
 module Graphics.Urho3D.Graphics.Material(
     Material
   , SharedMaterial
-  , SharedMaterialPtr
   , materialContext
-  , wrapSharedMaterialPtr
   ) where
 
 import qualified Language.C.Inline as C 

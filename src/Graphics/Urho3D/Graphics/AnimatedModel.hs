@@ -56,6 +56,7 @@ import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Vector.Common
+import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Scene.Serializable
 import Graphics.Urho3D.Scene.Animatable
 import Graphics.Urho3D.Scene.Component 
@@ -255,9 +256,9 @@ animatedModelGetSkeleton p = liftIO $ do
   [C.exp| Skeleton* { &$(AnimatedModel* ptr)->GetSkeleton() } |]
 
 -- | Return all animation states.
-animatedModelGetAnimationStates :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v SharedAnimationStatePtr) 
+animatedModelGetAnimationStates :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (SharedPtr AnimationState)) 
   => p -- ^ Pointer to AnimatedModel or ascentor
-  -> m (v SharedAnimationStatePtr)
+  -> m (v (SharedPtr AnimationState))
 animatedModelGetAnimationStates p = liftIO $ do 
   let ptr = parentPointer p 
   peekForeignVectorAs =<< [C.exp| const VectorSharedAnimationStatePtr* { &$(AnimatedModel* ptr)->GetAnimationStates() } |]
@@ -326,9 +327,9 @@ animatedModelGetMorphs p = liftIO $ do
   peekForeignVectorAs =<< [C.exp| const VectorModelMorph* { &$(AnimatedModel* ptr)->GetMorphs() } |]
 
 -- | Return all morph vertex buffers.
-animatedModelGetMorphVertexBuffers :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v SharedVertexBufferPtr) 
+animatedModelGetMorphVertexBuffers :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (SharedPtr VertexBuffer)) 
   => p -- ^ Pointer to AnimatedModel or ascentor
-  -> m (v SharedVertexBufferPtr)
+  -> m (v (SharedPtr VertexBuffer))
 animatedModelGetMorphVertexBuffers p = liftIO $ do 
   let ptr = parentPointer p 
   peekForeignVectorAs =<< [C.exp| const VectorSharedVertexBufferPtr* { &$(AnimatedModel* ptr)->GetMorphVertexBuffers() } |]

@@ -3,7 +3,6 @@ module Graphics.Urho3D.UI.Internal.Sprite(
   , spriteCntx
   , sharedSpritePtrCntx
   , SharedSprite
-  , SharedSpritePtr(..)
   ) where
 
 import qualified Language.C.Inline as C

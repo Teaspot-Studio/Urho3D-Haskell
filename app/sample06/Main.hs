@@ -30,11 +30,9 @@
 -}
 module Main where
 
-import qualified Data.Text as T
 import Control.Lens hiding (Context, element)
 import Control.Monad 
 import Data.IORef
-import Data.Monoid
 import Foreign
 import Graphics.Urho3D
 import Sample
@@ -65,10 +63,10 @@ customStart cntx sr = do
   writeIORef sr $ sampleScene .~ scene $ s 
 
 -- | Construct the scene content.
-createScene :: SharedApplicationPtr -> MoverType -> IO (SharedScenePtr, Ptr Node)
+createScene :: SharedPtr Application -> MoverType -> IO (SharedPtr Scene, Ptr Node)
 createScene app moverType = do 
   (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
-  (scene :: SharedScenePtr) <- newSharedObject =<< getContext app 
+  (scene :: SharedPtr Scene) <- newSharedObject =<< getContext app 
 
   {-
     Create octree, use default volume (-1000, -1000, -1000) to (1000, 1000, 1000)
@@ -135,13 +133,13 @@ createScene app moverType = do
     -- animation, The alternative would be to use an AnimationController component which updates the animation automatically,
     -- but we need to update the model's position manually in any case
     (walkAnimation :: Ptr Animation) <- fromJustTrace "Jack_Walk.ani" <$> cacheGetResource cache "Models/Jack_Walk.ani" True 
-    (state :: Ptr AnimationState) <- animatedModelAddAnimationState modelObject walkAnimation
+    (astate :: Ptr AnimationState) <- animatedModelAddAnimationState modelObject walkAnimation
     -- The state would fail to create (return null) if the animation was not found
-    unless (isNull state) $ do 
+    unless (isNull astate) $ do 
       -- Enable full blending weight and looping
-      animationStateSetWeight state 1
-      animationStateSetLooped state True
-      animationStateSetTime state =<< randomUp =<< animationGetLength walkAnimation
+      animationStateSetWeight astate 1
+      animationStateSetLooped astate True
+      animationStateSetTime astate =<< randomUp =<< animationGetLength walkAnimation
 
     -- Create our custom Mover component that will move & animate the model during each frame's update
     (mover :: Ptr Mover) <- fromJustTrace "Mover" <$> nodeCreateCustomComponent modelNode moverType Nothing Nothing
@@ -151,8 +149,8 @@ createScene app moverType = do
   -- Create the camera. Let the starting position be at the world origin. As the fog limits maximum visible distance, we can
   -- bring the far clip plane closer for more effective culling of distant objects
   cameraNode <- nodeCreateChild scene "Camera" CM'Replicated 0
-  (camera :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
-  cameraSetFarClip camera 300 
+  (cam :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
+  cameraSetFarClip cam 300 
 
   -- Set an initial position for the camera scene node above the plane
   nodeSetPosition cameraNode (Vector3 0 5 0)
@@ -160,25 +158,25 @@ createScene app moverType = do
   return (scene, cameraNode)
 
 -- | Construct an instruction text to the UI.
-createInstructions :: SharedApplicationPtr -> IO ()
+createInstructions :: SharedPtr Application -> IO ()
 createInstructions app = do 
   (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
   (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app
-  root <- uiRoot ui 
+  roote <- uiRoot ui 
 
   -- Construct new Text object, set string to display and font to use
-  (instructionText :: Ptr Text) <- createChildSimple root
+  (instructionText :: Ptr Text) <- createChildSimple roote
   textSetText instructionText "Use WASD keys and mouse/touch to move\nSpace to toggle debug geometry"
   (font :: Ptr Font) <- fromJustTrace "Anonymous Pro.ttf" <$> cacheGetResource cache "Fonts/Anonymous Pro.ttf" True
   textSetFont instructionText font 15
 
   -- Position the text relative to the screen center
   uiElementSetAlignment instructionText AlignmentHorizontalCenter AlignmentVerticalCenter
-  rootHeight <- uiElementGetHeight root 
+  rootHeight <- uiElementGetHeight roote
   uiElementSetPosition instructionText $ IntVector2 0 (rootHeight `div` 4)
 
 -- | Set up a viewport for displaying the scene.
-setupViewport :: SharedApplicationPtr -> SharedScenePtr -> Ptr Node -> IO ()
+setupViewport :: SharedPtr Application -> SharedPtr Scene -> Ptr Node -> IO ()
 setupViewport app scene cameraNode = do 
   (renderer :: Ptr Renderer) <- fromJustTrace "Renderer" <$> getSubsystem app
 
@@ -188,8 +186,8 @@ setupViewport app scene cameraNode = do
     use, but now we just use full screen and default render path configured in the engine command line options
   -}
   cntx <- getContext app 
-  (camera :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent' cameraNode False
-  (viewport :: SharedViewportPtr) <- newSharedObject (cntx, pointer scene, camera)
+  (cam :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent' cameraNode False
+  (viewport :: SharedPtr Viewport) <- newSharedObject (cntx, pointer scene, cam)
   rendererSetViewport renderer 0 viewport
 
 data CameraData = CameraData {
@@ -199,8 +197,8 @@ data CameraData = CameraData {
 }
 
 -- | Read input and moves the camera.
-moveCamera :: SharedApplicationPtr -> Ptr Node -> Float -> CameraData -> IO CameraData
-moveCamera app cameraNode timeStep camData = do 
+moveCamera :: SharedPtr Application -> Ptr Node -> Float -> CameraData -> IO CameraData
+moveCamera app cameraNode t camData = do 
   (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app 
 
   -- Do not move if the UI has a focused element (the console)
@@ -224,13 +222,13 @@ moveCamera app cameraNode timeStep camData = do
     -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     -- Use the Translate() function (default local space) to move relative to the node's orientation.
     whenM (inputGetKeyDown input KeyW) $ 
-      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * timeStep)) TS'Local
+      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TS'Local
     whenM (inputGetKeyDown input KeyS) $ 
-      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * timeStep)) TS'Local
+      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TS'Local
     whenM (inputGetKeyDown input KeyA) $ 
-      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * timeStep)) TS'Local
+      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TS'Local
     whenM (inputGetKeyDown input KeyD) $ 
-      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * timeStep)) TS'Local
+      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TS'Local
 
     -- Toggle debug geometry with space
     spacePressed <- inputGetKeyPress input KeySpace
@@ -244,13 +242,13 @@ moveCamera app cameraNode timeStep camData = do
     mul (Vector3 a b c) v = Vector3 (a*v) (b*v) (c*v)
 
 -- | Subscribe to application-wide logic update events.
-subscribeToEvents :: SharedApplicationPtr -> Ptr Node -> IO ()
+subscribeToEvents :: SharedPtr Application -> Ptr Node -> IO ()
 subscribeToEvents app cameraNode = do 
   camDataRef <- newIORef $ CameraData 0 0 False
   subscribeToEvent app $ handleUpdate app cameraNode camDataRef
 
 -- | Handle the logic update event.
-handleUpdate :: SharedApplicationPtr -> Ptr Node -> IORef CameraData -> EventUpdate -> IO ()
+handleUpdate :: SharedPtr Application -> Ptr Node -> IORef CameraData -> EventUpdate -> IO ()
 handleUpdate app cameraNode camDataRef e = do 
   -- Take the frame time step, which is stored as a float
   let t = e ^. timeStep
@@ -258,7 +256,7 @@ handleUpdate app cameraNode camDataRef e = do
   -- Move the camera, scale movement with time step
   writeIORef camDataRef =<< moveCamera app cameraNode t camData
 
-handlePostRenderUpdate :: SharedApplicationPtr -> IORef CameraData -> EventPostRenderUpdate -> IO ()
+handlePostRenderUpdate :: SharedPtr Application -> IORef CameraData -> EventPostRenderUpdate -> IO ()
 handlePostRenderUpdate app camDataRef _ = do 
   camData <- readIORef camDataRef
   (renderer :: Ptr Renderer) <- fromJustTrace "Input" <$> getSubsystem app

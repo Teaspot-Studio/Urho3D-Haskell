@@ -17,7 +17,6 @@ module Graphics.Urho3D.Graphics.Internal.Animation(
   , animationCntx
   , sharedAnimationPtrCntx
   , SharedAnimation
-  , SharedAnimationPtr(..)
   , HashMapStringHashAnimationTrack
   , hashMapStringHashAnimationTrackCntx
   , VectorAnimationTriggerPoint

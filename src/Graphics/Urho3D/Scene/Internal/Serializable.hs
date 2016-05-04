@@ -3,7 +3,6 @@ module Graphics.Urho3D.Scene.Internal.Serializable(
   , serializableCntx
   , sharedSerializablePtrCntx
   , SharedSerializable
-  , SharedSerializablePtr(..)
   ) where
 
 import qualified Language.C.Inline as C

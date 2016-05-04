@@ -3,6 +3,7 @@ module Sample(
   , SampleRef
   , newSample
   , runSample
+  , setLogoVisible
   -- | Lenses
   , sampleApplication
   , sampleName
@@ -31,7 +32,6 @@ import Data.Maybe
 import Data.Proxy
 import Data.StateVar
 import Data.Thyme
-import Data.Word 
 import Foreign
 import Graphics.Urho3D
 import System.Locale 
@@ -54,7 +54,7 @@ newSample :: Ptr Context
   -> String -- ^ Joystick patch string
   -> (SampleRef -> IO ()) -- ^ Custom start function 
   -> IO SampleRef
-newSample context name joystickPatch customStart = do 
+newSample context sname joystickPatch customStart = do 
   sampleRef <- newIORef undefined
   app <- newSharedObject (context
     , sampleSetup sampleRef
@@ -62,7 +62,7 @@ newSample context name joystickPatch customStart = do
     , sampleStop sampleRef)
   let s = Sample {
     _sampleApplication = app 
-  , _sampleName = name
+  , _sampleName = sname
   , _sampleYaw = 0
   , _samplePitch = 0
   , _sampleTouchEnabled = False
@@ -132,8 +132,8 @@ initTouchInput sr = do
 
       defStyleM <- cacheGetResource resCache "UI/DefaultStyle.xml" True
       _ <- whenJust defStyleM $ \defStyle -> do
-        joystick <- inputAddScreenJoystick input layout defStyle
-        inputSetScreenJoystickVisible input joystick True
+        j <- inputAddScreenJoystick input layout defStyle
+        inputSetScreenJoystickVisible input j True
       return ()
 
 setLogoVisible :: SampleRef -> Bool -> IO ()
@@ -199,7 +199,7 @@ createConsoleAndDebugHud sr = do
   xmlFileM <- cacheGetResource cache "UI/DefaultStyle.xml" True 
   _ <- whenJust xmlFileM $ \xmlFile -> do 
     consoleM <- engineCreateConsole engine
-    whenJust consoleM $ \console -> do 
+    _ <- whenJust consoleM $ \console -> do 
       consoleSetDefaultStyle console xmlFile 
       bg <- consoleGetBackground console 
       uiElementSetOpacity bg 0.8 
@@ -213,7 +213,7 @@ handleKeyDown :: SampleRef -> EventKeyDown -> IO ()
 handleKeyDown sr (EventKeyDown{..}) = do 
   s <- readIORef sr
   let app = s ^. sampleApplication
-      key = pressKey
+      k = pressKey
   engine <- applicationEngine app 
   (console :: Ptr Console) <- fromJustTrace "handleKeyDown:Console" <$> getSubsystem app 
   (debugHud :: Ptr DebugHud) <- fromJustTrace "handleKeyDown:DebugHud" <$> getSubsystem app 
@@ -223,20 +223,20 @@ handleKeyDown sr (EventKeyDown{..}) = do
   (cache :: Ptr ResourceCache) <- fromJustTrace "handleKeyDown:ResourceCache" <$> getSubsystem app 
   (fs :: Ptr FileSystem) <- fromJustTrace "handleKeyDown:FileSystem" <$> getSubsystem app 
 
-  if| key == KeyEsc -> do 
+  if| k == KeyEsc -> do 
       -- Close console (if open) or exit when ESC is pressed    
       vis <- consoleIsVisible console 
       if vis  
         then consoleSetVisible console False 
         else engineExit engine 
-    | key == KeyF1 -> consoleToggle console  -- Toggle console with F1
-    | key == KeyF2 -> debugHudToggle debugHud -- Toggle debug HUD with F2
+    | k == KeyF1 -> consoleToggle console  -- Toggle console with F1
+    | k == KeyF2 -> debugHudToggle debugHud -- Toggle debug HUD with F2
     | isNothing focusElem -> do -- Common rendering quality controls, only when UI has no focused element
       (renderer :: Ptr Renderer) <- fromJustTrace "handleKeyDown:Renderer" <$> getSubsystem app
 
       -- Preferences / Pause 
       let touchEnabled = s ^. sampleTouchEnabled
-      if | key == KeySelect && touchEnabled -> do 
+      if | k == KeySelect && touchEnabled -> do 
           modifyIORef' sr $ over samplePaused not 
 
           let settIndex = s ^. sampleScreenSettingsIndex
@@ -249,28 +249,28 @@ handleKeyDown sr (EventKeyDown{..}) = do
                   modifyIORef' sr $ set sampleScreenSettingsIndex ji
                 return ()
              | otherwise -> inputSetScreenJoystickVisible input settIndex $ s ^. samplePaused
-         | key == Key1 -> do -- Texture quality
+         | k == Key1 -> do -- Texture quality
           quality <- rendererGetTextureQuality renderer
           rendererSetTextureQuality renderer $ cycleEnum quality
-         | key == Key2 -> do -- Material quality 
+         | k == Key2 -> do -- Material quality 
           quality <- rendererGetMaterialQuality renderer 
           rendererSetMaterialQuality renderer $ cycleEnum quality
-         | key == Key3 -> -- Specular lighting
+         | k == Key3 -> -- Specular lighting
           rendererSetSpecularLighting renderer =<< fmap not (rendererGetSpecularLighting renderer)
-         | key == Key4 -> -- Shadow rendering
+         | k == Key4 -> -- Shadow rendering
           rendererSetDrawShadows renderer =<< fmap not (rendererGetDrawShadows renderer)
-         | key == Key5 -> do -- Shadow map resolution
+         | k == Key5 -> do -- Shadow map resolution
           shadowMapSize <- (*2) <$> rendererGetShadowMapSize renderer 
           rendererSetShadowMapSize renderer $ if shadowMapSize > 2048 then 512 else shadowMapSize
-         | key == Key6 -> do -- Shadow depth and filtering quality
+         | k == Key6 -> do -- Shadow depth and filtering quality
           quality <- rendererGetShadowQuality renderer
           rendererSetShadowQuality renderer $ cycleEnum quality
-         | key == Key7 -> do -- Occlusion culling 
+         | k == Key7 -> do -- Occlusion culling 
           occlusion <- (0 <) <$> rendererGetMaxOccluderTriangles renderer 
           rendererSetMaxOccluderTriangles renderer $ if not occlusion then 5000 else 0 
-         | key == Key8 -> -- Instancing
+         | k == Key8 -> -- Instancing
           rendererSetDynamicInstancing renderer =<< rendererGetDynamicInstancing renderer
-         | key == Key9 -> do -- Take screenshot
+         | k == Key9 -> do -- Take screenshot
           cntx <- getContext app 
           withObject cntx $ \screenshot -> do 
             (graphics :: Ptr Graphics) <- fromJustTrace "handleKeyDown:Graphics" <$> getSubsystem app
@@ -299,18 +299,18 @@ handleSceneUpdate sr _ = do
     (input :: Ptr Input) <- fromJustTrace "handleSceneUpdate:InputSystem" <$> getSubsystem app 
     ni <- inputGetNumTouches input 
     forM_ [0 .. ni] $ \i -> do 
-      state <- fromJustTrace "handleSceneUpdate:TouchState" <$> inputGetTouch input i 
-      unless (isNull $ state ^. touchedElement) $ do -- touch on empty space
-        if state^.touchDelta.x /= 0 || state^.touchDelta.y /= 0 then do 
+      tstate <- fromJustTrace "handleSceneUpdate:TouchState" <$> inputGetTouch input i 
+      unless (isNull $ tstate ^. touchedElement) $ do -- touch on empty space
+        if tstate^.touchDelta.x /= 0 || tstate^.touchDelta.y /= 0 then do 
           mcam <- nodeGetComponent' cameraNode False
-          Monad.void $ whenJust mcam $ \(camera :: Ptr Camera) -> do 
+          Monad.void $ whenJust mcam $ \(cam :: Ptr Camera) -> do 
             (graphics :: Ptr Graphics) <- fromJustTrace "handleSceneUpdate:Graphics" <$> getSubsystem app 
 
-            fov <- cameraGetFov camera 
-            height <- fromIntegral <$> graphicsGetHeight graphics
+            fov <- cameraGetFov cam 
+            h <- fromIntegral <$> graphicsGetHeight graphics
 
-            modifyIORef' sr $ over sampleYaw (+ ( touchSensitivity * fov / height * (fromIntegral $ state^.touchDelta.x)) )
-            modifyIORef' sr $ over samplePitch (+ ( touchSensitivity * fov / height * (fromIntegral $ state^.touchDelta.y)) )
+            modifyIORef' sr $ over sampleYaw (+ ( touchSensitivity * fov / h * (fromIntegral $ tstate^.touchDelta.x)) )
+            modifyIORef' sr $ over samplePitch (+ ( touchSensitivity * fov / h * (fromIntegral $ tstate^.touchDelta.y)) )
         
             -- Construct new orientation for the camera scene node from yaw and pitch; roll is fixed to zero
             let yaw = s^.sampleYaw
@@ -319,7 +319,7 @@ handleSceneUpdate sr _ = do
         else do -- Move the cursor to the touch position
           (ui :: Ptr UI) <- fromJustTrace "handleSceneUpdate:UI" <$> getSubsystem app
           cursor <- uiCursor ui 
-          whenM (uiElementIsVisible cursor) $ uiElementSetPosition cursor $ state^.touchPosition
+          whenM (uiElementIsVisible cursor) $ uiElementSetPosition cursor $ tstate^.touchPosition
   
 handleTouchBegin :: SampleRef -> EventTouchBegin -> IO ()
 handleTouchBegin sr _ = do 

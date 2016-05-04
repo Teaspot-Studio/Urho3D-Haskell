@@ -3,7 +3,6 @@ module Graphics.Urho3D.UI.Font(
     Font 
   , fontContext
   , SharedFont
-  , SharedFontPtr
   ) where
 
 import qualified Language.C.Inline as C 

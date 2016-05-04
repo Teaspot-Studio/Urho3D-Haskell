@@ -3,11 +3,9 @@ module Graphics.Urho3D.Scene.Component(
     Component
   , componentContext
   , SharedComponent
-  , SharedComponentPtr
-  , SharedWeakComponent
-  , SharedWeakComponentPtr
+  , WeakComponent
   , VectorSharedComponentPtr
-  , VectorSharedWeakComponentPtr
+  , VectorWeakComponentPtr
   , PODVectorComponentPtr
   ) where
 
@@ -30,15 +28,15 @@ import Graphics.Urho3D.Scene.Animatable
 import Graphics.Urho3D.Scene.Serializable
 import Graphics.Urho3D.Parent 
 
-C.context (C.cppCtx <> componentCntx <> sharedComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> serializableContext <> objectContext <> podVectorComponentPtrCntx <> sharedWeakComponentPtrCntx)
+C.context (C.cppCtx <> componentCntx <> sharedComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> serializableContext <> objectContext <> podVectorComponentPtrCntx <> weakComponentPtrCntx)
 C.include "<Urho3D/Scene/Component.h>"
 C.using "namespace Urho3D" 
 
 C.verbatim "typedef Vector<SharedPtr<Component> > VectorSharedComponentPtr;"
-C.verbatim "typedef Vector<WeakPtr<Component> > VectorSharedWeakComponentPtr;"
+C.verbatim "typedef Vector<WeakPtr<Component> > VectorWeakComponentPtr;"
 
 componentContext :: C.Context 
-componentContext = sharedComponentPtrCntx <> componentCntx <> stringHashContext <> podVectorComponentPtrCntx <> sharedWeakComponentPtrCntx
+componentContext = sharedComponentPtrCntx <> componentCntx <> stringHashContext <> podVectorComponentPtrCntx <> weakComponentPtrCntx
 
 newComponent :: Ptr Context -> IO (Ptr Component)
 newComponent ptr = [C.exp| Component* { new Component($(Context* ptr)) } |]
@@ -64,35 +62,35 @@ instance Createable (Ptr VectorSharedComponentPtr) where
   deleteObject ptr = liftIO $ [C.exp| void {delete $(VectorSharedComponentPtr* ptr)} |]
 
 instance ReadableVector VectorSharedComponentPtr where 
-  type ReadVecElem VectorSharedComponentPtr = SharedComponentPtr
+  type ReadVecElem VectorSharedComponentPtr = SharedPtr Component
   foreignVectorLength ptr = fromIntegral <$>
     liftIO [C.exp| unsigned int {$(VectorSharedComponentPtr* ptr)->Size()} |]
   foreignVectorElement ptr i = liftIO $ do 
     let i' = fromIntegral i 
-    wrapSharedComponentPtr =<< [C.exp| SharedComponent* { new SharedComponent((*$(VectorSharedComponentPtr* ptr))[$(int i')]) } |]
+    peekSharedPtr =<< [C.exp| SharedComponent* { new SharedComponent((*$(VectorSharedComponentPtr* ptr))[$(int i')]) } |]
 
 instance WriteableVector VectorSharedComponentPtr where 
-  type WriteVecElem VectorSharedComponentPtr = SharedComponentPtr 
+  type WriteVecElem VectorSharedComponentPtr = SharedPtr Component
   foreignVectorAppend ptr sp = liftIO $ do 
     let p = pointer sp
     [C.exp| void { $(VectorSharedComponentPtr* ptr)->Push(SharedPtr<Component>($(Component* p))) } |]
 
-instance Createable (Ptr VectorSharedWeakComponentPtr) where 
-  type CreationOptions (Ptr VectorSharedWeakComponentPtr) = ()
+instance Createable (Ptr VectorWeakComponentPtr) where 
+  type CreationOptions (Ptr VectorWeakComponentPtr) = ()
 
-  newObject _ = liftIO [C.exp| VectorSharedWeakComponentPtr* { new VectorSharedWeakComponentPtr() } |]
-  deleteObject ptr = liftIO $ [C.exp| void {delete $(VectorSharedWeakComponentPtr* ptr)} |]
+  newObject _ = liftIO [C.exp| VectorWeakComponentPtr* { new VectorWeakComponentPtr() } |]
+  deleteObject ptr = liftIO $ [C.exp| void {delete $(VectorWeakComponentPtr* ptr)} |]
 
-instance ReadableVector VectorSharedWeakComponentPtr where 
-  type ReadVecElem VectorSharedWeakComponentPtr = SharedWeakComponentPtr
+instance ReadableVector VectorWeakComponentPtr where 
+  type ReadVecElem VectorWeakComponentPtr = WeakPtr Component
   foreignVectorLength ptr = fromIntegral <$>
-    liftIO [C.exp| unsigned int {$(VectorSharedWeakComponentPtr* ptr)->Size()} |]
+    liftIO [C.exp| unsigned int {$(VectorWeakComponentPtr* ptr)->Size()} |]
   foreignVectorElement ptr i = liftIO $ do 
     let i' = fromIntegral i 
-    wrapSharedWeakComponentPtr =<< [C.exp| SharedWeakComponent* { new SharedWeakComponent((*$(VectorSharedWeakComponentPtr* ptr))[$(int i')]) } |]
+    peekWeakPtr =<< [C.exp| WeakComponent* { new WeakComponent((*$(VectorWeakComponentPtr* ptr))[$(int i')]) } |]
 
-instance WriteableVector VectorSharedWeakComponentPtr where 
-  type WriteVecElem VectorSharedWeakComponentPtr = SharedComponentPtr 
+instance WriteableVector VectorWeakComponentPtr where 
+  type WriteVecElem VectorWeakComponentPtr = WeakPtr Component
   foreignVectorAppend ptr sp = liftIO $ do 
     let p = pointer sp
-    [C.exp| void { $(VectorSharedWeakComponentPtr* ptr)->Push(WeakPtr<Component>($(Component* p))) } |]
+    [C.exp| void { $(VectorWeakComponentPtr* ptr)->Push(WeakPtr<Component>($(Component* p))) } |]

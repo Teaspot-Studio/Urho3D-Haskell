@@ -2,7 +2,6 @@ module Graphics.Urho3D.Graphics.Internal.Material(
     Material
   , materialCntx
   , SharedMaterial
-  , SharedMaterialPtr(..)
   , sharedMaterialPtrCntx
   ) where
 

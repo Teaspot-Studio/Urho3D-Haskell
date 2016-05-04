@@ -3,7 +3,6 @@ module Graphics.Urho3D.UI.Text(
     Text 
   , textContext
   , SharedText
-  , SharedTextPtr 
   , textSetText
   , defaultFontSize
   , textSetFont

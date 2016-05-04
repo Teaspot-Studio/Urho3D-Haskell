@@ -3,11 +3,7 @@ module Graphics.Urho3D.Scene.Node(
     Node
   , nodeContext
   , SharedNode
-  , SharedNodePtr
-  , SharedWeakNode
-  , SharedWeakNodePtr
-  , wrapSharedNodePtr
-  , wrapSharedWeakNodePtr
+  , WeakNode
   , VectorSharedNodePtr
   , PODVectorNodePtr
   , CreateMode(..)
@@ -177,7 +173,7 @@ import System.IO.Unsafe (unsafePerformIO)
 C.context (C.cppCtx 
   <> nodeCntx 
   <> sharedNodePtrCntx 
-  <> sharedWeakNodePtrCntx
+  <> weakNodePtrCntx
   <> contextContext 
   <> stringHashContext 
   <> componentContext 
@@ -198,13 +194,13 @@ C.using "namespace Urho3D"
 
 C.verbatim "typedef Vector<SharedPtr<Node> > VectorSharedNodePtr;"
 C.verbatim "typedef Vector<SharedPtr<Component> > VectorSharedComponentPtr;"
-C.verbatim "typedef Vector<WeakPtr<Component> > VectorSharedWeakComponentPtr;"
+C.verbatim "typedef Vector<WeakPtr<Component> > VectorWeakComponentPtr;"
 C.verbatim "typedef PODVector<Node*> PODVectorNodePtr;"
 C.verbatim "typedef PODVector<Component*> PODVectorComponentPtr;"
 C.verbatim "typedef VariantMap HashMapStringHashVariant;"
 
 nodeContext :: C.Context 
-nodeContext = sharedNodePtrCntx <> sharedWeakNodePtrCntx <> nodeCntx <> stringHashContext <> componentContext <> podVectorNodePtrCntx
+nodeContext = sharedNodePtrCntx <> weakNodePtrCntx <> nodeCntx <> stringHashContext <> componentContext <> podVectorNodePtrCntx
 
 newNode :: Ptr Context -> IO (Ptr Node)
 newNode ptr = [C.exp| Node* { new Node($(Context* ptr)) } |]
@@ -251,15 +247,15 @@ instance Createable (Ptr VectorSharedNodePtr) where
   deleteObject ptr = liftIO $ [C.exp| void {delete $(VectorSharedNodePtr* ptr)} |]
 
 instance ReadableVector VectorSharedNodePtr where 
-  type ReadVecElem VectorSharedNodePtr = SharedNodePtr
+  type ReadVecElem VectorSharedNodePtr = SharedPtr Node
   foreignVectorLength ptr = fromIntegral <$>
     liftIO [C.exp| unsigned int {$(VectorSharedNodePtr* ptr)->Size()} |]
   foreignVectorElement ptr i = liftIO $ do 
     let i' = fromIntegral i 
-    wrapSharedNodePtr =<< [C.exp| SharedNode* { new SharedPtr<Node>((*$(VectorSharedNodePtr* ptr))[$(int i')]) } |]
+    peekSharedPtr =<< [C.exp| SharedNode* { new SharedPtr<Node>((*$(VectorSharedNodePtr* ptr))[$(int i')]) } |]
 
 instance WriteableVector VectorSharedNodePtr where 
-  type WriteVecElem VectorSharedNodePtr = SharedNodePtr 
+  type WriteVecElem VectorSharedNodePtr = SharedPtr Node
   foreignVectorAppend ptr sp = liftIO $ do 
     let p = pointer sp
     [C.exp| void { $(VectorSharedNodePtr* ptr)->Push(SharedPtr<Node>($(Node* p))) } |]
@@ -1397,9 +1393,9 @@ nodeGetNumChildren p r = liftIO $ do
   fromIntegral <$> [C.exp| unsigned int { $(Node* ptr)->GetNumChildren($(int r') != 0)} |]
 
 -- | Return immediate child scene nodes.
-nodeGetChildren  :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v SharedNodePtr)
+nodeGetChildren  :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (SharedPtr Node))
   => p -- ^ Node pointer or pointer to ascentor
-  -> m (v SharedNodePtr)
+  -> m (v (SharedPtr Node))
 nodeGetChildren  p = liftIO $ do 
   let ptr = parentPointer p 
   peekForeignVectorAs =<< [C.exp| const VectorSharedNodePtr* { &$(Node* ptr)->GetChildren() } |]
@@ -1488,9 +1484,9 @@ nodeGetNumNetworkComponents p = liftIO $ do
   fromIntegral <$> [C.exp| unsigned int { $(Node* ptr)->GetNumNetworkComponents()} |]
 
 -- | Return all components.
-nodeGetComponents :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v SharedComponentPtr)
+nodeGetComponents :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (SharedPtr Component))
   => p -- ^ Node pointer or pointer to ascentor
-  -> m (v SharedComponentPtr)
+  -> m (v (SharedPtr Component))
 nodeGetComponents p = liftIO $ do 
   let ptr = parentPointer p 
   peekForeignVectorAs =<< [C.exp| const VectorSharedComponentPtr* { &$(Node* ptr)->GetComponents()} |]
@@ -1549,12 +1545,12 @@ nodeHasComponent p phash = liftIO $ do
   toBool <$> [C.exp| int { (int)$(Node* ptr)->HasComponent(*$(StringHash* phash))} |]
 
 -- | Return listener components.
-nodeGetListeners :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v SharedWeakComponentPtr)
+nodeGetListeners :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (WeakPtr Component))
   => p -- ^ Node pointer or pointer to ascentor
-  -> m (v SharedWeakComponentPtr)
+  -> m (v (WeakPtr Component))
 nodeGetListeners p = liftIO $ do 
   let ptr = parentPointer p 
-  peekForeignVectorAs =<< [C.block| const VectorSharedWeakComponentPtr* { 
+  peekForeignVectorAs =<< [C.block| const VectorWeakComponentPtr* { 
       static Vector<WeakPtr<Component> > vec = $(Node* ptr)->GetListeners();
       return &vec;
     } |]

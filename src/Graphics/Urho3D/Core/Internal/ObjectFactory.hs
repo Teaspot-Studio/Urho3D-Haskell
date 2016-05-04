@@ -3,7 +3,6 @@ module Graphics.Urho3D.Core.Internal.ObjectFactory(
   , objectFactoryCntx
   , sharedObjectFactoryPtrCntx
   , SharedObjectFactory
-  , SharedObjectFactoryPtr(..)
   ) where
 
 import qualified Language.C.Inline as C

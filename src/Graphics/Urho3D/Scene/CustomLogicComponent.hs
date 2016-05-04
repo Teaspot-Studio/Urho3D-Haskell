@@ -3,7 +3,6 @@ module Graphics.Urho3D.Scene.CustomLogicComponent(
     CustomLogicComponent
   , customLogicComponentContext
   , SharedCustomLogicComponent
-  , SharedCustomLogicComponentPtr
   , CustomLogicComponentSetup(..)
   , defaultCustomLogicComponent
   , newCustomLogicComponent
@@ -253,8 +252,6 @@ deleteCustomLogicComponent ptr = liftIO $ do
   statePtr <- castPtrToStablePtr <$> [C.exp| void* { $(CustomLogicComponent* ptr)->GetHaskellState() } |]
   freeStablePtr statePtr
   [C.exp| void { delete $(CustomLogicComponent* ptr) } |]
-
-instance AbstractType CustomLogicComponent 
 
 sharedPtr "CustomLogicComponent" 
 

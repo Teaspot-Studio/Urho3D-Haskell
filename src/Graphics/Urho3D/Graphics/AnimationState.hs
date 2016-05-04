@@ -1,9 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Graphics.AnimationState(
     AnimationState
-  , SharedAnimationState 
-  , SharedAnimationStatePtr
-  , wrapSharedAnimationStatePtr
+  , SharedAnimationState
   , AnimationBlendMode(..)
   , animationStateContext
   , animationStateSetStartBone
@@ -94,13 +92,13 @@ instance Createable (Ptr VectorSharedAnimationStatePtr) where
   deleteObject ptr = liftIO [C.exp| void { delete $(VectorSharedAnimationStatePtr* ptr) } |]
 
 instance ReadableVector VectorSharedAnimationStatePtr where 
-  type ReadVecElem VectorSharedAnimationStatePtr = SharedAnimationStatePtr
+  type ReadVecElem VectorSharedAnimationStatePtr = SharedPtr AnimationState
   foreignVectorLength ptr = liftIO $ fromIntegral <$> [C.exp| int {$(VectorSharedAnimationStatePtr* ptr)->Size() } |]
-  foreignVectorElement ptr i = liftIO $ wrapSharedAnimationStatePtr =<< [C.exp| SharedAnimationState* { new SharedPtr<AnimationState>((*$(VectorSharedAnimationStatePtr* ptr))[$(unsigned int i')]) } |]
+  foreignVectorElement ptr i = liftIO $ peekSharedPtr =<< [C.exp| SharedAnimationState* { new SharedPtr<AnimationState>((*$(VectorSharedAnimationStatePtr* ptr))[$(unsigned int i')]) } |]
     where i' = fromIntegral i 
 
 instance WriteableVector VectorSharedAnimationStatePtr where 
-  type WriteVecElem VectorSharedAnimationStatePtr = SharedAnimationStatePtr
+  type WriteVecElem VectorSharedAnimationStatePtr = SharedPtr AnimationState
   foreignVectorAppend ptr e = liftIO $ [C.exp| void {$(VectorSharedAnimationStatePtr* ptr)->Push(SharedPtr<AnimationState>($(AnimationState* e'))) } |]
     where e' = parentPointer e 
 

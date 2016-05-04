@@ -49,12 +49,12 @@ setRotatorSpeed ptr v = liftIO $ do
 -- | Custom logic component for rotating a scene node.
 rotatorDef :: RotatorSetup
 rotatorDef = defaultCustomLogicComponent {
-    componentUpdate = Just $ \ref node t -> do 
+    componentUpdate = Just $ \ref compNode t -> do 
       -- Component state is passed via reference
       rotSpeed <- readIORef ref
       -- Components have their scene node as a member variable for convenient access. Rotate the scene node now: construct a
       -- rotation quaternion from Euler angles, scale rotation speed with the scene update time step
-      let Vector3 x y z = rotSpeed
-          q = quaternionFromEuler (x*t) (y*t) (z*t)
-      nodeRotate node q TS'Local
+      let Vector3 vx vy vz = rotSpeed
+          q = quaternionFromEuler (vx*t) (vy*t) (vz*t)
+      nodeRotate compNode q TS'Local
   }

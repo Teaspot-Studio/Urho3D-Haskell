@@ -2,10 +2,8 @@
 module Graphics.Urho3D.Core.CustomFactory(
     CustomFactory
   , SharedCustomFactory
-  , SharedCustomFactoryPtr(..)
   , customFactoryContext
   , newCustomFactory
-  , wrapSharedCustomFactoryPtr
   ) where
 
 import qualified Language.C.Inline as C 

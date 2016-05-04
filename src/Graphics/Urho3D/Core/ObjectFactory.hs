@@ -2,9 +2,7 @@
 module Graphics.Urho3D.Core.ObjectFactory(
     ObjectFactory
   , SharedObjectFactory
-  , SharedObjectFactoryPtr(..)
   , objectFactoryContext
-  , wrapSharedObjectFactoryPtr
   , factoryCreateObject
   , factoryGetContext
   , factoryGetTypeInfo
@@ -32,8 +30,6 @@ C.using "namespace Urho3D"
 objectFactoryContext :: C.Context 
 objectFactoryContext = objectContext <> stringHashContext <> objectFactoryCntx <> sharedObjectFactoryPtrCntx
 
-instance AbstractType ObjectFactory
-
 sharedPtr "ObjectFactory" 
 
 C.verbatim "typedef SharedPtr<Object> SharedObject;"
@@ -41,10 +37,10 @@ C.verbatim "typedef SharedPtr<Object> SharedObject;"
 -- | Create an object. Implemented by factory ascentors
 factoryCreateObject :: (Parent ObjectFactory a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to object factory
-  -> m (Maybe SharedObjectPtr) -- ^ Resulting object, Nothing if failed
+  -> m (Maybe (SharedPtr Object)) -- ^ Resulting object, Nothing if failed
 factoryCreateObject p = liftIO $ do 
   let ptr = parentPointer p 
-  op <- wrapSharedObjectPtr =<< [C.exp| SharedObject* { new SharedPtr<Object>($(ObjectFactory* ptr)->CreateObject()) } |]
+  op <- peekSharedPtr =<< [C.exp| SharedObject* { new SharedPtr<Object>($(ObjectFactory* ptr)->CreateObject()) } |]
   checkNullPtr' op return
 
 -- | Return execution context.

@@ -3,7 +3,6 @@ module Graphics.Urho3D.UI.Internal.LineEdit(
   , lineEditCntx
   , sharedLineEditPtrCntx
   , SharedLineEdit
-  , SharedLineEditPtr(..)
   ) where
 
 import qualified Language.C.Inline as C

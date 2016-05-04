@@ -3,7 +3,6 @@ module Graphics.Urho3D.UI.Internal.Text(
   , textCntx
   , sharedTextPtrCntx
   , SharedText
-  , SharedTextPtr(..)
   ) where
 
 import qualified Language.C.Inline as C

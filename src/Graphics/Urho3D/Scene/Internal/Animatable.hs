@@ -3,7 +3,6 @@ module Graphics.Urho3D.Scene.Internal.Animatable(
   , animatableCntx
   , sharedAnimatablePtrCntx
   , SharedAnimatable
-  , SharedAnimatablePtr(..)
   ) where 
 
 import qualified Language.C.Inline as C

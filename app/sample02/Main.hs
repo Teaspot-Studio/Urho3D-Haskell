@@ -33,7 +33,6 @@ module Main where
 
 import qualified Data.Text as T
 import Control.Lens hiding (Context, element)
-import Control.Monad 
 import Data.IORef
 import Data.Monoid
 import Foreign
@@ -59,26 +58,26 @@ customStart sr = do
   (style :: Ptr XMLFile) <- fromJustTrace "Failed to load UI/DefaultStyle.xml" <$> cacheGetResource cache "UI/DefaultStyle.xml" True
 
   (ui :: Ptr UI) <- fromJustTrace "UI system" <$> getSubsystem app 
-  (root :: Ptr UIElement) <- uiRoot ui 
-  uiElementSetDefaultStyle root style 
+  (roote :: Ptr UIElement) <- uiRoot ui 
+  uiElementSetDefaultStyle roote style 
 
   -- Initialize window
-  window <- initWindow app root
+  window <- initWindow app roote
 
   -- Create and add some controls to the window
   initControls app window
 
   -- Create a draggable Fish
-  createDraggableFish app root
+  createDraggableFish app roote
 
 -- | Create and initialize a Window control.
-initWindow :: SharedApplicationPtr -> Ptr UIElement -> IO (Ptr Window)
-initWindow app root = do 
+initWindow :: SharedPtr Application-> Ptr UIElement -> IO (Ptr Window)
+initWindow app roote = do 
   cntx <- getContext app 
 
   -- Create the windwo and add it to the UI's root node
   (window :: Ptr Window) <- newObject cntx 
-  uiElementAddChild root window
+  uiElementAddChild roote window
 
   -- Set Window size and layout settings
   uiElementSetMinSize window $ IntVector2 384 192
@@ -111,7 +110,7 @@ initWindow app root = do
   -- Apply sytles
   _ <- uiElementSetStyleAutoDefault window 
   _ <- uiElementSetStyleAutoDefault windowTitle
-  uiElementSetStyleDefault buttonClose "CloseButton"
+  _ <- uiElementSetStyleDefault buttonClose "CloseButton"
 
   -- Subscride to buttonClose release (following a 'press') events
   subscribeToEventSpecific app buttonClose $ handleClosePressed app
@@ -121,7 +120,7 @@ initWindow app root = do
   return window
 
 -- | Create and add various common controls for demonstration purposes.
-initControls :: SharedApplicationPtr -> Ptr Window -> IO ()
+initControls :: SharedPtr Application -> Ptr Window -> IO ()
 initControls app window = do 
   cntx <- getContext app 
 
@@ -130,9 +129,9 @@ initControls app window = do
   uiElementSetName checkBox "CheckBox"
 
   -- Create a Button
-  (button :: Ptr Button) <- newObject cntx 
-  uiElementSetName button "Button"
-  uiElementSetMinHeight button 24
+  (btn :: Ptr Button) <- newObject cntx 
+  uiElementSetName btn "Button"
+  uiElementSetMinHeight btn 24
 
   -- Create a LineEdit
   (lineEdit :: Ptr LineEdit) <- newObject cntx 
@@ -141,18 +140,18 @@ initControls app window = do
 
   -- Add controls to Window 
   uiElementAddChild window checkBox
-  uiElementAddChild window button 
+  uiElementAddChild window btn 
   uiElementAddChild window lineEdit
 
   -- Apply previously set default style
   _ <- uiElementSetStyleAutoDefault checkBox
-  _ <- uiElementSetStyleAutoDefault button
+  _ <- uiElementSetStyleAutoDefault btn
   _ <- uiElementSetStyleAutoDefault lineEdit
   return ()
 
 -- | Create a draggable fish button.
-createDraggableFish :: SharedApplicationPtr -> Ptr UIElement-> IO ()
-createDraggableFish app root = do
+createDraggableFish :: SharedPtr Application -> Ptr UIElement-> IO ()
+createDraggableFish app roote = do
   (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
   (graphics :: Ptr Graphics) <- fromJustTrace "Graphics" <$> getSubsystem app 
   cntx <- getContext app 
@@ -163,24 +162,24 @@ createDraggableFish app root = do
   borderImageSetTexture draggableFish tex
   borderImageSetBlendMode draggableFish BlendAdd 
   uiElementSetSize draggableFish $ IntVector2 128 128
-  gwidth <- graphicsGetWidth graphics 
-  width <- uiElementGetWidth draggableFish
-  uiElementSetPosition draggableFish $ IntVector2 ((gwidth - width) `div` 2) 200
+  gw <- graphicsGetWidth graphics 
+  fw <- uiElementGetWidth draggableFish
+  uiElementSetPosition draggableFish $ IntVector2 ((gw - fw) `div` 2) 200
   uiElementSetName draggableFish "Fish"
-  uiElementAddChild root draggableFish
+  uiElementAddChild roote draggableFish
 
   -- Add a tooltip to Fish button
   (toolTip :: Ptr ToolTip) <- newObject cntx 
   uiElementAddChild draggableFish toolTip
-  uiElementSetPosition toolTip $ IntVector2 (width + 5) (width `div` 2)
+  uiElementSetPosition toolTip $ IntVector2 (fw + 5) (fw `div` 2)
   
   (textHolder :: Ptr BorderImage) <- newObject cntx 
   uiElementAddChild toolTip textHolder
-  uiElementSetStyleDefault textHolder "ToolTipBorderImage"
+  _ <- uiElementSetStyleDefault textHolder "ToolTipBorderImage"
 
   (toolTipText :: Ptr Text) <- newObject cntx
   uiElementAddChild textHolder toolTipText
-  uiElementSetStyleDefault toolTipText "ToolTipText"
+  _ <- uiElementSetStyleDefault toolTipText "ToolTipText"
   textSetText toolTipText "Please drag me!"
 
   -- Subscribe draggableFish to Drag Events (in order to make it draggable)
@@ -208,7 +207,7 @@ handleDragEnd :: EventDragEnd -> IO ()
 handleDragEnd _ = return ()
 
 -- | Handle close button pressed and released.
-handleClosePressed :: SharedApplicationPtr -> EventReleased -> IO ()
+handleClosePressed :: SharedPtr Application -> EventReleased -> IO ()
 handleClosePressed app _ = do 
   engine <- applicationEngine app 
   engineExit engine
@@ -223,7 +222,7 @@ handleControlClicked window e = do
   let clicked = e^.element 
 
   -- Get the name of the control that was clicked
-  name <- maybeNull (return "...?") uiElementGetName clicked 
+  n <- maybeNull (return "...?") uiElementGetName clicked 
 
   -- Update the Window's title text
-  textSetText windowTitle $ "Hello " <> T.pack name <> "!"
+  textSetText windowTitle $ "Hello " <> T.pack n <> "!"

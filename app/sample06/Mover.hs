@@ -46,9 +46,9 @@ type MoverType = ForeignPtr StringHash
 -- | Register mover within Urho engine, resulting type is used for creation of 
 -- the component instances.
 registerMover :: MonadIO m => Ptr Context -> m MoverType
-registerMover cntx = registerCustomComponent cntx "Mover" state moverDef 
+registerMover cntx = registerCustomComponent cntx "Mover" moverState moverDef 
   where 
-  state = MoverState {
+  moverState = MoverState {
       moverSpeed = 0
     , moverRotateSpeed = 0
     , moverBounds = 0
@@ -85,21 +85,21 @@ moverGetBounds ptr = liftIO $ do
 -- | Custom logic component for rotating a scene node.
 moverDef :: MoverSetup
 moverDef = defaultCustomLogicComponent {
-    componentUpdate = Just $ \ref node t -> do 
+    componentUpdate = Just $ \ref compNode t -> do 
       -- Component state is passed via reference
       MoverState {..} <- readIORef ref
 
-      nodeTranslate node (vec3Forward * vec3 (moverSpeed * t)) TS'Local
+      nodeTranslate compNode (vec3Forward * vec3 (moverSpeed * t)) TS'Local
 
       -- If in risk of going outside the plane, rotate the model right
-      pos <- nodeGetPosition node 
+      pos <- nodeGetPosition compNode 
       when ((pos ^. x < moverBounds ^. minVector ^. x) || (pos ^. x > moverBounds ^. maxVector ^. x) ||
             (pos ^. z < moverBounds ^. minVector ^. z) || (pos ^. z > moverBounds ^. maxVector ^. z)) $
-        nodeYaw node (moverRotateSpeed * t) TS'Local
+        nodeYaw compNode (moverRotateSpeed * t) TS'Local
 
       -- Get the model's first (only) animation state and advance its time. Note the convenience accessor to other components
       -- in the same scene node
-      (model :: Ptr AnimatedModel) <- fromJustTrace "AnimatedModel mover" <$> nodeGetComponent' node False
+      (model :: Ptr AnimatedModel) <- fromJustTrace "AnimatedModel mover" <$> nodeGetComponent' compNode False
       whenM ((> 0) <$> animatedModelGetNumAnimationStates model) $ do 
         states <- animatedModelGetAnimationStates model
         animationStateAddTime (head states) t

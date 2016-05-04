@@ -99,6 +99,7 @@ import Graphics.Urho3D.Input.Internal.Input
 import Graphics.Urho3D.Core.Object 
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Vector.Common
+import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Resource.XMLFile
 import Graphics.Urho3D.Math.Vector2 
 import Graphics.Urho3D.UI.Element
@@ -127,7 +128,7 @@ C.context (C.cppCtx
 C.include "<Urho3D/Input/Input.h>"
 C.using "namespace Urho3D"
 
-C.verbatim "typedef WeakPtr<UIElement> SharedWeakUIElement;"
+C.verbatim "typedef WeakPtr<UIElement> WeakUIElement;"
 C.verbatim "typedef PODVector<bool> PODVectorBool;"
 C.verbatim "typedef PODVector<float> PODVectorFloat;"
 C.verbatim "typedef PODVector<int> PODVectorInt;"
@@ -164,7 +165,7 @@ instance Storable TouchState where
     lpv <- peek =<< [C.exp| IntVector2* { &$(TouchState* ptr)->lastPosition_ } |]
     dv <- peek =<< [C.exp| IntVector2* { &$(TouchState* ptr)->delta_ } |]
     pr <- realToFrac <$> [C.exp| float { $(TouchState* ptr)->pressure_ } |]
-    e <- wrapSharedWeakUIElementPtr =<< [C.exp| SharedWeakUIElement* { new WeakPtr<UIElement>($(TouchState* ptr)->touchedElement_) }|]
+    e <- peekWeakPtr =<< [C.exp| WeakUIElement* { new WeakPtr<UIElement>($(TouchState* ptr)->touchedElement_) }|]
     return $ TouchState e tid pv lpv dv pr 
 
   poke ptr ts = do 

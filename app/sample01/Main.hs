@@ -56,13 +56,13 @@ customStart sr = do
   subscribeToEvents app 
 
 -- | Construct a new Text instance, containing the 'Hello World' String, and add it to the UI root element.
-createText :: SharedApplicationPtr -> IO ()
+createText :: SharedPtr Application -> IO ()
 createText app = do 
   -- Getting resouce cache to manipulate resource loading
   (cache :: Ptr ResourceCache) <- fromJustTrace "No ResourceCache!" <$> getSubsystem app
 
   -- Construct new Text object
-  (helloText :: SharedTextPtr) <- newSharedObject =<< getContext app
+  (helloText :: SharedPtr Text) <- newSharedObject =<< getContext app
 
   -- Set string to display
   textSetText helloText "Hello World from Urho3D!"
@@ -77,11 +77,11 @@ createText app = do
 
   -- Add Text instance to the UI root element
   (ui :: Ptr UI) <- fromJustTrace "No UI!" <$> getSubsystem app 
-  root <- uiRoot ui 
-  uiElementAddChild root helloText
+  rootElem <- uiRoot ui 
+  uiElementAddChild rootElem helloText
 
 -- | Subscribe to application-wide logic update events.
-subscribeToEvents :: SharedApplicationPtr -> IO ()
+subscribeToEvents :: SharedPtr Application -> IO ()
 subscribeToEvents app = 
   --  Subscribe handleUpdate function for processing update events
   subscribeToEvent app handleUpdate

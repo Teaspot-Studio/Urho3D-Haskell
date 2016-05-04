@@ -15,8 +15,6 @@ module Graphics.Urho3D.Graphics.Animation(
   , AnimationTriggerPoint(..)
   , animationContext
   , SharedAnimation
-  , SharedAnimationPtr(..)
-  , wrapSharedAnimationPtr
   , HashMapStringHashAnimationTrack
   , channelPosition
   , channelRotation

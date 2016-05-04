@@ -2,7 +2,6 @@
 module Graphics.Urho3D.Engine.Application(
     Application
   , SharedApplication
-  , SharedApplicationPtr
   , applicationContext
   , startupParameter
   , applicationEngine
@@ -37,7 +36,6 @@ C.include "<iostream>"
 C.using "namespace Urho3D"
 
 type SharedApplication = SharedApplicationH
-type SharedApplicationPtr = SharedApplicationHPtr
 
 C.verbatim [r|
 extern "C" typedef void (*haskellIOFunc)();
@@ -146,10 +144,10 @@ startupParameter ptr name = makeSettableStateVar $ setStartupParameter ptr name
 C.verbatim "typedef SharedPtr<Engine> SharedEngine;"
 
 -- | Returns shared reference to inner engine
-applicationEngine :: (Parent Application a, Pointer p a, MonadIO m) => p -> m SharedEnginePtr
+applicationEngine :: (Parent Application a, Pointer p a, MonadIO m) => p -> m (SharedPtr Engine)
 applicationEngine p = liftIO $ do
   let ptr = parentPointer p
-  wrapSharedEnginePtr =<< [C.exp| SharedEngine* { $(ApplicationH* ptr)->getEgine() } |]
+  peekSharedPtr =<< [C.exp| SharedEngine* { $(ApplicationH* ptr)->getEgine() } |]
 
 -- | Runs application loop, doesn't exit until call to engineExit
 applicationRun :: (Parent Application a, Pointer p a, MonadIO m) => p -> m ()

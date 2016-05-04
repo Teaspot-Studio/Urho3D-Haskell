@@ -3,7 +3,6 @@ module Graphics.Urho3D.UI.Internal.ToolTip(
   , toolTipCntx
   , sharedToolTipPtrCntx
   , SharedToolTip
-  , SharedToolTipPtr(..)
   ) where
 
 import qualified Language.C.Inline as C

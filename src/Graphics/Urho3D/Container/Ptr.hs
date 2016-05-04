@@ -156,9 +156,9 @@ sharedPtr tname = do
   finalizerInst <- [d|
       instance SharedPointerFinalizer $sharedTType $tType where 
         makeSharedForeignPointer ptr = do 
-          pptr <- $(quoteExp C.exp (sharedT ++ "* { new " ++ sharedT ++ "($( "++ tname ++ "* _ptr)) }")) 
+          pptr <- $(quoteExp C.exp (sharedT ++ "* { new " ++ sharedT ++ "($( "++ tname ++ "* ptr)) }")) 
           fptr <- FC.newForeignPtr ptr $ $(varE $ mkName deleteSharedTPtr) pptr
-          return (fptr, pptr)
+          return (pptr, fptr)
         wrapSharedPointer pptr = do 
           ptr <- $(quoteExp C.exp (tname ++ "* { $("++sharedT++"* pptr)->Get() }"))
           fptr <- FC.newForeignPtr ptr $ $(varE $ mkName deleteSharedTPtr) pptr
@@ -206,9 +206,9 @@ sharedWeakPtr tname = do
   finalizerInst <- [d|
       instance WeakPointerFinalizer $weakTType $tType where 
         makeWeakForeignPointer ptr = do 
-          pptr <- $(quoteExp C.exp (weakT ++ "* { new " ++ weakT ++ "($( "++ tname ++ "* _ptr)) }")) 
+          pptr <- $(quoteExp C.exp (weakT ++ "* { new " ++ weakT ++ "($( "++ tname ++ "* ptr)) }")) 
           fptr <- FC.newForeignPtr ptr $ $(varE $ mkName deleteWeakTPtr) pptr
-          return (fptr, pptr)
+          return (pptr, fptr)
         wrapWeakPointer pptr = do 
           ptr <- $(quoteExp C.exp (tname ++ "* { $("++weakT++"* pptr)->Get() }"))
           fptr <- FC.newForeignPtr ptr $ $(varE $ mkName deleteWeakTPtr) pptr

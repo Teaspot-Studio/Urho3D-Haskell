@@ -3,7 +3,6 @@ module Graphics.Urho3D.UI.Internal.Window(
   , windowCntx
   , sharedWindowPtrCntx
   , SharedWindow
-  , SharedWindowPtr(..)
   ) where
 
 import qualified Language.C.Inline as C

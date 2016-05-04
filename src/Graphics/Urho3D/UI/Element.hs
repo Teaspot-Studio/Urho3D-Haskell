@@ -3,11 +3,7 @@ module Graphics.Urho3D.UI.Element(
     UIElement 
   , uiElementContext
   , SharedUIElement
-  , SharedUIElementPtr 
-  , wrapSharedUIElementPtr
-  , SharedWeakUIElement
-  , SharedWeakUIElementPtr 
-  , wrapSharedWeakUIElementPtr
+  , WeakUIElement
   , UIElem(..)
 
   -- | Setters
@@ -189,12 +185,12 @@ import Foreign
 import Foreign.C.String 
 import Data.Proxy 
 
-C.context (C.cppCtx <> sharedUIElementPtrCntx  <> sharedWeakUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context <> rectContext <> contextContext <> xmlFileContext <> xmlElementContext <> stringContext <> colorContext <> variantContext <> podVectorUIElementPtrCntx)
+C.context (C.cppCtx <> sharedUIElementPtrCntx  <> weakUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context <> rectContext <> contextContext <> xmlFileContext <> xmlElementContext <> stringContext <> colorContext <> variantContext <> podVectorUIElementPtrCntx)
 C.include "<Urho3D/UI/UIElement.h>"
 C.using "namespace Urho3D"
 
 uiElementContext :: C.Context 
-uiElementContext = sharedUIElementPtrCntx <> sharedWeakUIElementPtrCntx <> uiElementCntx <> stringHashContext <> podVectorUIElementPtrCntx
+uiElementContext = sharedUIElementPtrCntx <> weakUIElementPtrCntx <> uiElementCntx <> stringHashContext <> podVectorUIElementPtrCntx
 
 C.verbatim "typedef HashMap<StringHash, Variant> HashMapStringHashVariant;"
 
