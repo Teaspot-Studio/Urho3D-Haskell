@@ -2,13 +2,13 @@ flags: {}
 packages:
 - '.'
 - location:
-    git: git@github.com:Teaspot-Studio/inline-c.git
-    commit: 5498d66c3ead457bf2de034bf31e6de9ff7e9667
+    git: https://github.com/Teaspot-Studio/inline-c.git
+    commit: 3b57bf189dbe7efedaac42e7ac705adea5bd7f6c
 - location:
-    git: git@github.com:fpco/inline-c-cpp.git
-    commit: 12319586f19f08f6b32984e2a1f15c76db290e0c
+    git: https://github.com/Teaspot-Studio/inline-c-cpp.git
+    commit: 68ec7290766c4f7997361d4e74e6ad4c15dd26b6
 extra-deps: []
-resolver: lts-5.10
+resolver: lts-5.15
 
 extra-lib-dirs:
 - /usr/lib64/Urho3D
