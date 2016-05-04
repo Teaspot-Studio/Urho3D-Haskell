@@ -22,6 +22,8 @@ import Graphics.Urho3D.Monad
 import qualified Data.Map as Map
 import System.IO.Unsafe (unsafePerformIO)
 
+import Graphics.Urho3D.Multithread
+
 -- | Common operations with shared pointers. 
 class (Pointer pointer element, Createable (Ptr element)) => SharedPointer pointer element | pointer -> element where 
   -- | Creates new object and wraps it to shared pointer. Pointer is garbage collected. The created object
@@ -47,14 +49,21 @@ class AbstractType a
 -- local context.
 sharedPtr :: String -> DecsQ 
 sharedPtr tname = do 
-  -- typedef <- C.verbatim $ "#include <iostream>\ntypedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
+#ifdef DEBUG_SHARED
+  typedef <- C.verbatim $ "#include <iostream>\ntypedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
+#else
   typedef <- C.verbatim $ "typedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
+#endif
   deleter <- sequence [
       deleteSharedTPtr ^:: [t| Ptr $sharedTType -> IO () |]
-    , mkFunc1 deleteSharedTPtr "ptr" $ \ptrName -> 
-        let inlinePtr = "$(" ++ sharedT ++ "* "++show ptrName++")"
-        -- in quoteExp C.exp ("void { std::cout << \"finalizing "++tname++"\" << std::endl; if ("++inlinePtr++") { delete "++inlinePtr++"; } }")
-        in quoteExp C.exp ("void { if ("++inlinePtr++") { delete "++inlinePtr++"; } }")
+    , mkFunc1 deleteSharedTPtr "ptr" $ \ptrName -> [e|runInMainThread $ do
+        $(let inlinePtr = "$(" ++ sharedT ++ "* "++show ptrName++")"
+#ifdef DEBUG_SHARED
+          in quoteExp C.exp ("void { std::cout << \"finalizing shared "++tname++" \" << "++inlinePtr++"->Refs() << std::endl; if ("++inlinePtr++") { delete "++inlinePtr++"; } }") )
+#else
+          in quoteExp C.exp ("void { if ("++inlinePtr++") { delete "++inlinePtr++"; } }") )
+#endif
+        |]
     ]
 
   wrappPointer <- sequence [
@@ -138,14 +147,21 @@ sharedPtr tname = do
 -- local context.
 sharedWeakPtr :: String -> DecsQ 
 sharedWeakPtr tname = do 
-  -- typedef <- C.verbatim $ "#include <iostream>\ntypedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
+#ifdef DEBUG_SHARED
+  typedef <- C.verbatim $ "#include <iostream>\ntypedef SharedPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
+#else
   typedef <- C.verbatim $ "typedef WeakPtr<" ++ tname ++ "> " ++ sharedT ++ ";"
+#endif
   deleter <- sequence [
       deleteSharedTPtr ^:: [t| Ptr $sharedTType -> IO () |]
-    , mkFunc1 deleteSharedTPtr "ptr" $ \ptrName -> 
-        let inlinePtr = "$(" ++ sharedT ++ "* "++show ptrName++")"
-        -- in quoteExp C.exp ("void { std::cout << \"finalizing "++tname++"\" << std::endl; if ("++inlinePtr++") { delete "++inlinePtr++"; } }")
-        in quoteExp C.exp ("void { if ("++inlinePtr++") { delete "++inlinePtr++"; } }")
+    , mkFunc1 deleteSharedTPtr "ptr" $ \ptrName -> [e|runInMainThread $ do
+        $(let inlinePtr = "$(" ++ sharedT ++ "* "++show ptrName++")"
+#ifdef DEBUG_SHARED
+          in quoteExp C.exp ("void { std::cout << \"finalizing weak "++tname++"\" << std::endl; if ("++inlinePtr++") { delete "++inlinePtr++"; } }") )
+#else
+          in quoteExp C.exp ("void { if ("++inlinePtr++") { delete "++inlinePtr++"; } }") )
+#endif
+        |]
     ]
 
   wrappPointer <- sequence [

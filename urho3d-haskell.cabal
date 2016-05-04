@@ -25,6 +25,14 @@ flag Urho3DD3D11
   description: binding to Urho3D engine with Direct3D11 renderer
   default: False
 
+flag examples
+  description: build engine examples 
+  default: True 
+
+flag debug-shared
+  description: Debug shared pointers. Print when they garbage collected.
+  default: False 
+
 library
   hs-source-dirs:      src
   include-dirs:        src
@@ -101,6 +109,7 @@ library
                        Graphics.Urho3D.Math.Vector3
                        Graphics.Urho3D.Math.Vector4
                        Graphics.Urho3D.Monad
+                       Graphics.Urho3D.Multithread
                        Graphics.Urho3D.Network
                        Graphics.Urho3D.Network.Connection
                        Graphics.Urho3D.Parent
@@ -339,15 +348,20 @@ library
     TypeFamilies
     UndecidableInstances
     RecordWildCards
+    CPP
     
   default-language:    Haskell2010
-  ghc-options:         -Wall -Werror 
+  ghc-options:         -Wall 
   extra-libraries:     Urho3D, stdc++
+
   if flag(Urho3DOpenGL)
     cc-options: -DURHO3D_OPENGL
   else 
     if flag(Urho3DD3D11)
       cc-options: -DURHO3D_D3D11
+
+  if flag(debug-shared)
+    cc-options: -DDEBUG_SHARED
 
 executable urho3d-haskell-sample01
   hs-source-dirs:      app/sample01, app/common
@@ -373,6 +387,11 @@ executable urho3d-haskell-sample01
     TemplateHaskell
     TypeFamilies
   default-language:    Haskell2010
+
+  if flag(examples)
+    Buildable: True
+  else
+    Buildable: False
 
 executable urho3d-haskell-sample02
   hs-source-dirs:      app/sample02, app/common
@@ -400,6 +419,11 @@ executable urho3d-haskell-sample02
     TypeFamilies
   default-language:    Haskell2010
 
+  if flag(examples)
+    Buildable: True
+  else
+    Buildable: False
+
 executable urho3d-haskell-sample03
   hs-source-dirs:      app/sample03, app/common
   main-is:             Main.hs
@@ -426,6 +450,11 @@ executable urho3d-haskell-sample03
     TypeFamilies
   default-language:    Haskell2010
 
+  if flag(examples)
+    Buildable: True
+  else
+    Buildable: False
+
 executable urho3d-haskell-sample04
   hs-source-dirs:      app/sample04, app/common
   main-is:             Main.hs
@@ -451,6 +480,11 @@ executable urho3d-haskell-sample04
     TemplateHaskell
     TypeFamilies
   default-language:    Haskell2010
+
+  if flag(examples)
+    Buildable: True
+  else
+    Buildable: False
 
 executable urho3d-haskell-sample05
   hs-source-dirs:      app/sample05, app/common
@@ -479,6 +513,11 @@ executable urho3d-haskell-sample05
     TypeFamilies
   default-language:    Haskell2010
 
+  if flag(examples)
+    Buildable: True
+  else
+    Buildable: False
+
 executable urho3d-haskell-sample06
   hs-source-dirs:      app/sample06, app/common
   main-is:             Main.hs
@@ -505,6 +544,11 @@ executable urho3d-haskell-sample06
     TemplateHaskell
     TypeFamilies
   default-language:    Haskell2010
+
+  if flag(examples)
+    Buildable: True
+  else
+    Buildable: False
 
 source-repository head
   type:     git

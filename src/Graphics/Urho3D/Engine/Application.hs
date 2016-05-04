@@ -27,9 +27,12 @@ import Text.RawString.QQ
 import Foreign 
 import Foreign.C.String 
 
+import Graphics.Urho3D.Multithread
+
 C.context (C.cppCtx <> C.funConstCtx <> applicationCntx <> sharedApplicationHPtrCntx <> contextContext <> variantContext <> objectContext <> engineContext)
 C.include "<Urho3D/Engine/Engine.h>"
 C.include "<Urho3D/Engine/Application.h>"
+C.include "<Urho3D/Core/CoreEvents.h>"
 C.include "<iostream>"
 C.using "namespace Urho3D"
 
@@ -48,13 +51,15 @@ class ApplicationH : public Application {
   ApplicationH(Context* context
     , haskellIOFunc setupFunc_
     , haskellIOFunc startFunc_
-    , haskellIOFunc stopFunc_ ) : 
+    , haskellIOFunc stopFunc_ 
+    , haskellIOFunc callbacksFunc_ ) : 
       Application(context)
     , setupFunc(setupFunc_)
     , startFunc(startFunc_)
     , stopFunc(stopFunc_)
+    , callbacksFunc(callbacksFunc_)
   {
-
+    SubscribeToEvent(E_ENDFRAME, URHO3D_HANDLER(ApplicationH, HandleHaskellCallbacks));
   }
 
   void setEngineParameter(const char* name, Variant* value) {
@@ -81,6 +86,14 @@ class ApplicationH : public Application {
   haskellIOFunc setupFunc = NULL;
   haskellIOFunc startFunc = NULL;
   haskellIOFunc stopFunc = NULL;
+  haskellIOFunc callbacksFunc = NULL;
+
+  void HandleHaskellCallbacks(StringHash eventType, VariantMap& eventData) {
+    if(callbacksFunc) {
+      callbacksFunc();
+    }
+  }
+
 };
 |]
 
@@ -97,7 +110,9 @@ newApplication ptr setupFunc startFunc stopFunc = do
     new ApplicationH($(Context* ptr)
       , $funConst:(void (*setupFunc)())
       , $funConst:(void (*startFunc)())
-      , $funConst:(void (*stopFunc)()) )
+      , $funConst:(void (*stopFunc)()) 
+      , $funConst:(void (*runAllMainThreadCallbacks)()) 
+      )
   } |]
 
 deleteApplication :: Ptr Application -> IO ()
