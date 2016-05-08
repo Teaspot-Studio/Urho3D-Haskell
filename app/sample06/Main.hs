@@ -246,7 +246,8 @@ subscribeToEvents :: SharedPtr Application -> Ptr Node -> IO ()
 subscribeToEvents app cameraNode = do 
   camDataRef <- newIORef $ CameraData 0 0 False
   subscribeToEvent app $ handleUpdate app cameraNode camDataRef
-
+  subscribeToEvent app $ handlePostRenderUpdate app camDataRef
+  
 -- | Handle the logic update event.
 handleUpdate :: SharedPtr Application -> Ptr Node -> IORef CameraData -> EventUpdate -> IO ()
 handleUpdate app cameraNode camDataRef e = do 
@@ -264,4 +265,5 @@ handlePostRenderUpdate app camDataRef _ = do
   -- If draw debug mode is enabled, draw viewport debug geometry, which will show eg. drawable bounding boxes and skeleton
   -- bones. Note that debug geometry has to be separately requested each frame. Disable depth test so that we can see the
   -- bones properly
-  when (camDebugGeometry camData) $ rendererDrawDebugGeometry renderer False
+  when (camDebugGeometry camData) $
+    rendererDrawDebugGeometry renderer False
