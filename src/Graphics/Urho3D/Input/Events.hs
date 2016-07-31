@@ -553,7 +553,7 @@ keyCapsLock :: Int
 keyCapsLock = fromIntegral $ [C.pure| int {KEY_CAPSLOCK} |]
 
 keyEsc :: Int
-keyEsc = fromIntegral $ [C.pure| int {KEY_ESC} |]
+keyEsc = fromIntegral $ [C.pure| int {KEY_ESCAPE} |]
 
 keySpace :: Int
 keySpace = fromIntegral $ [C.pure| int {KEY_SPACE} |]

@@ -549,6 +549,37 @@ executable urho3d-haskell-sample06
   else
     Buildable: False
 
+executable urho3d-haskell-sample07
+  hs-source-dirs:      app/sample07, app/common
+  main-is:             Main.hs
+  ghc-options:         -Odph -fno-liberate-case -funfolding-use-threshold1000 -funfolding-keeness-factor1000 -optlo-O3 -threaded -rtsopts -with-rtsopts=-N
+  other-modules:       Sample
+                       Internal.Sample
+  build-depends:       base
+                     , urho3d-haskell
+                     , StateVar
+                     , lens
+                     , mtl
+                     , thyme
+                     , old-locale
+                     , raw-strings-qq
+                     , text
+
+  default-extensions:
+    MultiWayIf
+    OverloadedStrings
+    QuasiQuotes
+    RecordWildCards
+    ScopedTypeVariables
+    TemplateHaskell
+    TypeFamilies
+  default-language:    Haskell2010
+
+  if flag(examples)
+    Buildable: True
+  else
+    Buildable: False
+
 source-repository head
   type:     git
   location: git@github.com:Teaspot-Studio/Urho3D-Haskell.git

@@ -8,7 +8,7 @@ packages:
     git: https://github.com/Teaspot-Studio/inline-c-cpp.git
     commit: 68ec7290766c4f7997361d4e74e6ad4c15dd26b6
 extra-deps: []
-resolver: lts-5.15
+resolver: lts-6.9
 
 extra-lib-dirs:
 - /usr/lib64/Urho3D
