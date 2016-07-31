@@ -86,7 +86,7 @@ createScene app = do
   (light :: Ptr Light) <- fromJustTrace "Light" <$> nodeCreateComponent lightNode Nothing Nothing
   lightSetLightType light LT'Directional
   lightSetColor light $ rgb 0.2 0.2 0.2
-  lightSetSpecularIntenisty 1
+  lightSetSpecularIntensity 1
 
   -- Create a "floor" consisting of several tiles
   forM [(x, y)| x <- [-5 .. 5], y <- [-5 .. 5]] $ \(x :: Int, y :: Int) -> do
@@ -109,7 +109,7 @@ createScene app = do
     [r1, r2] <- replicateM 2 (randomUp 190)
     nodeSetPosition groupNode $ Vector3 (r1 - 95) 0 (r2 - 95)
 
-    _ <- replicateM numMushrooms $ do 
+    replicateM numMushrooms $ do 
       (mushroomNode :: Ptr Node) <- nodeCreateChild scene "Mushroom" CM'Replicated 0
       [r3, r4] <- replicateM 2 (randomUp 25)
       [r5, r6] <- replicateM random
@@ -166,7 +166,9 @@ createScene app = do
 
     let angle = 0 :: Float 
         position = Vector3 ((i `mod` 3) * 60 - 60) 45 ((i / 3) * 60 - 60)
-        color = rgb ((i+1) .&&. 1) * 0.5 + 0.5) (((i+1) `shiftRight` 1) .&&. 1) * 0.5 + 0.5) (((i+1) `shiftRight` 2) .&&. 1) * 0.5 + 0.5)
+        color = rgb (((i+1) .&. 1) * 0.5 + 0.5) 
+                    ((((i+1) `shiftR` 1) .&. 1) * 0.5 + 0.5) 
+                    ((((i+1) `shiftR` 2) .&. 1) * 0.5 + 0.5)
         
     modelNode <- nodeCreateChild scene "Jack" CM'Replicated 0
     [r1, r2] <- replicateM 2 (randomUp 90)
