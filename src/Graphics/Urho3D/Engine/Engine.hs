@@ -18,7 +18,7 @@ import Graphics.Urho3D.Engine.DebugHud
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Core.Object
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Parent
 import Data.Monoid
@@ -37,7 +37,7 @@ newEngine ptr = [C.exp| Engine* {new Engine($(Context* ptr))} |]
 deleteEngine :: Ptr Engine -> IO ()
 deleteEngine ptr = [C.exp| void {delete $(Engine* ptr)} |]
 
-instance Createable (Ptr Engine) where 
+instance Creatable (Ptr Engine) where 
   type CreationOptions (Ptr Engine) = Ptr Context 
 
   newObject = liftIO . newEngine

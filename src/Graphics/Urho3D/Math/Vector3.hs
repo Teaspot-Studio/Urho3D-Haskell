@@ -21,7 +21,7 @@ import qualified Language.C.Inline.Cpp as C
 import Control.Lens 
 import Data.Monoid
 import Foreign 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Math.Defs
 import Graphics.Urho3D.Math.Internal.Vector3
@@ -80,7 +80,7 @@ instance Fractional Vector3 where
   a / b = Vector3 (a^.x / b^.x) (a^.y / b^.y) (a^.z / b^.z)
   fromRational v = Vector3 (fromRational v) (fromRational v) (fromRational v)
 
-instance Createable (Ptr Vector3) where
+instance Creatable (Ptr Vector3) where
   type CreationOptions (Ptr Vector3) = Vector3
 
   newObject = liftIO . new
@@ -124,7 +124,7 @@ vec3Back = Vector3 0 0 (-1)
 
 C.verbatim "typedef PODVector<Vector3> PODVectorVector3;"
 
-instance Createable (Ptr PODVectorVector3) where 
+instance Creatable (Ptr PODVectorVector3) where 
   type CreationOptions (Ptr PODVectorVector3) = ()
   newObject _ = liftIO [C.exp| PODVectorVector3* {new PODVectorVector3() } |]
   deleteObject ptr = liftIO [C.exp| void { delete $(PODVectorVector3* ptr) } |]
@@ -142,7 +142,7 @@ instance WriteableVector PODVectorVector3 where
 
 C.verbatim "typedef Vector<PODVector<Vector3> > VectorPODVectorVector3;"
 
-instance Createable (Ptr VectorPODVectorVector3) where 
+instance Creatable (Ptr VectorPODVectorVector3) where 
   type CreationOptions (Ptr VectorPODVectorVector3) = ()
   newObject _ = liftIO [C.exp| VectorPODVectorVector3* {new VectorPODVectorVector3() } |]
   deleteObject ptr = liftIO [C.exp| void { delete $(VectorPODVectorVector3* ptr) } |]

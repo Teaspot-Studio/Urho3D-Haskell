@@ -17,9 +17,11 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.BillboardSet
+import Graphics.Urho3D.Core.Context
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Graphics.Drawable
+import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Scene.Node 
---import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
 import System.IO.Unsafe (unsafePerformIO)
@@ -36,6 +38,7 @@ import Graphics.Urho3D.Scene.Component
 import Graphics.Urho3D.Scene.Serializable
 
 C.context (C.cppCtx 
+  <> contextContext
   <> billboardSetCntx 
   <> drawableContext
   <> componentContext 
@@ -70,6 +73,12 @@ billboardSetContext :: C.Context
 billboardSetContext = componentContext <> billboardSetCntx
 
 deriveParents [''Object, ''Serializable, ''Animatable, ''Component, ''Drawable] ''BillboardSet
+
+instance Creatable (Ptr BillboardSet) where 
+  type CreationOptions (Ptr BillboardSet) = Ptr Context
+
+  newObject ptr = liftIO $ [C.exp| BillboardSet* { new BillboardSet($(Context* ptr)) } |]
+  deleteObject ptr = liftIO $ [C.exp| void { delete $(BillboardSet* ptr) } |]
 
 instance NodeComponent BillboardSet where 
   nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {

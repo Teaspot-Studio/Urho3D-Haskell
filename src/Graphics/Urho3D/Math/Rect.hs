@@ -18,7 +18,7 @@ import qualified Language.C.Inline.Cpp as C
 import Control.Lens 
 import Data.Monoid
 import Foreign 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Defs
 import Graphics.Urho3D.Math.Internal.Rect
 import Graphics.Urho3D.Math.Vector2
@@ -96,7 +96,7 @@ instance Num IntRect where
   signum a = IntRect (signum $ a^.left) (signum $ a^.top) (signum $ a^.right) (signum $ a^.bottom)
   fromInteger i = IntRect (fromIntegral i) (fromIntegral i) (fromIntegral i) (fromIntegral i)
 
-instance Createable (Ptr IntRect) where
+instance Creatable (Ptr IntRect) where
   type CreationOptions (Ptr IntRect) = IntRect
 
   newObject = liftIO . new

@@ -12,7 +12,7 @@ import qualified Language.C.Inline.Cpp as C
 import Control.Lens 
 import Data.Monoid
 import Foreign 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Defs
 import Graphics.Urho3D.Math.Vector3
 import Graphics.Urho3D.Math.Internal.BoundingBox
@@ -65,7 +65,7 @@ instance Fractional BoundingBox where
   a / b = BoundingBox (a^.minVector / b^.minVector) (a^.maxVector / b^.maxVector)
   fromRational v = BoundingBox (fromRational v) (fromRational v)
 
-instance Createable (Ptr BoundingBox) where
+instance Creatable (Ptr BoundingBox) where
   type CreationOptions (Ptr BoundingBox) = BoundingBox
 
   newObject = liftIO . new

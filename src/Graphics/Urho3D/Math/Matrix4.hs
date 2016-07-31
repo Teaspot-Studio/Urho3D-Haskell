@@ -12,7 +12,7 @@ module Graphics.Urho3D.Math.Matrix4(
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Internal.Matrix4
 import Graphics.Urho3D.Math.Vector4 
 import Graphics.Urho3D.Monad
@@ -119,7 +119,7 @@ loadMatrix4 io = do
   q `deepseq` [C.exp| void { delete $(Matrix4* qp) } |]
   return q 
 
-instance Createable (Ptr Matrix4) where
+instance Creatable (Ptr Matrix4) where
   type CreationOptions (Ptr Matrix4) = Matrix4
 
   newObject = liftIO . new

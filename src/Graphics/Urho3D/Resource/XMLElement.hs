@@ -8,7 +8,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Resource.Internal.XMLElement
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign
@@ -20,7 +20,7 @@ C.using "namespace Urho3D"
 xmlElementContext :: C.Context 
 xmlElementContext = xmlElementCntx
 
-instance Createable (Ptr XMLElement) where 
+instance Creatable (Ptr XMLElement) where 
   type CreationOptions (Ptr XMLElement) = ()
 
   newObject _ = liftIO [C.exp| XMLElement* { new XMLElement() } |]

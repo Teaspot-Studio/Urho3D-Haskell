@@ -12,7 +12,7 @@ import Graphics.Urho3D.Scene.Internal.Scene
 import Graphics.Urho3D.Scene.Node
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Parent
 import Data.Monoid
@@ -35,7 +35,7 @@ newScene ptr = [C.exp| Scene* { new Scene($(Context* ptr)) } |]
 deleteScene :: Ptr Scene -> IO ()
 deleteScene ptr = [C.exp| void { delete $(Scene* ptr) } |]
 
-instance Createable (Ptr Scene) where 
+instance Creatable (Ptr Scene) where 
   type CreationOptions (Ptr Scene) = Ptr Context 
 
   newObject = liftIO . newScene

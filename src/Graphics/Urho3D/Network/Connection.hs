@@ -9,7 +9,7 @@ import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Network.Internal.Connection
 import Graphics.Urho3D.Core.Context 
---import Graphics.Urho3D.Createable
+--import Graphics.Urho3D.Creatable
 --import Graphics.Urho3D.Monad
 import Data.Monoid
 --import Foreign 
@@ -30,7 +30,7 @@ newConnection ptr = [C.exp| Connection* { new Connection( $(Context* ptr) ) } |]
 deleteConnection :: Ptr Connection -> IO ()
 deleteConnection ptr = [C.exp| void { delete $(Connection* ptr) } |]
 
-instance Createable (Ptr Connection) where 
+instance Creatable (Ptr Connection) where 
   type CreationOptions (Ptr Connection) = Ptr Context 
 
   newObject = liftIO . newConnection

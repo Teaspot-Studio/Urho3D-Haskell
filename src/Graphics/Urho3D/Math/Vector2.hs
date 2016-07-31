@@ -13,7 +13,7 @@ import qualified Language.C.Inline.Cpp as C
 import Control.Lens 
 import Data.Monoid
 import Foreign 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Defs
 import Graphics.Urho3D.Math.Internal.Vector2
 import Graphics.Urho3D.Monad
@@ -91,13 +91,13 @@ instance Fractional Vector2 where
   a / b = Vector2 (a^.x / b^.x) (a^.y / b^.y)
   fromRational v = Vector2 (fromRational v) (fromRational v)
 
-instance Createable (Ptr IntVector2) where
+instance Creatable (Ptr IntVector2) where
   type CreationOptions (Ptr IntVector2) = IntVector2
 
   newObject = liftIO . new
   deleteObject = liftIO . free
 
-instance Createable (Ptr Vector2) where
+instance Creatable (Ptr Vector2) where
   type CreationOptions (Ptr Vector2) = Vector2
 
   newObject = liftIO . new

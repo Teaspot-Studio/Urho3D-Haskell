@@ -17,7 +17,7 @@ import Graphics.Urho3D.Resource.XMLFile
 import Graphics.Urho3D.UI.BorderImage
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Core.Object
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Parent
 import Data.Monoid
@@ -36,7 +36,7 @@ newConsole ptr = [C.exp| Console* {new Console($(Context* ptr))} |]
 deleteConsole :: Ptr Console -> IO ()
 deleteConsole ptr = [C.exp| void {delete $(Console* ptr)} |]
 
-instance Createable (Ptr Console) where 
+instance Creatable (Ptr Console) where 
   type CreationOptions (Ptr Console) = Ptr Context 
 
   newObject = liftIO . newConsole

@@ -12,7 +12,7 @@ import Graphics.Urho3D.UI.Internal.Font
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Resource.Resource
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
@@ -25,7 +25,7 @@ C.using "namespace Urho3D"
 fontContext :: C.Context 
 fontContext = fontCntx <> resourceContext <> sharedFontPtrCntx
 
-instance Createable (Ptr Font) where 
+instance Creatable (Ptr Font) where 
   type CreationOptions (Ptr Font) = Ptr Context 
 
   newObject ptr = liftIO $ [C.exp| Font* { new Font( $(Context* ptr) ) } |]

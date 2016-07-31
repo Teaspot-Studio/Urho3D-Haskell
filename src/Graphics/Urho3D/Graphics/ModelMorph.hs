@@ -20,7 +20,7 @@ import Data.Monoid
 import Foreign 
 import Foreign.C.String
 import Graphics.Urho3D.Graphics.Internal.ModelMorph
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Monad
 import Text.RawString.QQ
@@ -128,7 +128,7 @@ instance Storable ModelMorph where
 
 C.verbatim "typedef Vector<ModelMorph> VectorModelMorph;"
 
-instance Createable (Ptr VectorModelMorph) where 
+instance Creatable (Ptr VectorModelMorph) where 
   type CreationOptions (Ptr VectorModelMorph) = ()
   newObject _ = liftIO [C.exp| VectorModelMorph* {new Vector<ModelMorph>() } |]
   deleteObject ptr = liftIO [C.exp| void { delete $(VectorModelMorph* ptr) } |]

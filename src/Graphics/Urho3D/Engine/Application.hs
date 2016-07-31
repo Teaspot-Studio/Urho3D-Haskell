@@ -17,7 +17,7 @@ import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Engine.Engine
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Parent
 import Data.Monoid
@@ -116,7 +116,7 @@ newApplication ptr setupFunc startFunc stopFunc = do
 deleteApplication :: Ptr Application -> IO ()
 deleteApplication ptr = [C.exp| void { delete $(ApplicationH* ptr) } |]
 
-instance Createable (Ptr Application) where 
+instance Creatable (Ptr Application) where 
   type CreationOptions (Ptr Application) = (Ptr Context, IO (), IO (), IO ())
 
   newObject (cntx, setup, start, stop) = liftIO $ newApplication cntx setup start stop

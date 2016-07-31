@@ -13,7 +13,7 @@ import Graphics.Urho3D.Engine.Internal.DebugHud
 import Graphics.Urho3D.Resource.XMLFile 
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Core.Object
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Parent
 import Data.Monoid
@@ -32,7 +32,7 @@ newDebugHud ptr = [C.exp| DebugHud* {new DebugHud($(Context* ptr))} |]
 deleteDebugHud :: Ptr DebugHud -> IO ()
 deleteDebugHud ptr = [C.exp| void {delete $(DebugHud* ptr)} |]
 
-instance Createable (Ptr DebugHud) where 
+instance Creatable (Ptr DebugHud) where 
   type CreationOptions (Ptr DebugHud) = Ptr Context 
 
   newObject = liftIO . newDebugHud

@@ -15,7 +15,7 @@ import qualified Data.Text as T
 import Graphics.Urho3D.UI.Internal.Text
 import Graphics.Urho3D.UI.Font
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -36,7 +36,7 @@ C.using "namespace Urho3D"
 textContext :: C.Context 
 textContext = sharedTextPtrCntx <> textCntx
 
-instance Createable (Ptr Text) where 
+instance Creatable (Ptr Text) where 
   type CreationOptions (Ptr Text) = Ptr Context 
 
   newObject ptr = liftIO $ [C.exp| Text* { new Text( $(Context* ptr) ) } |]

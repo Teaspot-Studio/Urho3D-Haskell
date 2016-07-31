@@ -10,7 +10,7 @@ import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.UI.Internal.LineEdit
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -31,7 +31,7 @@ C.using "namespace Urho3D"
 lineEditContext :: C.Context 
 lineEditContext = sharedLineEditPtrCntx <> lineEditCntx
 
-instance Createable (Ptr LineEdit) where 
+instance Creatable (Ptr LineEdit) where 
   type CreationOptions (Ptr LineEdit) = Ptr Context 
 
   newObject ptr = liftIO $ [C.exp| LineEdit* { new LineEdit( $(Context* ptr) ) } |]

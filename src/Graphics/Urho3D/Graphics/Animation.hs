@@ -49,7 +49,7 @@ import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.Vector
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.HashMap
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -109,7 +109,7 @@ hashMapPOD "StringHash" "AnimationTrack"
 animationContext :: C.Context 
 animationContext = animationCntx <> resourceContext <> sharedAnimationPtrCntx <> hashMapStringHashAnimationTrackCntx <> vectorAnimationKeyFrameCntx
 
-instance Createable (Ptr Animation) where 
+instance Creatable (Ptr Animation) where 
   type CreationOptions (Ptr Animation) = Ptr Context 
 
   newObject ptr = liftIO [C.exp| Animation* { new Animation($(Context* ptr)) } |]
@@ -187,7 +187,7 @@ instance (Typeable a, VariantStorable a) => Storable (AnimationTriggerPoint a) w
 
 C.verbatim "typedef Vector<AnimationTriggerPoint> VectorAnimationTriggerPoint;"
 
-instance Createable (Ptr VectorAnimationTriggerPoint) where 
+instance Creatable (Ptr VectorAnimationTriggerPoint) where 
   type CreationOptions (Ptr VectorAnimationTriggerPoint) = ()
   newObject _ = liftIO [C.exp| VectorAnimationTriggerPoint* {new VectorAnimationTriggerPoint() } |]
   deleteObject ptr = liftIO [C.exp| void { delete $(VectorAnimationTriggerPoint* ptr) } |]

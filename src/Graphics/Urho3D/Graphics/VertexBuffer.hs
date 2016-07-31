@@ -10,7 +10,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Monad
@@ -30,7 +30,7 @@ C.using "namespace Urho3D"
 vertexBufferContext :: C.Context 
 vertexBufferContext = sharedVertexBufferPtrCntx <> vertexBufferCntx <> objectContext
 
-instance Createable (Ptr VertexBuffer) where 
+instance Creatable (Ptr VertexBuffer) where 
   type CreationOptions (Ptr VertexBuffer) = Ptr Context
 
   newObject cntxPtr = liftIO $ [C.exp| VertexBuffer* { new VertexBuffer( $(Context* cntxPtr) ) } |]
@@ -42,7 +42,7 @@ sharedPtr "VertexBuffer"
 
 C.verbatim "typedef Vector<SharedPtr<VertexBuffer> > VectorSharedVertexBufferPtr;"
 
-instance Createable (Ptr VectorSharedVertexBufferPtr) where 
+instance Creatable (Ptr VectorSharedVertexBufferPtr) where 
   type CreationOptions (Ptr VectorSharedVertexBufferPtr) = ()
   newObject _ = liftIO [C.exp| VectorSharedVertexBufferPtr* {new Vector<SharedPtr<VertexBuffer> >() } |]
   deleteObject ptr = liftIO [C.exp| void { delete $(VectorSharedVertexBufferPtr* ptr) } |]

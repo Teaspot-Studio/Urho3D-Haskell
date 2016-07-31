@@ -13,7 +13,7 @@ module Graphics.Urho3D.Math.Color(
 import qualified Language.C.Inline as C 
 import qualified Language.C.Inline.Cpp as C
 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Internal.Color
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -80,7 +80,7 @@ instance Num Color where
   signum c = Color (signum $ c^.rComp) (signum $ c^.gComp) (signum $ c^.bComp) (signum $ c^.aComp)
   fromInteger i = Color (fromIntegral i) (fromIntegral i) (fromIntegral i) 1
 
-instance Createable (Ptr Color) where
+instance Creatable (Ptr Color) where
   type CreationOptions (Ptr Color) = Color
 
   newObject = liftIO . new

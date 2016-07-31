@@ -37,7 +37,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.Object
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Graphics.Camera
 import Graphics.Urho3D.Graphics.Skeleton
 import Graphics.Urho3D.Math.BoundingBox
@@ -87,7 +87,7 @@ instance NodeComponent DebugRenderer where
     return &h;
   } |]
 
-instance Createable (Ptr DebugRenderer) where 
+instance Creatable (Ptr DebugRenderer) where 
   type CreationOptions (Ptr DebugRenderer) = Ptr Context
 
   newObject ptr = liftIO [C.exp| DebugRenderer* { new DebugRenderer($(Context* ptr)) } |]

@@ -176,7 +176,7 @@ import Graphics.Urho3D.Math.Color
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector2
 import Graphics.Urho3D.Math.Rect
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Resource.XMLFile 
 import Graphics.Urho3D.Resource.XMLElement
 import Graphics.Urho3D.Monad
@@ -194,7 +194,7 @@ uiElementContext = sharedUIElementPtrCntx <> weakUIElementPtrCntx <> uiElementCn
 
 C.verbatim "typedef HashMap<StringHash, Variant> HashMapStringHashVariant;"
 
-instance Createable (Ptr UIElement) where 
+instance Creatable (Ptr UIElement) where 
   type CreationOptions (Ptr UIElement) = Ptr Context 
 
   newObject ptr = liftIO $ [C.exp| UIElement* { new UIElement($(Context* ptr)) } |]

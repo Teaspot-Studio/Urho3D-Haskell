@@ -20,7 +20,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign
@@ -53,7 +53,7 @@ C.verbatim "typedef WeakPtr<Node> WeakNode;"
 skeletonContext :: C.Context 
 skeletonContext = skeletonCntx
 
-instance Createable (Ptr Skeleton) where 
+instance Creatable (Ptr Skeleton) where 
   type CreationOptions (Ptr Skeleton) = ()
 
   newObject _ = liftIO $ [C.exp| Skeleton* { new Skeleton() } |]

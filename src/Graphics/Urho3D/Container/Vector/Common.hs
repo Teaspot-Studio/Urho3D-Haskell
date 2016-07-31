@@ -17,7 +17,7 @@ import qualified Language.C.Inline.Cpp as C
 import Graphics.Urho3D.Container.Vector.Internal.Common
 import Graphics.Urho3D.Container.ForeignVector 
 import Graphics.Urho3D.Math.Matrix3x4
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
@@ -39,7 +39,7 @@ C.verbatim "typedef PODVector<int> PODVectorInt;"
 C.verbatim "typedef Vector<PODVector<unsigned> > VectorPODVectorWord;"
 C.verbatim "typedef Vector<PODVector<Matrix3x4> > VectorPODVectorMatrix3x4;"
 
-instance Createable (Ptr PODVectorWord8) where 
+instance Creatable (Ptr PODVectorWord8) where 
   type CreationOptions (Ptr PODVectorWord8) = ()
 
   newObject _ = liftIO [C.exp| PODVectorWord8* { new PODVector<unsigned char>() } |]
@@ -61,7 +61,7 @@ instance WriteableVector PODVectorWord8 where
     [C.exp| void {$(PODVectorWord8* ptr)->Push($(unsigned char w'))} |]
 
 
-instance Createable (Ptr PODVectorWord) where 
+instance Creatable (Ptr PODVectorWord) where 
   type CreationOptions (Ptr PODVectorWord) = ()
 
   newObject _ = liftIO [C.exp| PODVectorWord* { new PODVector<unsigned int>() } |]
@@ -83,7 +83,7 @@ instance WriteableVector PODVectorWord where
     [C.exp| void {$(PODVectorWord* ptr)->Push($(unsigned int w'))} |]
 
 
-instance Createable (Ptr PODVectorMatrix3x4) where 
+instance Creatable (Ptr PODVectorMatrix3x4) where 
   type CreationOptions (Ptr PODVectorMatrix3x4) = ()
 
   newObject _ = liftIO [C.exp| PODVectorMatrix3x4* { new PODVector<Matrix3x4>() } |]
@@ -105,7 +105,7 @@ instance WriteableVector PODVectorMatrix3x4 where
 
 
 
-instance Createable (Ptr PODVectorBool) where 
+instance Creatable (Ptr PODVectorBool) where 
   type CreationOptions (Ptr PODVectorBool) = ()
 
   newObject _ = liftIO [C.exp| PODVectorBool* { new PODVector<bool>() } |]
@@ -126,7 +126,7 @@ instance WriteableVector PODVectorBool where
     let w' = fromBool w 
     [C.exp| void {$(PODVectorBool* ptr)->Push($(int w') != 0)} |]
 
-instance Createable (Ptr PODVectorFloat) where 
+instance Creatable (Ptr PODVectorFloat) where 
   type CreationOptions (Ptr PODVectorFloat) = ()
 
   newObject _ = liftIO [C.exp| PODVectorFloat* { new PODVector<float>() } |]
@@ -149,7 +149,7 @@ instance WriteableVector PODVectorFloat where
 
 
 
-instance Createable (Ptr PODVectorInt) where 
+instance Creatable (Ptr PODVectorInt) where 
   type CreationOptions (Ptr PODVectorInt) = ()
 
   newObject _ = liftIO [C.exp| PODVectorInt* { new PODVector<int>() } |]
@@ -172,7 +172,7 @@ instance WriteableVector PODVectorInt where
 
 
 
-instance Createable (Ptr VectorPODVectorWord) where 
+instance Creatable (Ptr VectorPODVectorWord) where 
   type CreationOptions (Ptr VectorPODVectorWord) = ()
 
   newObject _ = liftIO [C.exp| VectorPODVectorWord* { new Vector<PODVector<unsigned> >() } |]
@@ -193,7 +193,7 @@ instance WriteableVector VectorPODVectorWord where
     [C.exp| void {$(VectorPODVectorWord* ptr)->Push(*$(PODVectorWord* vptr))} |]
 
 
-instance Createable (Ptr VectorPODVectorMatrix3x4) where 
+instance Creatable (Ptr VectorPODVectorMatrix3x4) where 
   type CreationOptions (Ptr VectorPODVectorMatrix3x4) = ()
 
   newObject _ = liftIO [C.exp| VectorPODVectorMatrix3x4* { new Vector<PODVector<Matrix3x4> >() } |]

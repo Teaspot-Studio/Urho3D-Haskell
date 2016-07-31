@@ -16,7 +16,7 @@ import Graphics.Urho3D.Core.ObjectFactory
 import Graphics.Urho3D.Core.TypeInfo
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.Str
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Parent
@@ -69,7 +69,7 @@ newCustomFactory ptr pinfo maker = [C.exp| CustomFactory* {
 deleteCustomFactory :: Ptr CustomFactory -> IO ()
 deleteCustomFactory ptr = [C.exp| void {delete $(CustomFactory* ptr)} |]
 
-instance Createable (Ptr CustomFactory) where 
+instance Creatable (Ptr CustomFactory) where 
   type CreationOptions (Ptr CustomFactory) = (Ptr Context, Ptr TypeInfo, ObjectMaker)
 
   newObject (ptr, pinfo, maker) = liftIO $ newCustomFactory ptr pinfo maker

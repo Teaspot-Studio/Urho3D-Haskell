@@ -12,7 +12,7 @@ import Graphics.Urho3D.Resource.Internal.Cache
 import Graphics.Urho3D.Resource.Resource
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Data.Proxy
@@ -32,7 +32,7 @@ newResourceCache ptr = [C.exp| ResourceCache* { new ResourceCache( $(Context* pt
 deleteResourceCache :: Ptr ResourceCache -> IO ()
 deleteResourceCache ptr = [C.exp| void { delete $(ResourceCache* ptr) } |]
 
-instance Createable (Ptr ResourceCache) where 
+instance Creatable (Ptr ResourceCache) where 
   type CreationOptions (Ptr ResourceCache) = Ptr Context 
 
   newObject = liftIO . newResourceCache

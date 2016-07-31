@@ -14,7 +14,7 @@ import qualified Language.C.Inline.Cpp as C
 import Control.Lens 
 import Data.Monoid
 import Foreign 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Defs
 import Graphics.Urho3D.Math.Internal.Vector4
 import Graphics.Urho3D.Monad
@@ -75,7 +75,7 @@ instance Fractional Vector4 where
   a / b = Vector4 (a^.x / b^.x) (a^.y / b^.y) (a^.z / b^.z) (a^.w / b^.w)
   fromRational v = Vector4 (fromRational v) (fromRational v) (fromRational v) (fromRational v)
 
-instance Createable (Ptr Vector4) where
+instance Creatable (Ptr Vector4) where
   type CreationOptions (Ptr Vector4) = Vector4
 
   newObject = liftIO . new

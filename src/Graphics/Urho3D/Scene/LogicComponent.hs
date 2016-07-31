@@ -25,7 +25,7 @@ import Control.DeepSeq
 
 import Graphics.Urho3D.Scene.Internal.LogicComponent
 import Graphics.Urho3D.Core.Context
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
@@ -53,7 +53,7 @@ newLogicComponent ptr = [C.exp| LogicComponent* { new LogicComponent($(Context* 
 deleteLogicComponent :: Ptr LogicComponent -> IO ()
 deleteLogicComponent ptr = [C.exp| void { delete $(LogicComponent* ptr) } |]
 
-instance Createable (Ptr LogicComponent) where 
+instance Creatable (Ptr LogicComponent) where 
   type CreationOptions (Ptr LogicComponent) = Ptr Context 
 
   newObject = liftIO . newLogicComponent

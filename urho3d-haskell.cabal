@@ -39,11 +39,7 @@ library
 
   exposed-modules:     Graphics.Urho3D
                        Graphics.Urho3D.Container
-                       Graphics.Urho3D.Container.ForeignVector
-                       Graphics.Urho3D.Container.HashMap
-                       Graphics.Urho3D.Container.Ptr
                        Graphics.Urho3D.Container.Str
-                       Graphics.Urho3D.Container.Vector
                        Graphics.Urho3D.Container.Vector.Common
                        Graphics.Urho3D.Core
                        Graphics.Urho3D.Core.Context
@@ -54,7 +50,6 @@ library
                        Graphics.Urho3D.Core.ProcessUtils
                        Graphics.Urho3D.Core.TypeInfo
                        Graphics.Urho3D.Core.Variant
-                       Graphics.Urho3D.Createable
                        Graphics.Urho3D.Engine
                        Graphics.Urho3D.Engine.Application
                        Graphics.Urho3D.Engine.Console
@@ -109,11 +104,8 @@ library
                        Graphics.Urho3D.Math.Vector2 
                        Graphics.Urho3D.Math.Vector3
                        Graphics.Urho3D.Math.Vector4
-                       Graphics.Urho3D.Monad
-                       Graphics.Urho3D.Multithread
                        Graphics.Urho3D.Network
                        Graphics.Urho3D.Network.Connection
-                       Graphics.Urho3D.Parent
                        Graphics.Urho3D.Resource
                        Graphics.Urho3D.Resource.Cache
                        Graphics.Urho3D.Resource.Image
@@ -211,7 +203,6 @@ library
                        Graphics.Urho3D.Scene.Internal.Node
                        Graphics.Urho3D.Scene.Internal.Scene
                        Graphics.Urho3D.Scene.Internal.Serializable
-                       Graphics.Urho3D.Template
                        Graphics.Urho3D.UI.Internal.BorderImage
                        Graphics.Urho3D.UI.Internal.Button
                        Graphics.Urho3D.UI.Internal.CheckBox
@@ -313,6 +304,7 @@ library
                        src/Graphics/Urho3D/UI/Window.cpp
                        
   build-depends:        base
+                      , urho3d-bindgen
                       , containers
                       , inline-c
                       , inline-c-cpp
@@ -579,7 +571,7 @@ executable urho3d-haskell-sample07
   default-language:    Haskell2010
 
   if flag(examples)
-    Buildable: True
+    Buildable: False 
   else
     Buildable: False
 

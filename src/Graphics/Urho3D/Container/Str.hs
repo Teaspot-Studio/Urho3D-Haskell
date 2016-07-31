@@ -17,7 +17,7 @@ import qualified Data.Text as T
 
 import Graphics.Urho3D.Container.Internal.Str
 import Graphics.Urho3D.Container.ForeignVector 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign 
@@ -33,20 +33,20 @@ C.verbatim "typedef Vector<WString> WStringVector;"
 stringContext :: C.Context 
 stringContext = stringCntx
 
-instance Createable (Ptr UrhoString) where 
+instance Creatable (Ptr UrhoString) where 
   type CreationOptions (Ptr UrhoString) = Either String T.Text
 
   newObject (Left s) = liftIO $ withCString s $ \s' -> [C.exp| String* { new String($(const char* s')) } |]
   newObject (Right s) = liftIO $ textAsPtrW32 s $ \s' -> [C.exp| String* { new String($(const wchar_t* s')) } |]
   deleteObject ptr = liftIO $ [C.exp| void { delete $(String* ptr) } |]
 
-instance Createable (Ptr UrhoWString) where 
+instance Creatable (Ptr UrhoWString) where 
   type CreationOptions (Ptr UrhoWString) = T.Text
 
   newObject s = liftIO $ textAsPtrW32 s $ \s' -> [C.exp| WString* { new WString($(const wchar_t* s')) } |]
   deleteObject ptr = liftIO $ [C.exp| void { delete $(WString* ptr) } |]
 
-instance Createable (Ptr StringVector) where 
+instance Creatable (Ptr StringVector) where 
   type CreationOptions (Ptr StringVector) = ()
 
   newObject _ = liftIO [C.exp| StringVector* { new StringVector() } |]
@@ -65,7 +65,7 @@ instance WriteableVector StringVector where
   foreignVectorAppend ptr s = liftIO $ withCString s $ \s' -> 
     [C.exp| void { $(StringVector* ptr)->Push(String($(const char* s'))) } |]
 
-instance Createable (Ptr WStringVector) where 
+instance Creatable (Ptr WStringVector) where 
   type CreationOptions (Ptr WStringVector) = ()
 
   newObject _ = liftIO [C.exp| WStringVector* { new WStringVector() } |]

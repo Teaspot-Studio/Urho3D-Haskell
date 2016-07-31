@@ -38,7 +38,7 @@ import Graphics.Urho3D.Container.HashMap
 import Graphics.Urho3D.Container.Str
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Core.Internal.Variant
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Rect 
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector2
@@ -59,7 +59,7 @@ deleteVariant :: Ptr Variant -> IO ()
 deleteVariant ptr = [C.exp| void { delete $(Variant* ptr) } |]
 
 -- | Creates empty variant, for extended API view @VariantStorable@
-instance Createable (Ptr Variant) where 
+instance Creatable (Ptr Variant) where 
   type CreationOptions (Ptr Variant) = ()
 
   newObject _ = liftIO newEmptyVariant
@@ -288,7 +288,7 @@ instance Storable ResourceRefList where
 
 C.verbatim "typedef Vector<Variant> VectorVariant;"
 
-instance Createable (Ptr VectorVariant) where 
+instance Creatable (Ptr VectorVariant) where 
   type CreationOptions (Ptr VectorVariant) = ()
   newObject _ = liftIO [C.exp| VectorVariant* {new Vector<Variant>() } |]
   deleteObject ptr = liftIO [C.exp| void { delete $(VectorVariant* ptr) } |]

@@ -1,6 +1,7 @@
 flags: {}
 packages:
 - '.'
+- 'urho3d-bindgen'
 - location:
     git: https://github.com/Teaspot-Studio/inline-c.git
     commit: 3b57bf189dbe7efedaac42e7ac705adea5bd7f6c
@@ -8,7 +9,7 @@ packages:
     git: https://github.com/Teaspot-Studio/inline-c-cpp.git
     commit: 68ec7290766c4f7997361d4e74e6ad4c15dd26b6
 extra-deps: []
-resolver: lts-6.9
+resolver: lts-6.10
 
 extra-lib-dirs:
 - /usr/lib64/Urho3D

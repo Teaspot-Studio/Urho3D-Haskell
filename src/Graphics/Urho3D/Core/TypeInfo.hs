@@ -16,7 +16,7 @@ import Graphics.Urho3D.Core.Internal.TypeInfo
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Container.Str
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -40,7 +40,7 @@ newTypeInfo s ptr = liftIO $ withCString s $ \s' ->
 deleteTypeInfo :: Ptr TypeInfo -> IO ()
 deleteTypeInfo ptr = [C.exp| void {delete $(TypeInfo* ptr)} |]
 
-instance Createable (Ptr TypeInfo) where 
+instance Creatable (Ptr TypeInfo) where 
   type CreationOptions (Ptr TypeInfo) = (String, Ptr TypeInfo) 
 
   newObject = uncurry newTypeInfo

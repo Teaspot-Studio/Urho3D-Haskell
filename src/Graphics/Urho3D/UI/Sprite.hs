@@ -32,7 +32,7 @@ import Data.Monoid
 import Foreign 
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Graphics.Defs
 import Graphics.Urho3D.Graphics.Texture 
 import Graphics.Urho3D.Math.Rect
@@ -60,7 +60,7 @@ newSprite ptr = [C.exp| Sprite* { new Sprite( $(Context* ptr) ) } |]
 deleteSprite :: Ptr Sprite -> IO ()
 deleteSprite ptr = [C.exp| void { delete $(Sprite* ptr) } |]
 
-instance Createable (Ptr Sprite) where 
+instance Creatable (Ptr Sprite) where 
   type CreationOptions (Ptr Sprite) = Ptr Context 
 
   newObject = liftIO . newSprite

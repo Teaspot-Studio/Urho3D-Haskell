@@ -10,7 +10,7 @@ import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.UI.Internal.CheckBox
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -31,7 +31,7 @@ C.using "namespace Urho3D"
 checkBoxContext :: C.Context 
 checkBoxContext = sharedCheckBoxPtrCntx <> checkBoxCntx
 
-instance Createable (Ptr CheckBox) where 
+instance Creatable (Ptr CheckBox) where 
   type CreationOptions (Ptr CheckBox) = Ptr Context 
 
   newObject ptr = liftIO $ [C.exp| CheckBox* { new CheckBox( $(Context* ptr) ) } |]

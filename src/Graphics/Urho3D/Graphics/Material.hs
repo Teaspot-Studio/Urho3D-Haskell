@@ -17,7 +17,7 @@ import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Container.Ptr 
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Core.Object
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Parent
 import Graphics.Urho3D.Resource.Resource
 
@@ -36,7 +36,7 @@ instance ResourceType Material where
     return &h; 
     } |]
 
-instance Createable (Ptr Material) where 
+instance Creatable (Ptr Material) where 
   type CreationOptions (Ptr Material) = Ptr Context
   newObject ptr = liftIO [C.exp| Material* {new Material($(Context* ptr))} |]
   deleteObject ptr = liftIO [C.exp| void {delete $(Material* ptr)} |]

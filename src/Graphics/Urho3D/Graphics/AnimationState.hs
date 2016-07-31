@@ -35,7 +35,7 @@ import qualified Language.C.Inline.Cpp as C
 import Graphics.Urho3D.Graphics.Internal.AnimationState
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.ForeignVector
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign
@@ -75,7 +75,7 @@ data AnimationBlendMode =
 instance NFData AnimationBlendMode 
 
 -- | Construct with root scene node or animated model and animation pointers.
-instance Createable (Ptr AnimationState) where 
+instance Creatable (Ptr AnimationState) where 
   type CreationOptions (Ptr AnimationState) = (Either (Ptr AnimatedModel) (Ptr Node), Ptr Animation)
 
   newObject (Left pmodel, panim) = liftIO [C.exp| AnimationState* { new AnimationState($(AnimatedModel* pmodel), $(Animation* panim))} |]
@@ -86,7 +86,7 @@ sharedPtr "AnimationState"
 
 C.verbatim "typedef Vector<SharedPtr<AnimationState> > VectorSharedAnimationStatePtr;"
 
-instance Createable (Ptr VectorSharedAnimationStatePtr) where 
+instance Creatable (Ptr VectorSharedAnimationStatePtr) where 
   type CreationOptions (Ptr VectorSharedAnimationStatePtr) = ()
   newObject _ = liftIO [C.exp| VectorSharedAnimationStatePtr* {new Vector<SharedPtr<AnimationState> >() } |]
   deleteObject ptr = liftIO [C.exp| void { delete $(VectorSharedAnimationStatePtr* ptr) } |]

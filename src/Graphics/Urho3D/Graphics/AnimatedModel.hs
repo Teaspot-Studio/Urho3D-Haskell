@@ -38,7 +38,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.AnimatedModel
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign
@@ -115,7 +115,7 @@ instance NodeComponent AnimatedModel where
     return &h;
   } |]
 
-instance Createable (Ptr AnimatedModel) where 
+instance Creatable (Ptr AnimatedModel) where 
   type CreationOptions (Ptr AnimatedModel) = Ptr Context 
 
   newObject ptr = liftIO [C.exp| AnimatedModel* { new AnimatedModel($(Context* ptr))} |]

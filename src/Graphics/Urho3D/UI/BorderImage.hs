@@ -22,7 +22,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Graphics.Defs
 import Graphics.Urho3D.Graphics.Texture
 import Graphics.Urho3D.Math.Rect 
@@ -52,7 +52,7 @@ newBorderImage ptr = [C.exp| BorderImage* { new BorderImage( $(Context* ptr) ) }
 deleteBorderImage :: Ptr BorderImage -> IO ()
 deleteBorderImage ptr = [C.exp| void { delete $(BorderImage* ptr) } |]
 
-instance Createable (Ptr BorderImage) where 
+instance Creatable (Ptr BorderImage) where 
   type CreationOptions (Ptr BorderImage) = Ptr Context 
 
   newObject = liftIO . newBorderImage

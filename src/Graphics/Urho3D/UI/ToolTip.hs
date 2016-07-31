@@ -10,7 +10,7 @@ import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.UI.Internal.ToolTip
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -30,7 +30,7 @@ C.using "namespace Urho3D"
 toolTipContext :: C.Context 
 toolTipContext = sharedToolTipPtrCntx <> toolTipCntx
 
-instance Createable (Ptr ToolTip) where 
+instance Creatable (Ptr ToolTip) where 
   type CreationOptions (Ptr ToolTip) = Ptr Context 
 
   newObject ptr = liftIO $ [C.exp| ToolTip* { new ToolTip( $(Context* ptr) ) } |]

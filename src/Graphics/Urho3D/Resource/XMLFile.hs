@@ -12,7 +12,7 @@ import qualified Language.C.Inline.Cpp as C
 import Graphics.Urho3D.Resource.Internal.XMLFile
 import Graphics.Urho3D.Resource.Resource
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Control.Monad.IO.Class
 import Data.Monoid
 import Foreign 
@@ -32,7 +32,7 @@ newXMLFile ptr = [C.exp| XMLFile* { new XMLFile( $(Context* ptr) ) } |]
 deleteXMLFile :: Ptr XMLFile -> IO ()
 deleteXMLFile ptr = [C.exp| void { delete $(XMLFile* ptr) } |]
 
-instance Createable (Ptr XMLFile) where 
+instance Creatable (Ptr XMLFile) where 
   type CreationOptions (Ptr XMLFile) = Ptr Context 
 
   newObject = liftIO . newXMLFile

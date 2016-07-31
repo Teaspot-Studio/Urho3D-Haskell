@@ -10,7 +10,7 @@ import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Scene.Internal.Serializable
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
@@ -33,7 +33,7 @@ newSerializable ptr = [C.exp| Serializable* { new Serializable($(Context* ptr)) 
 deleteSerializable :: Ptr Serializable -> IO ()
 deleteSerializable ptr = [C.exp| void { delete $(Serializable* ptr) } |]
 
-instance Createable (Ptr Serializable) where 
+instance Creatable (Ptr Serializable) where 
   type CreationOptions (Ptr Serializable) = Ptr Context 
 
   newObject = liftIO . newSerializable

@@ -10,7 +10,7 @@ import qualified Language.C.Inline.Cpp as C
 
 import Data.Monoid
 import Foreign 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Math.Internal.Polyhedron
 import Graphics.Urho3D.Math.Vector3

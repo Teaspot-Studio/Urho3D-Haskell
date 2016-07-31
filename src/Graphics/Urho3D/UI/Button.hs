@@ -10,7 +10,7 @@ import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.UI.Internal.Button
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -31,7 +31,7 @@ C.using "namespace Urho3D"
 buttonContext :: C.Context 
 buttonContext = sharedButtonPtrCntx <> buttonCntx
 
-instance Createable (Ptr Button) where 
+instance Creatable (Ptr Button) where 
   type CreationOptions (Ptr Button) = Ptr Context 
 
   newObject ptr = liftIO $ [C.exp| Button* { new Button( $(Context* ptr) ) } |]

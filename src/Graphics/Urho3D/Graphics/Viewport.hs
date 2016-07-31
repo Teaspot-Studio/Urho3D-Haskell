@@ -9,7 +9,7 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -29,7 +29,7 @@ C.using "namespace Urho3D"
 viewportContext :: C.Context 
 viewportContext = sharedViewportPtrCntx <> viewportCntx <> objectContext
 
-instance Createable (Ptr Viewport) where 
+instance Creatable (Ptr Viewport) where 
   type CreationOptions (Ptr Viewport) = (Ptr Context, Ptr Scene, Ptr Camera)
 
   newObject (cntxPtr, scenePtr, camPtr) = liftIO $ [C.exp| Viewport* { new Viewport( $(Context* cntxPtr), $(Scene* scenePtr), $(Camera* camPtr) ) } |]

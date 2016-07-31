@@ -156,7 +156,7 @@ import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Vector
 import Graphics.Urho3D.Core.Context 
 import Graphics.Urho3D.Core.Variant
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Quaternion
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector2
@@ -208,7 +208,7 @@ newNode ptr = [C.exp| Node* { new Node($(Context* ptr)) } |]
 deleteNode :: Ptr Node -> IO ()
 deleteNode ptr = [C.exp| void { delete $(Node* ptr) } |]
 
-instance Createable (Ptr Node) where 
+instance Creatable (Ptr Node) where 
   type CreationOptions (Ptr Node) = Ptr Context 
 
   newObject = liftIO . newNode
@@ -240,7 +240,7 @@ instance NodeComponent Component where
     return &h;
   } |]
 
-instance Createable (Ptr VectorSharedNodePtr) where 
+instance Creatable (Ptr VectorSharedNodePtr) where 
   type CreationOptions (Ptr VectorSharedNodePtr) = ()
 
   newObject _ = liftIO [C.exp| VectorSharedNodePtr* { new VectorSharedNodePtr() } |]

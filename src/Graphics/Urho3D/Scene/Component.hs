@@ -14,7 +14,7 @@ import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Scene.Internal.Component
 import Graphics.Urho3D.Core.Context 
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Vector
@@ -44,7 +44,7 @@ newComponent ptr = [C.exp| Component* { new Component($(Context* ptr)) } |]
 deleteComponent :: Ptr Component -> IO ()
 deleteComponent ptr = [C.exp| void { delete $(Component* ptr) } |]
 
-instance Createable (Ptr Component) where 
+instance Creatable (Ptr Component) where 
   type CreationOptions (Ptr Component) = Ptr Context 
 
   newObject = liftIO . newComponent
@@ -55,7 +55,7 @@ sharedWeakPtr "Component"
 podVectorPtr "Component"
 deriveParents [''Object, ''Serializable, ''Animatable] ''Component
 
-instance Createable (Ptr VectorSharedComponentPtr) where 
+instance Creatable (Ptr VectorSharedComponentPtr) where 
   type CreationOptions (Ptr VectorSharedComponentPtr) = ()
 
   newObject _ = liftIO [C.exp| VectorSharedComponentPtr* { new VectorSharedComponentPtr() } |]
@@ -75,7 +75,7 @@ instance WriteableVector VectorSharedComponentPtr where
     let p = pointer sp
     [C.exp| void { $(VectorSharedComponentPtr* ptr)->Push(SharedPtr<Component>($(Component* p))) } |]
 
-instance Createable (Ptr VectorWeakComponentPtr) where 
+instance Creatable (Ptr VectorWeakComponentPtr) where 
   type CreationOptions (Ptr VectorWeakComponentPtr) = ()
 
   newObject _ = liftIO [C.exp| VectorWeakComponentPtr* { new VectorWeakComponentPtr() } |]

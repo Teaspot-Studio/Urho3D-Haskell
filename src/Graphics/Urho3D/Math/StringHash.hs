@@ -11,7 +11,7 @@ import qualified Language.C.Inline.Cpp as C
 import Text.RawString.QQ
 
 import Graphics.Urho3D.Math.Internal.StringHash
-import Graphics.Urho3D.Createable
+import Graphics.Urho3D.Creatable
 import Control.Monad.IO.Class
 import Data.Monoid
 import Foreign 
@@ -31,7 +31,7 @@ newStringHash str = withCString str $ \cstr -> do
 deleteStringHash :: Ptr StringHash -> IO ()
 deleteStringHash ptr = [C.exp| void { delete $(StringHash* ptr) } |]
 
-instance Createable (Ptr StringHash) where 
+instance Creatable (Ptr StringHash) where 
   type CreationOptions (Ptr StringHash) = String
 
   newObject = liftIO . newStringHash
