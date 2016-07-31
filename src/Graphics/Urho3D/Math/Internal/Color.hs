@@ -12,14 +12,17 @@ import qualified Language.C.Inline.Context as C
 import qualified Language.C.Types as C
 import qualified Data.Map as Map
 import Control.Lens 
+import GHC.Generics 
+import Control.DeepSeq
 
 data Color = Color {
   _colorRComp :: {-# UNPACK #-} !Float 
 , _colorGComp :: {-# UNPACK #-} !Float 
 , _colorBComp :: {-# UNPACK #-} !Float   
 , _colorAComp :: {-# UNPACK #-} !Float   
-} deriving (Eq, Show)
+} deriving (Eq, Show, Generic)
 makeFields ''Color
+instance NFData Color 
 
 colorCntx :: C.Context 
 colorCntx = mempty {
