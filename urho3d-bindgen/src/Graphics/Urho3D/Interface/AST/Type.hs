@@ -1,6 +1,10 @@
 module Graphics.Urho3D.Interface.AST.Type(
     CppType(..)
-  , parseType
+  , CppPodType(..)
+  , CppInt(..)
+  , Signess(..)
+  , Longness(..)
+  , cppType
   ) where 
 
 import Control.DeepSeq
@@ -65,15 +69,18 @@ longness = (cppSymbol "short" >> return Short)
   <|> (cppSymbol "long" >> return Long)
 
 -- | Parsing a C++ type
-parseType :: forall s m . MonadParsec s m Char
+cppType :: forall s m . MonadParsec s m Char
   => m CppType
-parseType = cppLexeme $ 
-      try parsePointer
-  <|> parseBultin
-  <|> parseUserType
+cppType = do 
+  t <- parseBultin <|> parseUserType
+  wrapPointer t 
   where 
-  parsePointer, parseUserType, parseBultin :: m CppType
-  parsePointer = CppPointer <$> parseType <* cppSymbol "*"
+  wrapPointer t = do 
+    mp <- optional $ cppSymbol "*"
+    case mp of 
+      Nothing -> return t 
+      Just _ -> wrapPointer $ CppPointer t
+
   parseUserType = CppUserType <$> cppIdentifier
   parseBultin = CppPodType <$> choice [
       cppSymbol "bool" >> return CppBool
