@@ -34,5 +34,5 @@ cppIdentifier :: MonadParsec s m Char
   => m String 
 cppIdentifier = cppLexeme $ do
   c <- letterChar
-  cs <- manyTill alphaNumChar cppSpace
+  cs <- many alphaNumChar
   return $ c : cs
