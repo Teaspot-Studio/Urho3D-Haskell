@@ -1,19 +1,20 @@
 module Graphics.Urho3D.Input.Events(
     EventKeyDown(..)
+  , EventKeyUp(..)
   , EventTouchBegin(..)
   , Key(..)
   , toUrhoKey
   , fromUrhoKey
   ) where
 
-import qualified Language.C.Inline as C 
+import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Core.Variant
 import Data.Monoid
-import Data.Maybe 
+import Data.Maybe
 
 C.context (C.cppCtx <> stringHashContext)
 C.include "<Urho3D/Input/InputEvents.h>"
@@ -21,16 +22,16 @@ C.using "namespace Urho3D"
 
 -- | Fires when user press down keyboard key
 data EventKeyDown = EventKeyDown {
-    pressKey :: Key 
-  , pressScancode :: Int 
-  , pressButtons :: Int 
-  , pressQualifiers :: Int 
+    pressKey :: Key
+  , pressScancode :: Int
+  , pressButtons :: Int
+  , pressQualifiers :: Int
   , pressRepeat :: Bool
   } deriving (Show)
 
-instance Event EventKeyDown where 
+instance Event EventKeyDown where
   eventID _ = [C.pure| const StringHash* {&E_KEYDOWN} |]
-  loadEventData vmap = do 
+  loadEventData vmap = do
     pkey <- variantMapGet' vmap [C.pure| const StringHash* {&KeyDown::P_KEY} |]
     pscan <- variantMapGet' vmap [C.pure| const StringHash* {&KeyDown::P_SCANCODE} |]
     pbuttons <- variantMapGet' vmap [C.pure| const StringHash* {&KeyDown::P_BUTTONS} |]
@@ -38,39 +39,61 @@ instance Event EventKeyDown where
     prepeat <- variantMapGet' vmap [C.pure| const StringHash* {&KeyDown::P_REPEAT} |]
     return $ EventKeyDown {
       pressKey = fromUrhoKey $ fromMaybe 0 pkey
-    , pressScancode = fromMaybe 0 pscan 
+    , pressScancode = fromMaybe 0 pscan
     , pressButtons = fromMaybe 0 pbuttons
     , pressQualifiers = fromMaybe 0 pqualifiers
     , pressRepeat = fromMaybe False prepeat
     }
 
+-- | Fires when user release keyboard key
+data EventKeyUp = EventKeyUp {
+  upKey        :: Key
+, upScancode   :: Int
+, upButtons    :: Int
+, upQualifiers :: Int
+} deriving (Show)
+
+instance Event EventKeyUp where
+  eventID _ = [C.pure| const StringHash* {&E_KEYUP} |]
+  loadEventData vmap = do
+    pkey <- variantMapGet' vmap [C.pure| const StringHash* {&KeyUp::P_KEY} |]
+    pscan <- variantMapGet' vmap [C.pure| const StringHash* {&KeyUp::P_SCANCODE} |]
+    pbuttons <- variantMapGet' vmap [C.pure| const StringHash* {&KeyUp::P_BUTTONS} |]
+    pqualifiers <- variantMapGet' vmap [C.pure| const StringHash* {&KeyUp::P_QUALIFIERS} |]
+    return $ EventKeyUp {
+      upKey = fromUrhoKey $ fromMaybe 0 pkey
+    , upScancode = fromMaybe 0 pscan
+    , upButtons = fromMaybe 0 pbuttons
+    , upQualifiers = fromMaybe 0 pqualifiers
+    }
+
 -- | Fires when user touches the screen
 data EventTouchBegin = EventTouchBegin {
-    eventTouchId :: Int 
-  , eventTouchX :: Int 
-  , eventTouchY :: Int 
+    eventTouchId :: Int
+  , eventTouchX :: Int
+  , eventTouchY :: Int
   , eventTouchPressure :: Float
   } deriving (Show)
 
-instance Event EventTouchBegin where 
+instance Event EventTouchBegin where
   eventID _ = [C.pure| const StringHash* {&E_TOUCHBEGIN} |]
-  loadEventData vmap = do 
-    tid <- variantMapGet' vmap [C.pure| const StringHash* {&TouchBegin::P_TOUCHID} |] 
-    tx <- variantMapGet' vmap [C.pure| const StringHash* {&TouchBegin::P_X} |] 
+  loadEventData vmap = do
+    tid <- variantMapGet' vmap [C.pure| const StringHash* {&TouchBegin::P_TOUCHID} |]
+    tx <- variantMapGet' vmap [C.pure| const StringHash* {&TouchBegin::P_X} |]
     ty <- variantMapGet' vmap [C.pure| const StringHash* {&TouchBegin::P_Y} |]
-    tp <- variantMapGet' vmap [C.pure| const StringHash* {&TouchBegin::P_PRESSURE} |] 
+    tp <- variantMapGet' vmap [C.pure| const StringHash* {&TouchBegin::P_PRESSURE} |]
     return $ EventTouchBegin {
-      eventTouchId = fromMaybe 0 tid 
+      eventTouchId = fromMaybe 0 tid
     , eventTouchX = fromMaybe 0 tx
-    , eventTouchY = fromMaybe 0 ty 
+    , eventTouchY = fromMaybe 0 ty
     , eventTouchPressure = fromMaybe 0 tp
     }
 
-data Key = 
-    KeyA 
-  | KeyB 
+data Key =
+    KeyA
+  | KeyB
   | KeyC
-  | KeyD 
+  | KeyD
   | KeyE
   | KeyF
   | KeyG
@@ -83,7 +106,7 @@ data Key =
   | KeyN
   | KeyO
   | KeyP
-  | KeyQ 
+  | KeyQ
   | KeyR
   | KeyS
   | KeyT
@@ -107,7 +130,7 @@ data Key =
   | KeyTab
   | KeyReturn
   | KeyReturn2
-  | KeyKPEnter 
+  | KeyKPEnter
   | KeyShift
   | KeyCtrl
   | KeyAlt
@@ -118,7 +141,7 @@ data Key =
   | KeySpace
   | KeyPageUp
   | KeyPageDown
-  | KeyEnd 
+  | KeyEnd
   | KeyHome
   | KeyLeft
   | KeyUp
@@ -181,12 +204,12 @@ data Key =
   | KeyUnknown
   deriving (Eq, Ord, Show, Enum)
 
-fromUrhoKey :: Int -> Key 
-fromUrhoKey i 
-  | i == keyA = KeyA 
-  | i == keyB = KeyB 
+fromUrhoKey :: Int -> Key
+fromUrhoKey i
+  | i == keyA = KeyA
+  | i == keyB = KeyB
   | i == keyC = KeyC
-  | i == keyD = KeyD 
+  | i == keyD = KeyD
   | i == keyE = KeyE
   | i == keyF = KeyF
   | i == keyG = KeyG
@@ -199,7 +222,7 @@ fromUrhoKey i
   | i == keyN = KeyN
   | i == keyO = KeyO
   | i == keyP = KeyP
-  | i == keyQ = KeyQ 
+  | i == keyQ = KeyQ
   | i == keyR = KeyR
   | i == keyS = KeyS
   | i == keyT = KeyT
@@ -223,7 +246,7 @@ fromUrhoKey i
   | i == keyTab = KeyTab
   | i == keyReturn = KeyReturn
   | i == keyReturn2 = KeyReturn2
-  | i == keyKPEnter = KeyKPEnter 
+  | i == keyKPEnter = KeyKPEnter
   | i == keyShift = KeyShift
   | i == keyCtrl = KeyCtrl
   | i == keyAlt = KeyAlt
@@ -234,7 +257,7 @@ fromUrhoKey i
   | i == keySpace = KeySpace
   | i == keyPageUp = KeyPageUp
   | i == keyPageDown = KeyPageDown
-  | i == keyEnd = KeyEnd 
+  | i == keyEnd = KeyEnd
   | i == keyHome = KeyHome
   | i == keyLeft = KeyLeft
   | i == keyUp = KeyUp
@@ -296,8 +319,8 @@ fromUrhoKey i
   | i == keyRAlt = KeyRAlt
   | otherwise = KeyUnknown
 
-toUrhoKey :: Key -> Int 
-toUrhoKey i 
+toUrhoKey :: Key -> Int
+toUrhoKey i
   | i == KeyA = keyA
   | i == KeyB = keyB
   | i == KeyC = keyC

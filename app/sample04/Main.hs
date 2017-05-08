@@ -29,39 +29,42 @@
 module Main where
 
 import Control.Lens hiding (Context, element)
-import Control.Monad 
+import Control.Monad
 import Data.IORef
 import Foreign
 import Graphics.Urho3D
 import Sample
 
 main :: IO ()
-main = withObject () $ \cntx -> do 
+main = withObject () $ \cntx -> do
   newSample cntx "StaticScene" joysticPatch customStart >>= runSample
 
 -- | Setup after engine initialization and before running the main loop.
 customStart :: SampleRef -> IO ()
-customStart sr = do 
-  s <- readIORef sr 
+customStart sr = do
+  s <- readIORef sr
   let app = s ^. sampleApplication
 
-  -- Create the scene content 
-  (scene, cameraNode) <- createScene app 
-  -- Create the UI content 
-  createInstructions app 
+  -- Create the scene content
+  (scene, cameraNode) <- createScene app
+  -- Create the UI content
+  createInstructions app
   -- Setup the viewport for displaying the scene
   setupViewport app scene cameraNode
-  -- Hook up to the frame update events 
+  -- Hook up to the frame update events
   subscribeToEvents app cameraNode
-  -- Save scene to prevent garbage collecting 
-  writeIORef sr $ sampleScene .~ scene $ s 
+  -- Save scene to prevent garbage collecting
+  writeIORef sr $ sampleScene .~ scene $ s
+
+  -- Set the mouse mode to use in the sample
+  initMouseMode sr MM'Relative
 
 -- | Construct the scene content.
 createScene :: SharedPtr Application -> IO (SharedPtr Scene, Ptr Node)
-createScene app = do 
-  (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
+createScene app = do
+  (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app
 
-  (scene :: SharedPtr Scene) <- newSharedObject =<< getContext app 
+  (scene :: SharedPtr Scene) <- newSharedObject =<< getContext app
 
   {-
    Create the Octree component to the scene. This is required before adding any drawable components, or else nothing will
@@ -79,7 +82,7 @@ createScene app = do
   planeNode <- nodeCreateChild scene "Plane" CM'Replicated 0
   nodeSetScale planeNode (Vector3 100 1 100)
   (planeObject :: Ptr StaticModel) <- fromJustTrace "Plane StaticModel" <$> nodeCreateComponent planeNode Nothing Nothing
-  (planeModel :: Ptr Model) <- fromJustTrace "Plane.mdl" <$> cacheGetResource cache "Models/Plane.mdl" True 
+  (planeModel :: Ptr Model) <- fromJustTrace "Plane.mdl" <$> cacheGetResource cache "Models/Plane.mdl" True
   staticModelSetModel planeObject planeModel
   (planeMaterial :: Ptr Material) <- fromJustTrace "StoneTiled.xml" <$> cacheGetResource cache "Materials/StoneTiled.xml" True
   staticModelSetMaterial planeObject planeMaterial
@@ -103,11 +106,11 @@ createScene app = do
    scene.
   -}
   let numObjects = 200
-  _ <- replicateM numObjects $ do 
+  _ <- replicateM numObjects $ do
     mushroomNode <- nodeCreateChild scene "Mushroom" CM'Replicated 0
     [r1, r2] <- replicateM 2 (randomUp 90)
     nodeSetPosition mushroomNode $ Vector3 (r1 - 45) 0 (r2 - 45)
-    r3 <- randomUp 360 
+    r3 <- randomUp 360
     nodeSetRotation mushroomNode $ quaternionFromEuler 0 r3 0
     r4 <- randomUp 2
     nodeSetScale' mushroomNode $ 0.5 + r4
@@ -132,10 +135,10 @@ createScene app = do
 
 -- | Construct an instruction text to the UI.
 createInstructions :: SharedPtr Application -> IO ()
-createInstructions app = do 
-  (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
+createInstructions app = do
+  (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app
   (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app
-  roote <- uiRoot ui 
+  roote <- uiRoot ui
 
   -- Construct new Text object, set string to display and font to use
   (instructionText :: Ptr Text) <- createChildSimple roote
@@ -145,12 +148,12 @@ createInstructions app = do
 
   -- Position the text relative to the screen center
   uiElementSetAlignment instructionText AlignmentHorizontalCenter AlignmentVerticalCenter
-  rootHeight <- uiElementGetHeight roote 
+  rootHeight <- uiElementGetHeight roote
   uiElementSetPosition instructionText $ IntVector2 0 (rootHeight `div` 4)
 
 -- | Set up a viewport for displaying the scene.
 setupViewport :: SharedPtr Application -> SharedPtr Scene -> Ptr Node -> IO ()
-setupViewport app scene cameraNode = do 
+setupViewport app scene cameraNode = do
   (renderer :: Ptr Renderer) <- fromJustTrace "Renderer" <$> getSubsystem app
 
   {-
@@ -158,24 +161,24 @@ setupViewport app scene cameraNode = do
     at minimum. Additionally we could configure the viewport screen size and the rendering path (eg. forward / deferred) to
     use, but now we just use full screen and default render path configured in the engine command line options
   -}
-  cntx <- getContext app 
+  cntx <- getContext app
   (cam :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent' cameraNode False
   (viewport :: SharedPtr Viewport) <- newSharedObject (cntx, pointer scene, cam)
   rendererSetViewport renderer 0 viewport
 
 data CameraData = CameraData {
-  camYaw :: Float 
+  camYaw :: Float
 , camPitch :: Float
 }
 
 -- | Read input and moves the camera.
 moveCamera :: SharedPtr Application -> Ptr Node -> Float -> CameraData -> IO CameraData
-moveCamera app cameraNode t camData = do 
-  (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app 
+moveCamera app cameraNode t camData = do
+  (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app
 
   -- Do not move if the UI has a focused element (the console)
   mFocusElem <- uiFocusElement ui
-  whenNothing mFocusElem camData $ do 
+  whenNothing mFocusElem camData $ do
     (input :: Ptr Input) <- fromJustTrace "Input" <$> getSubsystem app
 
     -- Movement speed as world units per second
@@ -184,40 +187,40 @@ moveCamera app cameraNode t camData = do
     let mouseSensitivity = 0.1
 
     -- Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
-    mouseMove <- inputGetMouseMove input 
+    mouseMove <- inputGetMouseMove input
     let yaw = camYaw camData + mouseSensitivity * fromIntegral (mouseMove ^. x)
-    let pitch = camPitch camData + mouseSensitivity * fromIntegral (mouseMove ^. y)
+    let pitch = clamp (-90) 90 $ camPitch camData + mouseSensitivity * fromIntegral (mouseMove ^. y)
 
     -- Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
-    nodeSetRotation cameraNode $ quaternionFromEuler pitch yaw 0 
+    nodeSetRotation cameraNode $ quaternionFromEuler pitch yaw 0
 
     -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     -- Use the Translate() function (default local space) to move relative to the node's orientation.
-    whenM (inputGetKeyDown input KeyW) $ 
+    whenM (inputGetKeyDown input KeyW) $
       nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TS'Local
-    whenM (inputGetKeyDown input KeyS) $ 
+    whenM (inputGetKeyDown input KeyS) $
       nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TS'Local
-    whenM (inputGetKeyDown input KeyA) $ 
+    whenM (inputGetKeyDown input KeyA) $
       nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TS'Local
-    whenM (inputGetKeyDown input KeyD) $ 
+    whenM (inputGetKeyDown input KeyD) $
       nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TS'Local
 
     return camData {
-        camYaw = yaw 
+        camYaw = yaw
       , camPitch = pitch
       }
-  where 
+  where
     mul (Vector3 a b c) v = Vector3 (a*v) (b*v) (c*v)
 
 -- | Subscribe to application-wide logic update events.
 subscribeToEvents :: SharedPtr Application -> Ptr Node -> IO ()
-subscribeToEvents app cameraNode = do 
+subscribeToEvents app cameraNode = do
   camDataRef <- newIORef $ CameraData 0 0
   subscribeToEvent app $ handleUpdate app cameraNode camDataRef
 
 -- | Handle the logic update event.
 handleUpdate :: SharedPtr Application -> Ptr Node -> IORef CameraData -> EventUpdate -> IO ()
-handleUpdate app cameraNode camDataRef e = do 
+handleUpdate app cameraNode camDataRef e = do
   -- Take the frame time step, which is stored as a float
   let t = e ^. timeStep
   camData <- readIORef camDataRef

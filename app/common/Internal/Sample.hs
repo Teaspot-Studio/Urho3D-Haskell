@@ -1,15 +1,15 @@
 module Internal.Sample where
 
 import Graphics.Urho3D
-import Data.Int 
+import Data.Int
 import Foreign
-import Control.Lens 
+import Control.Lens
 
 data Sample = Sample {
   _sampleApplication :: SharedPtr Application
 , _sampleName :: String
 , _sampleYaw :: Float
-, _samplePitch :: Float 
+, _samplePitch :: Float
 , _sampleTouchEnabled :: Bool
 , _sampleScreenJoystickIndex :: Int32
 , _sampleScreenSettingsIndex :: Int32
@@ -17,6 +17,7 @@ data Sample = Sample {
 , _sampleLogo :: Ptr Sprite
 , _sampleScene :: SharedPtr Scene
 , _sampleCameraNode :: SharedPtr Node
-, _sampleJoystickPatch :: String 
+, _sampleJoystickPatch :: String
+, _sampleMouseMode :: MouseMode 
 }
-makeLenses ''Sample 
+makeLenses ''Sample

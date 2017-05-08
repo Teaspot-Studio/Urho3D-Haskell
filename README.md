@@ -16,7 +16,7 @@ Urho3D was configured with following options for development of the bindings:
 ``` bash
 git clone https://github.com/urho3d/Urho3D.git
 cd Urho3D
-mkdir build 
+mkdir build
 cd build
 
 cmake .. -DURHO3D_SAMPLES=1 -DURHO3D_EXTRAS=1 -DURHO3D_LIB_TYPE=SHARED -DCMAKE_INSTALL_PREFIX:PATH=/usr
@@ -25,7 +25,7 @@ make
 sudo make install
 ```
 
-Urho3D commit the bindings are tested with: `c817428fb7c9955e3cb3a1a10b86c88873b2682b`
+Urho3D commit the bindings are tested with: `ce69ad556e070d965ad9bda74ae2c441cc59f7be`
 
 Also you need to adjust paths at the end of `stack.yml`:
 

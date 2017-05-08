@@ -587,23 +587,19 @@ inputGetQualifiers p = liftIO $ do
 inputGetMousePosition :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
   -> m IntVector2
-inputGetMousePosition p = liftIO $ do
+inputGetMousePosition p = liftIO $ alloca $ \vptr -> do
   let ptr = parentPointer p
-  peek =<< [C.block| IntVector2* {
-    static IntVector2 v = $(Input* ptr)->GetMousePosition();
-    return &v;
-    } |]
+  [C.exp| void { *($(IntVector2* vptr)) = $(Input* ptr)->GetMousePosition() } |]
+  peek vptr
 
 -- | Return mouse movement since last frame.
 inputGetMouseMove :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
   -> m IntVector2
-inputGetMouseMove p = liftIO $ do
+inputGetMouseMove p = liftIO $ alloca $ \vptr -> do
   let ptr = parentPointer p
-  peek =<< [C.block| IntVector2* {
-    static IntVector2 v = $(Input* ptr)->GetMouseMove();
-    return &v;
-    } |]
+  [C.exp| void { *($(IntVector2* vptr)) = $(Input* ptr)->GetMouseMove(); } |]
+  peek vptr
 
 -- | Return horizontal mouse movement since last frame.
 inputGetMouseMoveX :: (Parent Input a, Pointer p a, MonadIO m)
