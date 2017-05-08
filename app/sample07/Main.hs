@@ -29,39 +29,39 @@
 module Main where
 
 import Control.Lens hiding (Context, element)
-import Control.Monad 
+import Control.Monad
 import Data.IORef
 import Foreign
 import Graphics.Urho3D
 import Sample
-import Data.Bits 
+import Data.Bits
 
 main :: IO ()
-main = withObject () $ \cntx -> do 
+main = withObject () $ \cntx -> do
   newSample cntx "Billboards" joysticPatch (customStart cntx) >>= runSample
 
 -- | Setup after engine initialization and before running the main loop.
 customStart :: Ptr Context -> SampleRef -> IO ()
-customStart cntx sr = do 
-  s <- readIORef sr 
+customStart cntx sr = do
+  s <- readIORef sr
   let app = s ^. sampleApplication
-  
-  -- Create the scene content 
+
+  -- Create the scene content
   (scene, cameraNode) <- createScene app
-  -- Create the UI content 
-  createInstructions app 
+  -- Create the UI content
+  createInstructions app
   -- Setup the viewport for displaying the scene
   setupViewport app scene cameraNode
-  -- Hook up to the frame update events 
+  -- Hook up to the frame update events
   subscribeToEvents app cameraNode
-  -- Save scene to prevent garbage collecting 
-  writeIORef sr $ sampleScene .~ scene $ s 
+  -- Save scene to prevent garbage collecting
+  writeIORef sr $ sampleScene .~ scene $ s
 
 -- | Construct the scene content.
 createScene :: SharedPtr Application -> IO (SharedPtr Scene, Ptr Node)
-createScene app = do 
-  (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
-  (scene :: SharedPtr Scene) <- newSharedObject =<< getContext app 
+createScene app = do
+  (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app
+  (scene :: SharedPtr Scene) <- newSharedObject =<< getContext app
 
   {-
     Create octree, use default volume (-1000, -1000, -1000) to (1000, 1000, 1000)
@@ -86,7 +86,7 @@ createScene app = do
   (light :: Ptr Light) <- fromJustTrace "Light" <$> nodeCreateComponent lightNode Nothing Nothing
   lightSetLightType light LT'Directional
   lightSetColor light $ rgb 0.2 0.2 0.2
-  lightSetSpecularIntensity 1
+  lightSetSpecularIntensity light 1
 
   -- Create a "floor" consisting of several tiles
   forM [(x, y)| x <- [-5 .. 5], y <- [-5 .. 5]] $ \(x :: Int, y :: Int) -> do
@@ -94,34 +94,34 @@ createScene app = do
     nodeSetPosition floorNode $ Vector3 (fromIntegral x * 20.5) (-0.5) (fromIntegral y * 20.5)
     nodeSetScale floorNode $ Vector3 20 1 20
     (floorObject :: Ptr StaticModel) <- fromJustTrace "Tile model" <$> nodeCreateComponent floorNode Nothing Nothing
-    (floorModel :: Ptr Model) <- fromJustTrace "Box.mld" <$> cacheGetResource cache "Models/Box.mdl" True 
+    (floorModel :: Ptr Model) <- fromJustTrace "Box.mld" <$> cacheGetResource cache "Models/Box.mdl" True
     (floorMaterial :: Ptr Material) <- fromJustTrace "Stone.xml" <$> cacheGetResource cache "Materials/Stone.xml" True
-    staticModelSetModel floorObject floorModel 
-    staticModelSetMaterial floorObject floorMaterial 
-    
+    staticModelSetModel floorObject floorModel
+    staticModelSetMaterial floorObject floorMaterial
+
   -- Create groups of mushrooms, which act as shadow casters
   let numMushroomGroups = 25
       numMushrooms = 25
 
-  _ <- replicateM numMushroomGroups $ do 
+  _ <- replicateM numMushroomGroups $ do
     -- First create a scene node for the group. The individual mushrooms nodes will be created as children
     (groupNode :: Ptr Node) <- nodeCreateChild scene "MushroomGroup" CM'Replicated 0
     [r1, r2] <- replicateM 2 (randomUp 190)
     nodeSetPosition groupNode $ Vector3 (r1 - 95) 0 (r2 - 95)
 
-    replicateM numMushrooms $ do 
+    replicateM numMushrooms $ do
       (mushroomNode :: Ptr Node) <- nodeCreateChild scene "Mushroom" CM'Replicated 0
       [r3, r4] <- replicateM 2 (randomUp 25)
-      [r5, r6] <- replicateM random
+      [r5, r6] <- replicateM 2 random
       nodeSetPosition mushroomNode $ Vector3 (r3 - 12.5) 0 (r4 - 12.5)
-      nodeSetRotation mushroomNode $ quaternionFromEuler 0 (r5 * 360) 0 
-      nodeSetScale mushroomNode $ vec3 (1 + r6 * 4) 
+      nodeSetRotation mushroomNode $ quaternionFromEuler 0 (r5 * 360) 0
+      nodeSetScale mushroomNode $ vec3 (1 + r6 * 4)
 
       (mushroomObject :: Ptr StaticModel) <- fromJustTrace "Mushroom model" <$> nodeCreateComponent mushroomNode Nothing Nothing
-      (mushroomModel :: Ptr Model) <- fromJustTrace "Mushroom.mdl" <$> cacheGetResource cache "Models/Mushroom.mdl" True 
+      (mushroomModel :: Ptr Model) <- fromJustTrace "Mushroom.mdl" <$> cacheGetResource cache "Models/Mushroom.mdl" True
       (mushroomMaterial :: Ptr Material) <- fromJustTrace "Mushroom.xml" <$> cacheGetResource cache "Materials/Mushroom.xml" True
-      staticModelSetModel mushroomObject mushroomModel 
-      staticModelSetMaterial mushroomObject mushroomMaterial 
+      staticModelSetModel mushroomObject mushroomModel
+      staticModelSetMaterial mushroomObject mushroomMaterial
       drawableSetCastShadows mushroomObject True
 
 
@@ -129,7 +129,7 @@ createScene app = do
   let numBillboardNodes = 25
       numBillboards = 10
 
-  _ <- replicateM numBillboards $ do 
+  _ <- replicateM numBillboards $ do
     (smokeNode :: Ptr Node) <- nodeCreateChild scene "Smoke" CM'Replicated 0
     [sr1, sr2] <- replicateM 2 (randomUp 200)
     sr3 <- randomUp 20
@@ -139,72 +139,65 @@ createScene app = do
     billboardSetSetNumBillboards billboardObject numBillboards
     (smokeMaterial :: Ptr Material) <- fromJustTrace "LitSmoke.xml" <$> cacheGetResource cache "Materials/LitSmoke.xml" True
     billboardSetSetMaterial billboardObject smokeMaterial
-    billboardSetSetSorted billboardObject True 
+    billboardSetSetSorted billboardObject True
 
 
-    _ <- forM [0 .. numBillboards-1] $ \j -> do 
-      bb <- billboardSetGetBillboard billboardObject j 
+    _ <- forM [0 .. numBillboards-1] $ \j -> do
+      bb <- billboardSetGetBillboard billboardObject j
       [sr4, sr5] <- replicateM 2 (randomUp 12)
       sr6 <- randomUp 8
       [sr7, sr8] <- replicateM 2 (randomUp 2)
       sr9 <- randomUp 360
-      billboardSetSetBillboard j   
+      billboardSetSetBillboard j
         $ position .~ Vector3 (sr4 - 6) (sr6 - 4) (sr5 - 6)
         $ size .~ Vector2 (sr7 + 3.0, sr8 + 3.0)
         $ rotation .~ sr9
-        $ enabled .~ True 
-          bb 
-    
+        $ enabled .~ True
+          bb
+
     -- After modifying the billboards, they need to be "commited" so that the BillboardSet updates its internals
     billboardSetCommit billboardObject
 
   -- Create shadow casting spotlights
   let numLights = 9 :: Int
-  _ <- forM [0 .. numLights] $ \i -> do 
+  _ <- forM [0 .. numLights] $ \i -> do
     (lightNode :: Ptr Node) <- nodeCreateChild scene "SpotLight" CM'Replicated 0
     (light :: Ptr Light) <- fromJustTrace "SpotLight" <$> nodeCreateComponent smokeNode Nothing Nothing
 
-    let angle = 0 :: Float 
+    let angle = 0 :: Float
         position = Vector3 ((i `mod` 3) * 60 - 60) 45 ((i / 3) * 60 - 60)
-        color = rgb (((i+1) .&. 1) * 0.5 + 0.5) 
-                    ((((i+1) `shiftR` 1) .&. 1) * 0.5 + 0.5) 
+        color = rgb (((i+1) .&. 1) * 0.5 + 0.5)
+                    ((((i+1) `shiftR` 1) .&. 1) * 0.5 + 0.5)
                     ((((i+1) `shiftR` 2) .&. 1) * 0.5 + 0.5)
-        
-    modelNode <- nodeCreateChild scene "Jack" CM'Replicated 0
-    [r1, r2] <- replicateM 2 (randomUp 90)
-    nodeSetPosition modelNode $ Vector3 (r1 - 45) 0 (r2 - 45)
-    r3 <- randomUp 360
-    nodeSetRotation modelNode $ quaternionFromEuler 0 r3 0 
 
-    (modelObject :: Ptr AnimatedModel) <- fromJustTrace "Jack model" <$> nodeCreateComponent modelNode Nothing Nothing
-    (modelModel :: Ptr Model) <- fromJustTrace "Jack.mdl" <$> cacheGetResource cache "Models/Jack.mdl" True
-    animatedModelSetModel modelObject modelModel True
-    (modelMaterial :: Ptr Material) <- fromJustTrace "Jack.xml" <$> cacheGetResource cache "Materials/Jack.xml" True
-    staticModelSetMaterial modelObject modelMaterial
-    drawableSetCastShadows modelObject True 
+    nodeSetPosition lightNode position
+    nodeSetDirection lightNode $ Vector3 (sin angle) (-1.5f) (cos angle)
 
-    -- Create an AnimationState for a walk animation. Its time position will need to be manually updated to advance the
-    -- animation, The alternative would be to use an AnimationController component which updates the animation automatically,
-    -- but we need to update the model's position manually in any case
-    (walkAnimation :: Ptr Animation) <- fromJustTrace "Jack_Walk.ani" <$> cacheGetResource cache "Models/Jack_Walk.ani" True 
-    (astate :: Ptr AnimationState) <- animatedModelAddAnimationState modelObject walkAnimation
-    -- The state would fail to create (return null) if the animation was not found
-    unless (isNull astate) $ do 
-      -- Enable full blending weight and looping
-      animationStateSetWeight astate 1
-      animationStateSetLooped astate True
-      animationStateSetTime astate =<< randomUp =<< animationGetLength walkAnimation
+    lightSetLightType light LT'Spot
+    lightSetRange light 90
+    rampTexture :: Ptr Texture2D <- fromJustTrace "RampExtreme.png" <$> cacheGetResource cache "Textures/RampExtreme.png" True
+    lightSetRampTexture light rampTexture
+    lightSetFov light 45
+    lightSetColor light color
+    lightSetSpecularIntensity light 1
+    lightSetCastShadows light True
+    lightSetShadowBias light $ BiasParameters 0.00002 0
 
-    -- Create our custom Mover component that will move & animate the model during each frame's update
-    (mover :: Ptr Mover) <- fromJustTrace "Mover" <$> nodeCreateCustomComponent modelNode moverType Nothing Nothing
-    setMoverParameters mover modelMoveSpeed modelRotateSpeed bounds
-    return ()
+    -- Configure shadow fading for the lights. When they are far away enough, the lights eventually become unshadowed for
+    -- better GPU performance. Note that we could also set the maximum distance for each object to cast shadows
+    lightSetShadowFadeDistance light 100 -- Fade start distance
+    lightSetShadowDistance light 125 -- Fade end distance, shadows are disabled
+    -- Set half resolution for the shadow maps for increased performance
+    lightSetShadowResolution light 0.5
+    -- The spot lights will not have anything near them, so move the near plane of the shadow camera farther
+    -- for better shadow depth resolution
+    lightSetShadowNearFarRatio light 0.01
 
   -- Create the camera. Let the starting position be at the world origin. As the fog limits maximum visible distance, we can
   -- bring the far clip plane closer for more effective culling of distant objects
   cameraNode <- nodeCreateChild scene "Camera" CM'Replicated 0
   (cam :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
-  cameraSetFarClip cam 300 
+  cameraSetFarClip cam 300
 
   -- Set an initial position for the camera scene node above the plane
   nodeSetPosition cameraNode (Vector3 0 5 0)
@@ -213,10 +206,10 @@ createScene app = do
 
 -- | Construct an instruction text to the UI.
 createInstructions :: SharedPtr Application -> IO ()
-createInstructions app = do 
-  (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app 
+createInstructions app = do
+  (cache :: Ptr ResourceCache) <- fromJustTrace "ResourceCache" <$> getSubsystem app
   (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app
-  roote <- uiRoot ui 
+  roote <- uiRoot ui
 
   -- Construct new Text object, set string to display and font to use
   (instructionText :: Ptr Text) <- createChildSimple roote
@@ -231,7 +224,7 @@ createInstructions app = do
 
 -- | Set up a viewport for displaying the scene.
 setupViewport :: SharedPtr Application -> SharedPtr Scene -> Ptr Node -> IO ()
-setupViewport app scene cameraNode = do 
+setupViewport app scene cameraNode = do
   (renderer :: Ptr Renderer) <- fromJustTrace "Renderer" <$> getSubsystem app
 
   {-
@@ -239,25 +232,25 @@ setupViewport app scene cameraNode = do
     at minimum. Additionally we could configure the viewport screen size and the rendering path (eg. forward / deferred) to
     use, but now we just use full screen and default render path configured in the engine command line options
   -}
-  cntx <- getContext app 
+  cntx <- getContext app
   (cam :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent' cameraNode False
   (viewport :: SharedPtr Viewport) <- newSharedObject (cntx, pointer scene, cam)
   rendererSetViewport renderer 0 viewport
 
 data CameraData = CameraData {
-  camYaw :: Float 
+  camYaw :: Float
 , camPitch :: Float
 , camDebugGeometry :: Bool
 }
 
 -- | Read input and moves the camera.
 moveCamera :: SharedPtr Application -> Ptr Node -> Float -> CameraData -> IO CameraData
-moveCamera app cameraNode t camData = do 
-  (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app 
+moveCamera app cameraNode t camData = do
+  (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app
 
   -- Do not move if the UI has a focused element (the console)
   mFocusElem <- uiFocusElement ui
-  whenNothing mFocusElem camData $ do 
+  whenNothing mFocusElem camData $ do
     (input :: Ptr Input) <- fromJustTrace "Input" <$> getSubsystem app
 
     -- Movement speed as world units per second
@@ -266,58 +259,63 @@ moveCamera app cameraNode t camData = do
     let mouseSensitivity = 0.1
 
     -- Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
-    mouseMove <- inputGetMouseMove input 
+    mouseMove <- inputGetMouseMove input
     let yaw = camYaw camData + mouseSensitivity * fromIntegral (mouseMove ^. x)
     let pitch = clamp (-90) 90 $ camPitch camData + mouseSensitivity * fromIntegral (mouseMove ^. y)
 
     -- Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
-    nodeSetRotation cameraNode $ quaternionFromEuler pitch yaw 0 
+    nodeSetRotation cameraNode $ quaternionFromEuler pitch yaw 0
 
     -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     -- Use the Translate() function (default local space) to move relative to the node's orientation.
-    whenM (inputGetKeyDown input KeyW) $ 
+    whenM (inputGetKeyDown input KeyW) $
       nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TS'Local
-    whenM (inputGetKeyDown input KeyS) $ 
+    whenM (inputGetKeyDown input KeyS) $
       nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TS'Local
-    whenM (inputGetKeyDown input KeyA) $ 
+    whenM (inputGetKeyDown input KeyA) $
       nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TS'Local
-    whenM (inputGetKeyDown input KeyD) $ 
+    whenM (inputGetKeyDown input KeyD) $
       nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TS'Local
 
     -- Toggle debug geometry with space
     spacePressed <- inputGetKeyPress input KeySpace
 
     return camData {
-        camYaw = yaw 
+        camYaw = yaw
       , camPitch = pitch
       , camDebugGeometry = (if spacePressed then not else id) $ camDebugGeometry camData
       }
-  where 
+  where
     mul (Vector3 a b c) v = Vector3 (a*v) (b*v) (c*v)
+
+-- | Rotate lights and billboards
+animateScene :: SharedPtr Application -> Float -> IO ()
+animateScene app t = pure ()
 
 -- | Subscribe to application-wide logic update events.
 subscribeToEvents :: SharedPtr Application -> Ptr Node -> IO ()
-subscribeToEvents app cameraNode = do 
+subscribeToEvents app cameraNode = do
   camDataRef <- newIORef $ CameraData 0 0 False
   subscribeToEvent app $ handleUpdate app cameraNode camDataRef
   subscribeToEvent app $ handlePostRenderUpdate app camDataRef
-  
+
 -- | Handle the logic update event.
 handleUpdate :: SharedPtr Application -> Ptr Node -> IORef CameraData -> EventUpdate -> IO ()
-handleUpdate app cameraNode camDataRef e = do 
+handleUpdate app cameraNode camDataRef e = do
   -- Take the frame time step, which is stored as a float
   let t = e ^. timeStep
   camData <- readIORef camDataRef
-  -- Move the camera, scale movement with time step
+  -- Move the camera and animate the scene, scale movement with time step
   writeIORef camDataRef =<< moveCamera app cameraNode t camData
+  animateScene app t
 
 handlePostRenderUpdate :: SharedPtr Application -> IORef CameraData -> EventPostRenderUpdate -> IO ()
-handlePostRenderUpdate app camDataRef _ = do 
+handlePostRenderUpdate app camDataRef _ = do
   camData <- readIORef camDataRef
   (renderer :: Ptr Renderer) <- fromJustTrace "Input" <$> getSubsystem app
 
   -- If draw debug mode is enabled, draw viewport debug geometry, which will show eg. drawable bounding boxes and skeleton
-  -- bones. Note that debug geometry has to be separately requested each frame. Disable depth test so that we can see the
-  -- bones properly
+  -- bones. Note that debug geometry has to be separately requested each frame. This time use depth test, as otherwise the result becomes
+  -- hard to interpret due to large object count
   when (camDebugGeometry camData) $
-    rendererDrawDebugGeometry renderer False
+    rendererDrawDebugGeometry renderer True

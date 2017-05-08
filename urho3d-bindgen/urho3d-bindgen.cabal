@@ -1,6 +1,6 @@
 name:                urho3d-bindgen
 version:             0.1.0.0
-synopsis:            Utilities to generate bindings for Urho3D 
+synopsis:            Utilities to generate bindings for Urho3D
 description:         Please see README.md
 homepage:            https://github.com/teaspot-studio/urho3d-haskell#readme
 license:             BSD3
@@ -15,11 +15,11 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:    
+  exposed-modules:
     Graphics.Urho3D.Container.ForeignVector
     Graphics.Urho3D.Container.HashMap
     Graphics.Urho3D.Container.Ptr
-    Graphics.Urho3D.Container.Vector 
+    Graphics.Urho3D.Container.Vector
     Graphics.Urho3D.Creatable
     Graphics.Urho3D.Interface.AST
     Graphics.Urho3D.Interface.AST.Lexer
@@ -29,7 +29,7 @@ library
     Graphics.Urho3D.Multithread
     Graphics.Urho3D.Parent
     Graphics.Urho3D.Template
-  build-depends:       
+  build-depends:
       base >= 4.7 && < 5
     , bytestring >= 0.10
     , containers >= 0.5
@@ -37,7 +37,7 @@ library
     , exceptions >= 0.8
     , hashable >= 1.2
     , inline-c >= 0.5
-    , megaparsec >= 4.4 
+    , megaparsec >= 4.4
     , mtl >= 2.2
     , stm >= 2.4
     , template-haskell >= 2.10
@@ -48,6 +48,8 @@ library
 
   default-language:    Haskell2010
   default-extensions:
+    ConstraintKinds
+    CPP
     DeriveGeneric
     FlexibleContexts
     FlexibleInstances
@@ -57,23 +59,22 @@ library
     MultiParamTypeClasses
     OverloadedStrings
     QuasiQuotes
+    RecordWildCards
     ScopedTypeVariables
     TemplateHaskell
     TypeFamilies
     UndecidableInstances
-    RecordWildCards
-    CPP
 
 test-suite urho3d-bindgen-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
-  build-depends:       
+  build-depends:
       base
     , urho3d-bindgen
     , tasty >= 0.11
     , tasty-hunit >= 0.9
-    
+
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 

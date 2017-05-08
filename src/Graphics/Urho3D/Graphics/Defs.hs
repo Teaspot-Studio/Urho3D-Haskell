@@ -81,6 +81,7 @@ module Graphics.Urho3D.Graphics.Defs(
   , pspRoughness
   , pspMetallic
   , dotScale
+  , FaceCameraMode(..)
   , Quality(..)
   , ShadowQuality(..)
   , Mask(..)
@@ -90,11 +91,11 @@ module Graphics.Urho3D.Graphics.Defs(
   , bitsPerComponent
   ) where
 
-import qualified Language.C.Inline as C 
+import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 import Text.RawString.QQ
 
-import Graphics.Urho3D.Graphics.Internal.Defs 
+import Graphics.Urho3D.Graphics.Internal.Defs
 
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector3
@@ -113,7 +114,7 @@ class Traits
 public:
     struct AlignmentFinder
     {
-      char a; 
+      char a;
       T b;
     };
 
@@ -121,20 +122,20 @@ public:
 };
 |]
 
-graphDefsContext :: C.Context 
+graphDefsContext :: C.Context
 graphDefsContext = graphDefsCntx
 
-instance Storable VertexElement where 
+instance Storable VertexElement where
   sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(VertexElement) } |]
   alignment _ = fromIntegral $ [C.pure| int { (int)Traits<VertexElement>::AlignmentOf } |]
-  peek ptr = do 
+  peek ptr = do
     _vertexElementElementType <- toEnum . fromIntegral <$> [C.exp| int {$(VertexElement* ptr)->type_} |]
     _vertexElementSemantic <- toEnum . fromIntegral <$> [C.exp| int {$(VertexElement* ptr)->semantic_} |]
     _vertexElementIndex <- fromIntegral <$> [C.exp| unsigned char {$(VertexElement* ptr)->index_} |]
     _vertexElementPerInstance <- toBool <$> [C.exp| int {(int)$(VertexElement* ptr)->perInstance_} |]
     _vertexElementOffset <- fromIntegral <$> [C.exp| unsigned int {$(VertexElement* ptr)->offset_} |]
     return VertexElement {..}
-  poke ptr (VertexElement {..}) = [C.block| void { 
+  poke ptr (VertexElement {..}) = [C.block| void {
       $(VertexElement* ptr)->type_ = (VertexElementType)$(int _vertexElementElementType');
       $(VertexElement* ptr)->semantic_ = (VertexElementSemantic)$(int _vertexElementSemantic');
       $(VertexElement* ptr)->index_ = $(unsigned char _vertexElementIndex');
@@ -300,5 +301,5 @@ pspMetallic :: Ptr StringHash
 pspMetallic = [C.pure| const StringHash* { &PSP_METALLIC } |]
 
 -- | Scale calculation from bounding box diagonal.
-dotScale :: Vector3 
+dotScale :: Vector3
 dotScale = unsafePerformIO $ peek =<< [C.exp| const Vector3* { &DOT_SCALE } |]

@@ -10,10 +10,10 @@ maintainer:          ncrashed@gmail.com
 copyright:           Teaspot Studio (c) 2015
 category:            Bindings
 build-type:          Simple
--- extra-source-files:  
+-- extra-source-files:
 cabal-version:       >=1.10
 
-flag Urho3DOpenGL 
+flag Urho3DOpenGL
   description: binding to Urho3D engine with OpenGL renderer
   default: True
 
@@ -26,12 +26,12 @@ flag Urho3DD3D11
   default: False
 
 flag examples
-  description: build engine examples 
-  default: False 
+  description: build engine examples
+  default: False
 
 flag debug-shared
   description: Debug shared pointers. Print when they garbage collected.
-  default: False 
+  default: False
 
 library
   hs-source-dirs:      src
@@ -101,7 +101,7 @@ library
                        Graphics.Urho3D.Math.Rect
                        Graphics.Urho3D.Math.Sphere
                        Graphics.Urho3D.Math.StringHash
-                       Graphics.Urho3D.Math.Vector2 
+                       Graphics.Urho3D.Math.Vector2
                        Graphics.Urho3D.Math.Vector3
                        Graphics.Urho3D.Math.Vector4
                        Graphics.Urho3D.Network
@@ -187,7 +187,7 @@ library
                        Graphics.Urho3D.Math.Internal.Rect
                        Graphics.Urho3D.Math.Internal.Sphere
                        Graphics.Urho3D.Math.Internal.StringHash
-                       Graphics.Urho3D.Math.Internal.Vector2 
+                       Graphics.Urho3D.Math.Internal.Vector2
                        Graphics.Urho3D.Math.Internal.Vector3
                        Graphics.Urho3D.Math.Internal.Vector4
                        Graphics.Urho3D.Network.Internal.Connection
@@ -302,7 +302,7 @@ library
                        src/Graphics/Urho3D/UI/ToolTip.cpp
                        src/Graphics/Urho3D/UI/UI.cpp
                        src/Graphics/Urho3D/UI/Window.cpp
-                       
+
   build-depends:        base
                       , urho3d-bindgen
                       , containers
@@ -317,16 +317,18 @@ library
                       , StateVar
                       , raw-strings-qq
                       , lens
-                      , text 
+                      , text
                       , bytestring
-                      , stm 
+                      , stm
                       , hashable
                       , unordered-containers
                       , vector >= 0.11.0.0
                       , containers >= 0.5.6.2
                       , sdl2 >= 2.1.1
-                      
+
   default-extensions:
+    ConstraintKinds
+    CPP
     DeriveGeneric
     FlexibleContexts
     FlexibleInstances
@@ -336,15 +338,14 @@ library
     MultiParamTypeClasses
     OverloadedStrings
     QuasiQuotes
+    RecordWildCards
     ScopedTypeVariables
     TemplateHaskell
     TypeFamilies
     UndecidableInstances
-    RecordWildCards
-    CPP
-    
+
   default-language:    Haskell2010
-  ghc-options:         -Wall 
+  ghc-options:         -Wall
   extra-libraries:     Urho3D, stdc++
 
   if flag(debug-shared)
@@ -352,7 +353,7 @@ library
 
   if flag(Urho3DOpenGL)
     cpp-options: -DURHO3D_OPENGL
-  else 
+  else
     if flag(Urho3DD3D11)
       cpp-options: -DURHO3D_D3D11
 
@@ -571,7 +572,7 @@ executable urho3d-haskell-sample07
   default-language:    Haskell2010
 
   if flag(examples)
-    Buildable: False 
+    Buildable: True
   else
     Buildable: False
 
