@@ -22,25 +22,25 @@ name ^:: typeQ = sigD (mkName name) typeQ
 name ^= bodyQ = valD (varP (mkName name)) (normalB bodyQ) []
 
 -- | Makes lamda expression with give args
-lam :: [String] -> Q Exp -> Q Exp 
+lam :: [String] -> Q Exp -> Q Exp
 lam args = lamE (varP . mkName <$> args)
 
-mkFunc1 :: String -> String -> (Name -> Q Exp) -> Q Dec 
+mkFunc1 :: String -> String -> (Name -> Q Exp) -> Q Dec
 mkFunc1 name par bodyQ = do
-  let parName = mkName par 
-  funD (mkName name) [clause [varP parName] (normalB $ bodyQ parName) []] 
+  let parName = mkName par
+  funD (mkName name) [clause [varP parName] (normalB $ bodyQ parName) []]
 
-mkFuncN :: String -> [String] -> ([Name] -> ExpQ ) -> DecQ 
+mkFuncN :: String -> [String] -> ([Name] -> ExpQ ) -> DecQ
 mkFuncN name ps bodyQ = do
   let pns = mkName <$> ps
   funD (mkName name) [clause (varP <$> pns) (normalB $ bodyQ pns) []]
 
-mkNewType :: String -> TypeQ -> DecQ 
-mkNewType tname t = 
-  newtypeD (return []) (mkName tname) [] (recC (mkName tname) [varStrictType (mkName $ "un"++tname) $ strictType notStrict t]) []
+mkNewType :: String -> TypeQ -> DecQ
+mkNewType tname t =
+  newtypeD (return []) (mkName tname) [] Nothing (recC (mkName tname) [varBangType (mkName $ "un"++tname) $ bangType (bang noSourceUnpackedness noSourceStrictness) t]) (return [])
 
-mkFunc1Con :: String -> String -> String -> (Name -> Q Exp) -> Q Dec 
-mkFunc1Con name con par bodyQ = do 
-  let parName = mkName par 
+mkFunc1Con :: String -> String -> String -> (Name -> Q Exp) -> Q Dec
+mkFunc1Con name con par bodyQ = do
+  let parName = mkName par
       conName = mkName con
-  funD (mkName name) [clause [conP conName [varP parName]] (normalB $ bodyQ parName) []] 
+  funD (mkName name) [clause [conP conName [varP parName]] (normalB $ bodyQ parName) []]

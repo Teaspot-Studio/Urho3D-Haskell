@@ -8,7 +8,7 @@ module Graphics.Urho3D.Container.Vector(
   ) where
 
 import qualified Data.Map as Map
-import qualified Language.C.Inline as C 
+import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Context as C
 import qualified Language.C.Types as C
 
@@ -30,17 +30,17 @@ podVectorPtr elemName = podVectorPtr' elemName elemName
 
 -- | Same as 'podVectorPtr', but you can provide different names for C-side and Haskell-side.
 podVectorPtr' :: String -> String -> DecsQ
-podVectorPtr' cElemName elemName = do 
+podVectorPtr' cElemName elemName = do
   typedef <- C.verbatim $ "typedef " ++ vectorCpp ++ " " ++ vectorT ++ ";"
   createable <- [d|
-    instance Creatable (Ptr $vectorType) where 
+    instance Creatable (Ptr $vectorType) where
       type CreationOptions (Ptr $vectorType) = ()
 
       newObject _ = liftIO $(quoteExp C.exp $ vectorT++"* {new "++vectorCpp++"()}")
       deleteObject _ptr = liftIO $ $(quoteExp C.exp $ "void { delete $("++vectorT++"* _ptr)}")
     |]
   readable <- [d|
-    instance ReadableVector $vectorType where 
+    instance ReadableVector $vectorType where
       type ReadVecElem $vectorType = Ptr $elemType
 
       foreignVectorLength _ptr = liftIO $ fromIntegral <$> $(quoteExp C.exp $ "unsigned int {$("++vectorT++"* _ptr)->Size()}")
@@ -48,15 +48,15 @@ podVectorPtr' cElemName elemName = do
         where _i' = fromIntegral _i
     |]
   writeable <- [d|
-    instance WriteableVector $vectorType where 
-      type WriteVecElem $vectorType = Ptr $elemType 
+    instance WriteableVector $vectorType where
+      type WriteVecElem $vectorType = Ptr $elemType
 
       foreignVectorAppend _ptr _elem = liftIO $(quoteExp C.exp $ "void {$("++vectorT++"* _ptr)->Push($("++cElemName++"* _elem))}")
     |]
   return $ typedef ++ createable ++ readable ++ writeable
-  where 
+  where
     vectorType = conT $ mkName vectorT
-    elemType = conT $ mkName elemName 
+    elemType = conT $ mkName elemName
     vectorT = "PODVector" ++ elemName ++ "Ptr"
     vectorCpp = "PODVector<" ++ elemName ++ "*>"
 
@@ -66,7 +66,7 @@ podVectorPtr' cElemName elemName = do
 -- podVectorTPtrCntx :: C.Context
 podVectorPtrImpl :: String -> DecsQ
 podVectorPtrImpl elemName = sequence [
-    return $ DataD [] (mkName vectorT) [] [] []
+    return $ DataD [] (mkName vectorT) [] Nothing [] []
   , podVectorTPtrCntx ^:: [t| C.Context |]
   , podVectorTPtrCntx ^= [e| mempty {
         C.ctxTypesTable = Map.fromList [
@@ -74,7 +74,7 @@ podVectorPtrImpl elemName = sequence [
         ]
     } |]
   ]
-  where 
+  where
     vectorT = "PODVector" ++ elemName ++ "Ptr"
     podVectorTPtrCntx = "podVector" ++ elemName ++ "PtrCntx"
     cTType = return $ LitE $ StringL vectorT
@@ -91,17 +91,17 @@ simpleVector elemName = simpleVector' elemName elemName
 
 -- | Same as 'simpleVector', but you can provide different names for C-side and Haskell-side.
 simpleVector' :: String -> String -> DecsQ
-simpleVector' cElemName elemName = do 
+simpleVector' cElemName elemName = do
   typedef <- C.verbatim $ "typedef " ++ vectorCpp ++ " " ++ vectorT ++ ";"
   createable <- [d|
-    instance Creatable (Ptr $vectorType) where 
+    instance Creatable (Ptr $vectorType) where
       type CreationOptions (Ptr $vectorType) = ()
 
       newObject _ = liftIO $(quoteExp C.exp $ vectorT++"* {new "++vectorCpp++"()}")
       deleteObject _ptr = liftIO $ $(quoteExp C.exp $ "void { delete $("++vectorT++"* _ptr)}")
     |]
   readable <- [d|
-    instance ReadableVector $vectorType where 
+    instance ReadableVector $vectorType where
       type ReadVecElem $vectorType = $elemType
 
       foreignVectorLength _ptr = liftIO $ fromIntegral <$> $(quoteExp C.exp $ "unsigned int {$("++vectorT++"* _ptr)->Size()}")
@@ -109,15 +109,15 @@ simpleVector' cElemName elemName = do
         where _i' = fromIntegral _i
     |]
   writeable <- [d|
-    instance WriteableVector $vectorType where 
-      type WriteVecElem $vectorType = $elemType 
+    instance WriteableVector $vectorType where
+      type WriteVecElem $vectorType = $elemType
 
       foreignVectorAppend _ptr _elem = liftIO $ with _elem $ \_elem' ->  $(quoteExp C.exp $ "void {$("++vectorT++"* _ptr)->Push(*$("++cElemName++"* _elem'))}")
     |]
   return $ typedef ++ createable ++ readable ++ writeable
-  where 
+  where
     vectorType = conT $ mkName vectorT
-    elemType = conT $ mkName elemName 
+    elemType = conT $ mkName elemName
     vectorT = "Vector" ++ elemName ++ ""
     vectorCpp = "Vector<" ++ elemName ++ ">"
 
@@ -127,7 +127,7 @@ simpleVector' cElemName elemName = do
 -- vectorTCntx :: C.Context
 simpleVectorImpl :: String -> DecsQ
 simpleVectorImpl elemName = sequence [
-    return $ DataD [] (mkName vectorT) [] [] []
+    return $ DataD [] (mkName vectorT) [] Nothing [] []
   , vectorTPtrCntx ^:: [t| C.Context |]
   , vectorTPtrCntx ^= [e| mempty {
         C.ctxTypesTable = Map.fromList [
@@ -135,7 +135,7 @@ simpleVectorImpl elemName = sequence [
         ]
     } |]
   ]
-  where 
+  where
     vectorT = "Vector" ++ elemName
     vectorTPtrCntx = "vector" ++ elemName ++ "Cntx"
     cTType = return $ LitE $ StringL vectorT
