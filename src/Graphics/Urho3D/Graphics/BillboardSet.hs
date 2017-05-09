@@ -3,6 +3,7 @@ module Graphics.Urho3D.Graphics.BillboardSet(
     BillboardSet
   , Billboard(..)
   , HasPosition(..)
+  , HasSize(..)
   , HasUv(..)
   , HasColor(..)
   , HasRotation(..)
@@ -54,7 +55,6 @@ import Graphics.Urho3D.Scene.Node
 import Data.Monoid
 import Foreign
 import System.IO.Unsafe (unsafePerformIO)
-import Text.RawString.QQ
 
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Vector.Common
@@ -80,6 +80,7 @@ C.context (C.cppCtx
   <> objectContext
   <> vector3Context
   <> vector2Context
+  <> vectorContext
   <> rectContext
   <> colorContext
   <> materialContext
@@ -88,23 +89,9 @@ C.context (C.cppCtx
 C.include "<Urho3D/Graphics/BillboardSet.h>"
 C.using "namespace Urho3D"
 
-C.verbatim [r|
-template <class T>
-class Traits
-{
-public:
-    struct AlignmentFinder
-    {
-      char a;
-      T b;
-    };
-
-    enum {AlignmentOf = sizeof(AlignmentFinder) - sizeof(T)};
-};
-|]
-
 C.verbatim "typedef Vector<Variant> VectorVariant;"
 C.verbatim "typedef PODVector<unsigned char> PODVectorWord8;"
+C.verbatim "typedef PODVector<Billboard> PODVectorBillboard;"
 
 billboardSetContext :: C.Context
 billboardSetContext = componentContext <> billboardSetCntx
@@ -123,56 +110,24 @@ instance NodeComponent BillboardSet where
     return &h;
   } |]
 
-instance Storable Billboard where
-  sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(Billboard) } |]
-  alignment _ = fromIntegral $ [C.pure| int { (int)Traits<Billboard>::AlignmentOf } |]
-  peek ptr = do
-    _billboardPosition <- peek =<< [C.exp| Vector3* {&$(Billboard* ptr)->position_} |]
-    _billboardSize <- peek =<< [C.exp| Vector2* {&$(Billboard* ptr)->size_} |]
-    _billboardUv <- peek =<< [C.exp| Rect* {&$(Billboard* ptr)->uv_} |]
-    _billboardColor <- peek =<< [C.exp| Color* {&$(Billboard* ptr)->color_} |]
-    _billboardRotation <- realToFrac <$> [C.exp| float {$(Billboard* ptr)->rotation_} |]
-    _billboardDirection <- peek =<< [C.exp| Vector3* {&$(Billboard* ptr)->direction_} |]
-    _billboardEnabled <- toBool <$> [C.exp| int {$(Billboard* ptr)->enabled_} |]
-    _billboardSortDistance <- realToFrac <$> [C.exp| float {$(Billboard* ptr)->sortDistance_} |]
-    _billboardScreenScaleFactor <- realToFrac <$> [C.exp| float {$(Billboard* ptr)->screenScaleFactor_} |]
-    return Billboard {..}
-  poke ptr (Billboard {..}) =
-    with _billboardPosition $ \_billboardPosition' ->
-    with _billboardSize $ \_billboardSize' ->
-    with _billboardUv $ \_billboardUv' ->
-    with _billboardColor $ \_billboardColor' ->
-    with _billboardDirection $ \_billboardDirection' ->
-    [C.block| void {
-      $(Billboard* ptr)->position_ = *$(Vector3* _billboardPosition');
-      $(Billboard* ptr)->size_ = *$(Vector2* _billboardSize');
-      $(Billboard* ptr)->uv_ = *$(Rect* _billboardUv');
-      $(Billboard* ptr)->color_ = *$(Color* _billboardColor');
-      $(Billboard* ptr)->rotation_ = $(float _billboardRotation');
-      $(Billboard* ptr)->direction_ = *$(Vector3* _billboardDirection');
-      $(Billboard* ptr)->enabled_ = $(int _billboardEnabled') != 0;
-      $(Billboard* ptr)->sortDistance_ = $(float _billboardSortDistance');
-      $(Billboard* ptr)->screenScaleFactor_ = $(float _billboardScreenScaleFactor');
-    } |]
-    where
-    _billboardRotation' = realToFrac _billboardRotation
-    _billboardEnabled' = fromBool _billboardEnabled
-    _billboardSortDistance' = realToFrac _billboardSortDistance
-    _billboardScreenScaleFactor' = realToFrac _billboardScreenScaleFactor
-
 -- | Set material
 billboardSetSetMaterial :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> Ptr Material -- ^ Material to set
   -> m ()
-billboardSetSetMaterial = undefined
+billboardSetSetMaterial p pmaterial = liftIO $ do
+  let ptr = parentPointer p
+  [C.exp| void { $(BillboardSet* ptr)->SetMaterial($(Material* pmaterial)) } |]
 
 -- | Set number of billboards.
 billboardSetSetNumBillboards :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> Int -- ^ Number of billboards
   -> m ()
-billboardSetSetNumBillboards = undefined
+billboardSetSetNumBillboards p n = liftIO $ do
+  let ptr = parentPointer p
+      n' = fromIntegral n
+  [C.exp| void { $(BillboardSet* ptr)->SetNumBillboards($(unsigned int n')) } |]
 --void SetNumBillboards(unsigned num);
 
 -- | Set whether billboards are relative to the scene node. Default true.
@@ -180,7 +135,10 @@ billboardSetSetRelative :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> Bool -- ^ Enable?
   -> m ()
-billboardSetSetRelative = undefined
+billboardSetSetRelative p v = liftIO $ do
+  let ptr = parentPointer p
+      v' = fromBool v
+  [C.exp| void { $(BillboardSet* ptr)->SetRelative($(int v') != 0) } |]
 -- void SetRelative(bool enable);
 
 -- | Set whether scene node scale affects billboards' size. Default true.
@@ -188,7 +146,10 @@ billboardSetSetScaled :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> Bool -- ^ Enable?
   -> m ()
-billboardSetSetScaled = undefined
+billboardSetSetScaled p v = liftIO $ do
+  let ptr = parentPointer p
+      v' = fromBool v
+  [C.exp| void { $(BillboardSet* ptr)->SetScaled($(int v') != 0) } |]
 -- void SetScaled(bool enable);
 
 -- | Set whether billboards are sorted by distance. Default false.
@@ -196,7 +157,10 @@ billboardSetSetSorted :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> Bool -- ^ Enable?
   -> m ()
-billboardSetSetSorted = undefined
+billboardSetSetSorted p v = liftIO $ do
+  let ptr = parentPointer p
+      v' = fromBool v
+  [C.exp| void { $(BillboardSet* ptr)->SetSorted($(int v') != 0) } |]
 -- void SetSorted(bool enable);
 
 -- | Set whether billboards have fixed size on screen (measured in pixels) regardless of distance to camera. Default false.
@@ -204,7 +168,10 @@ billboardSetSetFixedScreenSize :: (Parent BillboardSet a, Pointer p a, MonadIO m
   => p -- ^ Pointer to BillboardSet or ascentor
   -> Bool -- ^ Enable?
   -> m ()
-billboardSetSetFixedScreenSize = undefined
+billboardSetSetFixedScreenSize p v = liftIO $ do
+  let ptr = parentPointer p
+      v' = fromBool v
+  [C.exp| void { $(BillboardSet* ptr)->SetFixedScreenSize($(int v') != 0) } |]
 -- void SetFixedScreenSize(bool enable);
 
 -- | Set how the billboards should rotate in relation to the camera. Default is to follow camera rotation on all axes (FC_ROTATE_XYZ.)
@@ -212,7 +179,10 @@ billboardSetSetFaceCameraMode :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> FaceCameraMode
   -> m ()
-billboardSetSetFaceCameraMode = undefined
+billboardSetSetFaceCameraMode p v = liftIO $ do
+  let ptr = parentPointer p
+      v' = fromIntegral . fromEnum $ v
+  [C.exp| void { $(BillboardSet* ptr)->SetFaceCameraMode((FaceCameraMode)$(int v')) } |]
 --void SetFaceCameraMode(FaceCameraMode mode);
 
 -- | Set minimal angle between billboard normal and look-at direction.
@@ -220,7 +190,10 @@ billboardSetSetMinAngle :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> Float -- ^ Angle
   -> m ()
-billboardSetSetMinAngle = undefined
+billboardSetSetMinAngle p v = liftIO $ do
+  let ptr = parentPointer p
+      v' = realToFrac v
+  [C.exp| void { $(BillboardSet* ptr)->SetMinAngle($(float v')) } |]
 --void SetMinAngle(float angle);
 
 -- | Set animation LOD bias.
@@ -228,35 +201,46 @@ billboardSetSetAnimationLodBias :: (Parent BillboardSet a, Pointer p a, MonadIO 
   => p -- ^ Pointer to BillboardSet or ascentor
   -> Float -- ^ bias
   -> m ()
-billboardSetSetAnimationLodBias = undefined
+billboardSetSetAnimationLodBias p v = liftIO $ do
+  let ptr = parentPointer p
+      v' = realToFrac v
+  [C.exp| void { $(BillboardSet* ptr)->SetAnimationLodBias($(float v')) } |]
 -- void SetAnimationLodBias(float bias);
 
 -- | Mark for bounding box and vertex buffer update. Call after modifying the billboards.
 billboardSetCommit :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m ()
-billboardSetCommit = undefined
+billboardSetCommit p = liftIO $ do
+  let ptr = parentPointer p
+  [C.exp| void { $(BillboardSet* ptr)->Commit() } |]
 -- void Commit();
 
 -- | Return material.
 billboardSetGetMaterial :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m (Ptr Material)
-billboardSetGetMaterial = undefined
+billboardSetGetMaterial p = liftIO $ do
+  let ptr = parentPointer p
+  [C.exp| Material* { $(BillboardSet* ptr)->GetMaterial() } |]
 -- Material* GetMaterial() const;
 
 -- | Return number of billboards.
 billboardSetGetNumBillboards :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m Int
-billboardSetGetNumBillboards = undefined
+billboardSetGetNumBillboards p = liftIO $ do
+  let ptr = parentPointer p
+  fmap fromIntegral [C.exp| int { $(BillboardSet* ptr)->GetNumBillboards() } |]
 --unsigned GetNumBillboards() const { return billboards_.Size(); }
 
 -- | Return all billboards.
 billboardSetGetBillboards :: (Parent BillboardSet a, Pointer p a, MonadIO m, ForeignVector v Billboard)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m (v Billboard)
-billboardSetGetBillboards = undefined
+billboardSetGetBillboards p = liftIO $ do
+  let ptr = parentPointer p
+  peekForeignVectorAs =<< [C.exp| PODVectorBillboard* { &$(BillboardSet* ptr)->GetBillboards() } |]
 -- PODVector<Billboard>& GetBillboards() { return billboards_; }
 
 -- | Return billboard by index.
@@ -264,7 +248,10 @@ billboardSetGetBillboard :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> Int -- ^ Number
   -> m Billboard
-billboardSetGetBillboard = undefined
+billboardSetGetBillboard p n = liftIO $ do
+  let ptr = parentPointer p
+      n' = fromIntegral n
+  peek =<< [C.exp| Billboard* { $(BillboardSet* ptr)->GetBillboard($(unsigned int n')) } |]
 -- Billboard* GetBillboard(unsigned index);
 
 -- | Set billboard data
@@ -273,55 +260,73 @@ billboardSetSetBillboard :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   -> Int -- ^ Number
   -> Billboard -- ^ Billboard datum
   -> m ()
-billboardSetSetBillboard = undefined
+billboardSetSetBillboard p n b = liftIO $ do
+  let ptr = parentPointer p
+      n' = fromIntegral n
+  bptr <- [C.exp| Billboard* { $(BillboardSet* ptr)->GetBillboard($(unsigned int n')) } |]
+  poke bptr b
 
 -- | Return whether billboards are relative to the scene node.
 billboardSetIsRelative :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m Bool
-billboardSetIsRelative = undefined
+billboardSetIsRelative p = liftIO $ do
+  let ptr = parentPointer p
+  fmap toBool [C.exp| int { (int)$(BillboardSet* ptr)->IsRelative() } |]
 -- bool IsRelative() const { return relative_; }
 
 -- | Return whether scene node scale affects billboards' size.
 billboardSetIsScaled :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m Bool
-billboardSetIsScaled = undefined
+billboardSetIsScaled p = liftIO $ do
+  let ptr = parentPointer p
+  fmap toBool [C.exp| int { (int)$(BillboardSet* ptr)->IsScaled() } |]
 -- bool IsScaled() const { return scaled_; }
 
 -- | Return whether billboards are sorted.
 billboardSetIsSorted :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m Bool
-billboardSetIsSorted = undefined
+billboardSetIsSorted p = liftIO $ do
+  let ptr = parentPointer p
+  fmap toBool [C.exp| int { (int)$(BillboardSet* ptr)->IsSorted() } |]
 -- bool IsSorted() const { return sorted_; }
 
 -- | Return whether billboards are fixed screen size.
 billboardSetIsFixedScreenSize :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m Bool
-billboardSetIsFixedScreenSize = undefined
+billboardSetIsFixedScreenSize p = liftIO $ do
+  let ptr = parentPointer p
+  fmap toBool [C.exp| int { (int)$(BillboardSet* ptr)->IsFixedScreenSize() } |]
 -- bool IsFixedScreenSize() const { return fixedScreenSize_; }
 
 -- | Return how the billboards rotate in relation to the camera.
 billboardSetGetFaceCameraMode :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m FaceCameraMode
-billboardSetGetFaceCameraMode = undefined
+billboardSetGetFaceCameraMode p = liftIO $ do
+  let ptr = parentPointer p
+  toEnum . fromIntegral <$> [C.exp| int { (int)$(BillboardSet* ptr)->GetFaceCameraMode() } |]
 -- FaceCameraMode GetFaceCameraMode() const { return faceCameraMode_; }
 
 -- | Return minimal angle between billboard normal and look-at direction.
 billboardSetGetMinAngle :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m Float
-billboardSetGetMinAngle = undefined
+billboardSetGetMinAngle p = liftIO $ do
+  let ptr = parentPointer p
+  realToFrac <$> [C.exp| float { (float)$(BillboardSet* ptr)->GetMinAngle() } |]
 -- float GetMinAngle() const { return minAngle_; }
 
 -- | Return animation LOD bias.
 billboardSetGetAnimationLodBias :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m Float
-billboardSetGetAnimationLodBias = undefined
+billboardSetGetAnimationLodBias p = liftIO $ do
+  let ptr = parentPointer p
+  realToFrac <$> [C.exp| float { (float)$(BillboardSet* ptr)->GetAnimationLodBias() } |]
 -- float GetAnimationLodBias() const { return animationLodBias_; }
 
 -- | Set material attribute.
@@ -329,15 +334,19 @@ billboardSetSetMaterialAttr :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> ResourceRef -- ^ Value
   -> m ()
-billboardSetSetMaterialAttr = undefined
+billboardSetSetMaterialAttr p r = liftIO $ with r $ \r' -> do
+  let ptr = parentPointer p
+  [C.exp| void { $(BillboardSet* ptr)->SetMaterialAttr(*$(ResourceRef* r')) } |]
 -- void SetMaterialAttr(const ResourceRef& value);
 
 -- | Set billboards attribute.
-billboardSetSetBillboardsAttr :: (Parent BillboardSet a, Pointer p a, MonadIO m, ForeignVector v Variant)
+billboardSetSetBillboardsAttr :: (Parent BillboardSet a, Pointer p a, MonadIO m, ForeignVector v (Ptr Variant))
   => p -- ^ Pointer to BillboardSet or ascentor
-  -> v Variant
+  -> v (Ptr Variant)
   -> m ()
-billboardSetSetBillboardsAttr = undefined
+billboardSetSetBillboardsAttr p v = liftIO $ withForeignVector () v $ \(v' :: Ptr VectorVariant) -> do
+  let ptr = parentPointer p
+  [C.exp| void { $(BillboardSet* ptr)->SetBillboardsAttr(*$(VectorVariant* v')) } |]
 -- void SetBillboardsAttr(const VariantVector& value);
 
 -- | Set billboards attribute for network replication.
@@ -345,26 +354,45 @@ billboardSetSetNetBillboardsAttr :: (Parent BillboardSet a, Pointer p a, MonadIO
   => p -- ^ Pointer to BillboardSet or ascentor
   -> v Word8
   -> m ()
-billboardSetSetNetBillboardsAttr = undefined
+billboardSetSetNetBillboardsAttr p v = liftIO $ withForeignVector () v $ \(v' :: Ptr PODVectorWord8) -> do
+  let ptr = parentPointer p
+  [C.exp| void { $(BillboardSet* ptr)->SetNetBillboardsAttr(*$(PODVectorWord8* v')) } |]
 -- void SetNetBillboardsAttr(const PODVector<unsigned char>& value);
 
 -- | Return material attribute.
 billboardSetGetMaterialAttr :: (Parent BillboardSet a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m ResourceRef
-billboardSetGetMaterialAttr = undefined
+billboardSetGetMaterialAttr p = liftIO $ alloca $ \r -> do
+  let ptr = parentPointer p
+  [C.exp| void { *($(ResourceRef* r)) = $(BillboardSet* ptr)->GetMaterialAttr() } |]
+  peek r
 -- ResourceRef GetMaterialAttr() const;
 
 -- | Return billboards attribute.
-billboardSetGetBillboardsAttr :: (Parent BillboardSet a, Pointer p a, MonadIO m, ForeignVector v Variant)
+billboardSetGetBillboardsAttr :: (Parent BillboardSet a, Pointer p a, MonadIO m, ForeignVector v (Ptr Variant))
   => p -- ^ Pointer to BillboardSet or ascentor
-  -> m (v Variant)
-billboardSetGetBillboardsAttr = undefined
+  -> m (v (Ptr Variant))
+billboardSetGetBillboardsAttr p = liftIO $ do
+  let ptr = parentPointer p
+  resptr <- [C.exp| VectorVariant* {
+    new VectorVariant($(BillboardSet* ptr)->GetBillboardsAttr())
+    } |]
+  v <- peekForeignVectorAs resptr
+  [C.exp| void { delete $(VectorVariant* resptr) }|]
+  pure v
 -- VariantVector GetBillboardsAttr() const;
 
 -- | Return billboards attribute for network replication.
-billboardSetGetNetBillboardsAttr :: (Parent BillboardSet a, Pointer p a, MonadIO m, ForeignVector v Variant)
+billboardSetGetNetBillboardsAttr :: (Parent BillboardSet a, Pointer p a, MonadIO m, ForeignVector v Word8)
   => p -- ^ Pointer to BillboardSet or ascentor
   -> m (v Word8)
-billboardSetGetNetBillboardsAttr = undefined
+billboardSetGetNetBillboardsAttr p = liftIO $ do
+  let ptr = parentPointer p
+  resptr <- [C.exp| PODVectorWord8* {
+    new PODVectorWord8($(BillboardSet* ptr)->GetNetBillboardsAttr())
+    } |]
+  v <- peekForeignVectorAs resptr
+  [C.exp| void { delete $(PODVectorWord8* resptr) }|]
+  pure v
 -- const PODVector<unsigned char>& GetNetBillboardsAttr() const;

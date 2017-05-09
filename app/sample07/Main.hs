@@ -76,7 +76,6 @@ createScene app = do
   -- Set same volume as the Octree, set a close bluish fog and some ambient light
   zoneSetBoundingBox zone $ BoundingBox (-1000) 1000
   zoneSetAmbientColor zone $ rgb 0.1 0.1 0.1
-  zoneSetFogColor zone $ rgb 0.5 0.5 0.7
   zoneSetFogStart zone 100
   zoneSetFogEnd zone 300
 
@@ -110,7 +109,7 @@ createScene app = do
     nodeSetPosition groupNode $ Vector3 (r1 - 95) 0 (r2 - 95)
 
     replicateM numMushrooms $ do
-      (mushroomNode :: Ptr Node) <- nodeCreateChild scene "Mushroom" CM'Replicated 0
+      (mushroomNode :: Ptr Node) <- nodeCreateChild groupNode "Mushroom" CM'Replicated 0
       [r3, r4] <- replicateM 2 (randomUp 25)
       [r5, r6] <- replicateM 2 random
       nodeSetPosition mushroomNode $ Vector3 (r3 - 12.5) 0 (r4 - 12.5)
@@ -148,12 +147,11 @@ createScene app = do
       sr6 <- randomUp 8
       [sr7, sr8] <- replicateM 2 (randomUp 2)
       sr9 <- randomUp 360
-      billboardSetSetBillboard j
-        $ position .~ Vector3 (sr4 - 6) (sr6 - 4) (sr5 - 6)
-        $ size .~ Vector2 (sr7 + 3.0, sr8 + 3.0)
-        $ rotation .~ sr9
-        $ enabled .~ True
-          bb
+      billboardSetSetBillboard billboardObject j $ bb
+        & position .~ Vector3 (sr4 - 6) (sr6 - 4) (sr5 - 6)
+        & size .~ Vector2 (sr7 + 3.0) (sr8 + 3.0)
+        & rotation .~ sr9
+        & enabled .~ True
 
     -- After modifying the billboards, they need to be "commited" so that the BillboardSet updates its internals
     billboardSetCommit billboardObject
@@ -162,31 +160,31 @@ createScene app = do
   let numLights = 9 :: Int
   _ <- forM [0 .. numLights] $ \i -> do
     (lightNode :: Ptr Node) <- nodeCreateChild scene "SpotLight" CM'Replicated 0
-    (light :: Ptr Light) <- fromJustTrace "SpotLight" <$> nodeCreateComponent smokeNode Nothing Nothing
+    (light :: Ptr Light) <- fromJustTrace "SpotLight" <$> nodeCreateComponent lightNode Nothing Nothing
 
     let angle = 0 :: Float
-        position = Vector3 ((i `mod` 3) * 60 - 60) 45 ((i / 3) * 60 - 60)
-        color = rgb (((i+1) .&. 1) * 0.5 + 0.5)
-                    ((((i+1) `shiftR` 1) .&. 1) * 0.5 + 0.5)
-                    ((((i+1) `shiftR` 2) .&. 1) * 0.5 + 0.5)
+        position = Vector3 (fromIntegral (i `mod` 3) * 60 - 60) 45 ((fromIntegral i / 3) * 60 - 60)
+        color = rgb (fromIntegral ((i+1) .&. 1) * 0.5 + 0.5)
+                    (fromIntegral (((i+1) `shiftR` 1) .&. 1) * 0.5 + 0.5)
+                    (fromIntegral (((i+1) `shiftR` 2) .&. 1) * 0.5 + 0.5)
 
     nodeSetPosition lightNode position
-    nodeSetDirection lightNode $ Vector3 (sin angle) (-1.5f) (cos angle)
+    nodeSetDirection lightNode $ Vector3 (sin angle) (-1.5) (cos angle)
 
     lightSetLightType light LT'Spot
     lightSetRange light 90
     rampTexture :: Ptr Texture2D <- fromJustTrace "RampExtreme.png" <$> cacheGetResource cache "Textures/RampExtreme.png" True
-    lightSetRampTexture light rampTexture
+    lightSetRampTexture light (castToParent rampTexture)
     lightSetFov light 45
     lightSetColor light color
     lightSetSpecularIntensity light 1
-    lightSetCastShadows light True
+    drawableSetCastShadows light True
     lightSetShadowBias light $ BiasParameters 0.00002 0
 
     -- Configure shadow fading for the lights. When they are far away enough, the lights eventually become unshadowed for
     -- better GPU performance. Note that we could also set the maximum distance for each object to cast shadows
     lightSetShadowFadeDistance light 100 -- Fade start distance
-    lightSetShadowDistance light 125 -- Fade end distance, shadows are disabled
+    drawableSetShadowDistance light 125 -- Fade end distance, shadows are disabled
     -- Set half resolution for the shadow maps for increased performance
     lightSetShadowResolution light 0.5
     -- The spot lights will not have anything near them, so move the near plane of the shadow camera farther

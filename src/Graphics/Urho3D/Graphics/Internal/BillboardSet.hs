@@ -2,6 +2,7 @@ module Graphics.Urho3D.Graphics.Internal.BillboardSet(
     BillboardSet
   , Billboard(..)
   , HasPosition(..)
+  , HasSize(..)
   , HasUv(..)
   , HasColor(..)
   , HasRotation(..)
@@ -14,23 +15,26 @@ module Graphics.Urho3D.Graphics.Internal.BillboardSet(
 
 import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Context as C
+import qualified Language.C.Inline.Cpp as C
 import qualified Language.C.Types as C
 
-import Graphics.Urho3D.Math.Internal.Color 
+import Data.Monoid
+import Foreign
+import Graphics.Urho3D.Math.Internal.Color
 import Graphics.Urho3D.Math.Internal.Rect
-import Graphics.Urho3D.Math.Internal.Vector2 
+import Graphics.Urho3D.Math.Internal.Vector2
 import Graphics.Urho3D.Math.Internal.Vector3
 
 -- For lenses conflicts
 import Graphics.Urho3D.Graphics.Animation
 
-import Control.DeepSeq 
-import Control.Lens 
-import GHC.Generics 
+import Control.DeepSeq
+import Control.Lens
+import GHC.Generics
 import qualified Data.Map as Map
 
 -- | Billboard component.
-data BillboardSet 
+data BillboardSet
 
 -- | One billboard in the billboard set.
 data Billboard = Billboard {
@@ -48,10 +52,10 @@ data Billboard = Billboard {
 makeFields ''Billboard
 instance NFData Billboard
 
-billboardSetCntx :: C.Context 
+billboardSetCntx :: C.Context
 billboardSetCntx = mempty {
     C.ctxTypesTable = Map.fromList [
       (C.TypeName "BillboardSet", [t| BillboardSet |])
     , (C.TypeName "Billboard", [t| Billboard |])
     ]
-  } 
+  }
