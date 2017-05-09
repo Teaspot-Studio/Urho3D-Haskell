@@ -55,7 +55,7 @@ customStart cntx sr = do
   -- Setup the viewport for displaying the scene
   setupViewport app scene cameraNode
   -- Hook up to the frame update events
-  subscribeToEvents app cameraNode
+  subscribeToEvents sr cameraNode
   -- Save scene to prevent garbage collecting
   writeIORef sr $ sampleScene .~ scene $ s
 
@@ -289,12 +289,12 @@ moveCamera app cameraNode t camData = do
     mul (Vector3 a b c) v = Vector3 (a*v) (b*v) (c*v)
 
 -- | Rotate lights and billboards
-animateScene :: SharedPtr Application -> Float -> IO ()
-animateScene app timeStep = do
-  (scene :: SharedPtr Scene) <- newSharedObject =<< getContext app
+animateScene :: SampleRef -> Float -> IO ()
+animateScene sr timeStep = do
+  sr <- readIORef sr
+  let scene = sr ^. sampleScene
   lightNodes :: [Ptr Node] <- nodeGetChildrenWithComponent scene (Proxy @Light) False
   billboardNodes :: [Ptr Node] <- nodeGetChildrenWithComponent scene (Proxy @BillboardSet) False
-  print $ length lightNodes
 
   let lightRotationSpeed = 20
       billboardRotationSpeed = 50
@@ -315,21 +315,25 @@ animateScene app timeStep = do
       billboardSetCommit bset
 
 -- | Subscribe to application-wide logic update events.
-subscribeToEvents :: SharedPtr Application -> Ptr Node -> IO ()
-subscribeToEvents app cameraNode = do
+subscribeToEvents :: SampleRef -> Ptr Node -> IO ()
+subscribeToEvents sr cameraNode = do
+  s <- readIORef sr
+  let app = s ^. sampleApplication
   camDataRef <- newIORef $ CameraData 0 0 False
-  subscribeToEvent app $ handleUpdate app cameraNode camDataRef
+  subscribeToEvent app $ handleUpdate sr cameraNode camDataRef
   subscribeToEvent app $ handlePostRenderUpdate app camDataRef
 
 -- | Handle the logic update event.
-handleUpdate :: SharedPtr Application -> Ptr Node -> IORef CameraData -> EventUpdate -> IO ()
-handleUpdate app cameraNode camDataRef e = do
+handleUpdate :: SampleRef -> Ptr Node -> IORef CameraData -> EventUpdate -> IO ()
+handleUpdate sr cameraNode camDataRef e = do
+  s <- readIORef sr
+  let app = s ^. sampleApplication
   -- Take the frame time step, which is stored as a float
   let t = e ^. timeStep
   camData <- readIORef camDataRef
   -- Move the camera and animate the scene, scale movement with time step
   writeIORef camDataRef =<< moveCamera app cameraNode t camData
-  animateScene app t
+  animateScene sr t
 
 handlePostRenderUpdate :: SharedPtr Application -> IORef CameraData -> EventPostRenderUpdate -> IO ()
 handlePostRenderUpdate app camDataRef _ = do
