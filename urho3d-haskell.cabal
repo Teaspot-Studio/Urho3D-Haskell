@@ -574,7 +574,7 @@ executable urho3d-haskell-sample07
   default-language:    Haskell2010
 
   if flag(examples)
-    Buildable: True
+    Buildable: False
   else
     Buildable: False
 
