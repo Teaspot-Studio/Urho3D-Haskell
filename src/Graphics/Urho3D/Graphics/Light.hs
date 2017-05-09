@@ -144,10 +144,8 @@ lightContext = lightCntx <> componentContext <> stringHashContext
 deriveParents [''Object, ''Serializable, ''Animatable, ''Component, ''Drawable] ''Light
 
 instance NodeComponent Light where
-  nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {
-    static StringHash h = Light::GetTypeStatic();
-    return &h;
-  } |]
+  nodeComponentType _ = unsafePerformIO $ StringHash . fromIntegral <$> [C.exp|
+    unsigned int { Light::GetTypeStatic().Value() } |]
 
 -- | Light types
 data LightType =

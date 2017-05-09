@@ -15,13 +15,13 @@ module Graphics.Urho3D.Scene.LogicComponent(
   , logicComponentSetUpdateEventMask
   , logicComponentGetUpdateEventMask
   , logicComponentIsDelayedStartCalled
-  ) where 
+  ) where
 
-import qualified Language.C.Inline as C 
+import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import GHC.Generics
-import Control.DeepSeq 
+import Control.DeepSeq
 
 import Graphics.Urho3D.Scene.Internal.LogicComponent
 import Graphics.Urho3D.Core.Context
@@ -30,21 +30,21 @@ import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Data.Monoid
-import Foreign 
+import Foreign
 import System.IO.Unsafe (unsafePerformIO)
 
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Scene.Serializable
 import Graphics.Urho3D.Scene.Animatable
-import Graphics.Urho3D.Scene.Component 
+import Graphics.Urho3D.Scene.Component
 import Graphics.Urho3D.Scene.Node
 import Graphics.Urho3D.Parent
 
 C.context (C.cppCtx <> logicComponentCntx <> sharedLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext <> serializableContext <> objectContext)
 C.include "<Urho3D/Scene/LogicComponent.h>"
-C.using "namespace Urho3D" 
+C.using "namespace Urho3D"
 
-logicComponentContext :: C.Context 
+logicComponentContext :: C.Context
 logicComponentContext = sharedLogicComponentPtrCntx <> logicComponentCntx <> stringHashContext
 
 newLogicComponent :: Ptr Context -> IO (Ptr LogicComponent)
@@ -53,24 +53,22 @@ newLogicComponent ptr = [C.exp| LogicComponent* { new LogicComponent($(Context* 
 deleteLogicComponent :: Ptr LogicComponent -> IO ()
 deleteLogicComponent ptr = [C.exp| void { delete $(LogicComponent* ptr) } |]
 
-instance Creatable (Ptr LogicComponent) where 
-  type CreationOptions (Ptr LogicComponent) = Ptr Context 
+instance Creatable (Ptr LogicComponent) where
+  type CreationOptions (Ptr LogicComponent) = Ptr Context
 
   newObject = liftIO . newLogicComponent
   deleteObject = liftIO . deleteLogicComponent
 
-sharedPtr "LogicComponent" 
+sharedPtr "LogicComponent"
 
 deriveParents [''Object, ''Serializable, ''Animatable, ''Component] ''LogicComponent
 
-instance NodeComponent LogicComponent where 
-  nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {
-    static StringHash h = LogicComponent::GetTypeStatic();
-    return &h;
-  } |]
+instance NodeComponent LogicComponent where
+  nodeComponentType _ = unsafePerformIO $ StringHash . fromIntegral <$> [C.exp|
+    unsigned int { LogicComponent::GetTypeStatic().Value() } |]
 
 -- | Data used in 'logicComponentSetUpdateEventMask' for optimizing even handling
-data EventMask = 
+data EventMask =
     EM'UseUpdate -- ^ Bitmask for using the scene update event.
   | EM'UsePostUpdate -- ^ Bitmask for using the scene post-update event.
   | EM'UseFixedUpdate -- ^ Bitmask for using the physics update event.
@@ -79,11 +77,11 @@ data EventMask =
 
 instance NFData EventMask
 
-instance Enum EventMask where 
-  fromEnum e = case e of 
+instance Enum EventMask where
+  fromEnum e = case e of
     EM'UseUpdate -> 0x01
     EM'UsePostUpdate -> 0x02
-    EM'UseFixedUpdate -> 0x04 
+    EM'UseFixedUpdate -> 0x04
     EM'UseFixedPostUpdate -> 0x08
   toEnum i = case i of
     0x01 -> EM'UseUpdate
@@ -96,23 +94,23 @@ instance Enum EventMask where
 logicComponentOnSetEnabled :: (Parent LogicComponent a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to logic component
   -> m ()
-logicComponentOnSetEnabled p = liftIO $ do 
-  let ptr = parentPointer p 
+logicComponentOnSetEnabled p = liftIO $ do
+  let ptr = parentPointer p
   [C.exp| void { $(LogicComponent* ptr)->OnSetEnabled() } |]
 
 -- | Called when the component is added to a scene node. Other components may not yet exist.
 logicComponentStart :: (Parent LogicComponent a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to logic component
   -> m ()
-logicComponentStart p = liftIO $ do 
-  let ptr = parentPointer p 
+logicComponentStart p = liftIO $ do
+  let ptr = parentPointer p
   [C.exp| void { $(LogicComponent* ptr)->Start() } |]
 
 -- | Called before the first update. At this point all other components of the node should exist. Will also be called if update events are not wanted; in that case the event is immediately unsubscribed afterward.
 logicComponentDelayedStart :: (Parent LogicComponent a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to logic component
   -> m ()
-logicComponentDelayedStart p = liftIO $ do 
+logicComponentDelayedStart p = liftIO $ do
   let ptr = parentPointer p
   [C.exp| void { $(LogicComponent* ptr)->DelayedStart() } |]
 
@@ -120,8 +118,8 @@ logicComponentDelayedStart p = liftIO $ do
 logicComponentStop :: (Parent LogicComponent a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to logic component
   -> m ()
-logicComponentStop p = liftIO $ do 
-  let ptr = parentPointer p 
+logicComponentStop p = liftIO $ do
+  let ptr = parentPointer p
   [C.exp| void { $(LogicComponent* ptr)->Stop() } |]
 
 -- | Called on scene update, variable timestep.
@@ -129,8 +127,8 @@ logicComponentUpdate :: (Parent LogicComponent a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to logic component
   -> Float -- ^ Time step
   -> m ()
-logicComponentUpdate p t = liftIO $ do 
-  let ptr = parentPointer p 
+logicComponentUpdate p t = liftIO $ do
+  let ptr = parentPointer p
       t' = realToFrac t
   [C.exp| void { $(LogicComponent* ptr)->Update($(float t')) } |]
 
@@ -139,8 +137,8 @@ logicComponentPostUpdate :: (Parent LogicComponent a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to logic component
   -> Float -- ^ Time step
   -> m ()
-logicComponentPostUpdate p t = liftIO $ do 
-  let ptr = parentPointer p 
+logicComponentPostUpdate p t = liftIO $ do
+  let ptr = parentPointer p
       t' = realToFrac t
   [C.exp| void { $(LogicComponent* ptr)->PostUpdate($(float t')) } |]
 
@@ -149,8 +147,8 @@ logicComponentFixedUpdate :: (Parent LogicComponent a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to logic component
   -> Float -- ^ Time step
   -> m ()
-logicComponentFixedUpdate p t = liftIO $ do 
-  let ptr = parentPointer p 
+logicComponentFixedUpdate p t = liftIO $ do
+  let ptr = parentPointer p
       t' = realToFrac t
   [C.exp| void { $(LogicComponent* ptr)->FixedUpdate($(float t')) } |]
 
@@ -159,8 +157,8 @@ logicComponentFixedPostUpdate :: (Parent LogicComponent a, Pointer p a, MonadIO 
   => p -- ^ Pointer to logic component
   -> Float -- ^ Time step
   -> m ()
-logicComponentFixedPostUpdate p t = liftIO $ do 
-  let ptr = parentPointer p 
+logicComponentFixedPostUpdate p t = liftIO $ do
+  let ptr = parentPointer p
       t' = realToFrac t
   [C.exp| void { $(LogicComponent* ptr)->FixedPostUpdate($(float t')) } |]
 
@@ -169,8 +167,8 @@ logicComponentSetUpdateEventMask :: (Parent LogicComponent a, Pointer p a, Monad
   => p -- ^ Pointer to logic component
   -> [EventMask] -- ^ Flags of events that are enabled
   -> m ()
-logicComponentSetUpdateEventMask p es = liftIO $ do 
-  let ptr = parentPointer p 
+logicComponentSetUpdateEventMask p es = liftIO $ do
+  let ptr = parentPointer p
       w = fromIntegral $ toByteBitset es
   [C.exp| void { $(LogicComponent* ptr)->SetUpdateEventMask($(unsigned char w)) } |]
 
@@ -178,14 +176,14 @@ logicComponentSetUpdateEventMask p es = liftIO $ do
 logicComponentGetUpdateEventMask :: (Parent LogicComponent a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to logic component
   -> m [EventMask]
-logicComponentGetUpdateEventMask p = liftIO $ do 
-  let ptr = parentPointer p 
+logicComponentGetUpdateEventMask p = liftIO $ do
+  let ptr = parentPointer p
   fromByteBitset . fromIntegral <$> [C.exp| unsigned char { $(LogicComponent* ptr)->GetUpdateEventMask() } |]
 
 -- | Return whether the DelayedStart() function has been called.
 logicComponentIsDelayedStartCalled :: (Parent LogicComponent a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to logic component
   -> m Bool
-logicComponentIsDelayedStartCalled p = liftIO $ do 
-  let ptr = parentPointer p 
+logicComponentIsDelayedStartCalled p = liftIO $ do
+  let ptr = parentPointer p
   toBool <$> [C.exp| int { $(LogicComponent* ptr)->IsDelayedStartCalled() } |]

@@ -25,11 +25,11 @@ module Graphics.Urho3D.Graphics.DebugRenderer(
   , debugRendererHasContent
   ) where
 
-import qualified Language.C.Inline as C 
+import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.DebugRenderer
-import Graphics.Urho3D.Scene.Node 
+import Graphics.Urho3D.Scene.Node
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign
@@ -47,26 +47,27 @@ import Graphics.Urho3D.Math.Matrix3x4
 import Graphics.Urho3D.Math.Matrix4
 import Graphics.Urho3D.Math.Polyhedron
 import Graphics.Urho3D.Math.Sphere
+import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector3
 import Graphics.Urho3D.Parent
 import Graphics.Urho3D.Scene.Animatable
-import Graphics.Urho3D.Scene.Component 
+import Graphics.Urho3D.Scene.Component
 import Graphics.Urho3D.Scene.Serializable
 
-C.context (C.cppCtx 
-  <> debugRendererCntx 
-  <> componentContext 
-  <> animatableContext 
-  <> serializableContext 
+C.context (C.cppCtx
+  <> debugRendererCntx
+  <> componentContext
+  <> animatableContext
+  <> serializableContext
   <> objectContext
-  <> contextContext 
-  <> cameraContext 
-  <> colorContext 
-  <> nodeContext 
+  <> contextContext
+  <> cameraContext
+  <> colorContext
+  <> nodeContext
   <> boundingBoxContext
-  <> matrix3x4Context 
+  <> matrix3x4Context
   <> matrix4Context
-  <> frustumContext 
+  <> frustumContext
   <> polyhedronContext
   <> vector3Context
   <> sphereContext
@@ -75,19 +76,17 @@ C.context (C.cppCtx
 C.include "<Urho3D/Graphics/DebugRenderer.h>"
 C.using "namespace Urho3D"
 
-debugRendererContext :: C.Context 
-debugRendererContext = componentContext 
+debugRendererContext :: C.Context
+debugRendererContext = componentContext
   <> debugRendererCntx
 
 deriveParents [''Object, ''Serializable, ''Animatable, ''Component] ''DebugRenderer
 
-instance NodeComponent DebugRenderer where 
-  nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {
-    static StringHash h = DebugRenderer::GetTypeStatic();
-    return &h;
-  } |]
+instance NodeComponent DebugRenderer where
+  nodeComponentType _ = unsafePerformIO $ StringHash . fromIntegral <$> [C.exp|
+    unsigned int { DebugRenderer::GetTypeStatic().Value() } |]
 
-instance Creatable (Ptr DebugRenderer) where 
+instance Creatable (Ptr DebugRenderer) where
   type CreationOptions (Ptr DebugRenderer) = Ptr Context
 
   newObject ptr = liftIO [C.exp| DebugRenderer* { new DebugRenderer($(Context* ptr)) } |]
@@ -98,12 +97,12 @@ debugRendererSetView :: (Parent DebugRenderer a, Pointer p a, MonadIO m, Parent 
   => p -- ^ Pointer to DebugRenderer or ascentor
   -> pcam -- ^ Pointer to camera or ascentor
   -> m ()
-debugRendererSetView p pcam = liftIO $ do 
+debugRendererSetView p pcam = liftIO $ do
   let ptr = parentPointer p
       ptrcam = parentPointer pcam
   [C.exp| void { $(DebugRenderer* ptr)->SetView($(Camera* ptrcam)) } |]
 
-class DebugRendererAddLine a where 
+class DebugRendererAddLine a where
   -- | Add line with color from struct or unsigned value
   debugRendererAddLine :: (Parent DebugRenderer b, Pointer p b, MonadIO m)
     => p -- ^ Pointer to DebugRenderer or ascentor
@@ -114,17 +113,17 @@ class DebugRendererAddLine a where
     -> m ()
 
 -- | Add a line.
-instance DebugRendererAddLine Color where 
-  debugRendererAddLine p s e c d = liftIO $ 
-    with s $ \s' -> with e $ \e' -> with c $ \c' -> do 
+instance DebugRendererAddLine Color where
+  debugRendererAddLine p s e c d = liftIO $
+    with s $ \s' -> with e $ \e' -> with c $ \c' -> do
       let ptr = parentPointer p
           d' = fromBool d
       [C.exp| void { $(DebugRenderer* ptr)->AddLine(*$(Vector3* s'), *$(Vector3* e'), *$(Color* c'), $(int d') != 0) } |]
 
 -- | Add a line with color already converted to unsigned.
-instance DebugRendererAddLine Word where 
-  debugRendererAddLine p s e c d = liftIO $ 
-    with s $ \s' -> with e $ \e' -> do 
+instance DebugRendererAddLine Word where
+  debugRendererAddLine p s e c d = liftIO $
+    with s $ \s' -> with e $ \e' -> do
       let ptr = parentPointer p
           d' = fromBool d
           c' = fromIntegral c
@@ -136,23 +135,23 @@ class DebugRendererAddTriangle a where
     => p -- ^ Pointer to DebugRenderer or ascentor
     -> Vector3 -- ^ v1
     -> Vector3 -- ^ v2
-    -> Vector3 -- ^ v3 
+    -> Vector3 -- ^ v3
     -> a -- ^ color
     -> Bool -- ^ depthTest
     -> m ()
 
 -- | Add a triangle.
-instance DebugRendererAddTriangle Color where 
-  debugRendererAddTriangle p v1 v2 v3 c d = liftIO $ 
-    with v1 $ \v1' -> with v2 $ \v2' -> with v3 $ \v3' -> with c $ \c' -> do 
+instance DebugRendererAddTriangle Color where
+  debugRendererAddTriangle p v1 v2 v3 c d = liftIO $
+    with v1 $ \v1' -> with v2 $ \v2' -> with v3 $ \v3' -> with c $ \c' -> do
       let ptr = parentPointer p
           d' = fromBool d
       [C.exp| void { $(DebugRenderer* ptr)->AddTriangle(*$(Vector3* v1'), *$(Vector3* v2'), *$(Vector3* v3'), *$(Color* c'), $(int d') != 0) } |]
 
 -- | Add a triangle with color already converted to unsigned.
-instance DebugRendererAddTriangle Word where 
-  debugRendererAddTriangle p v1 v2 v3 c d = liftIO $ 
-    with v1 $ \v1' -> with v2 $ \v2' -> with v3 $ \v3' -> do 
+instance DebugRendererAddTriangle Word where
+  debugRendererAddTriangle p v1 v2 v3 c d = liftIO $
+    with v1 $ \v1' -> with v2 $ \v2' -> with v3 $ \v3' -> do
       let ptr = parentPointer p
           d' = fromBool d
           c' = fromIntegral c
@@ -165,9 +164,9 @@ debugRendererAddNode :: (Parent DebugRenderer a, Pointer p a, MonadIO m, Parent 
   -> Float -- ^ scale
   -> Bool -- ^ depth test
   -> m ()
-debugRendererAddNode p pnode scale d = liftIO $ do 
+debugRendererAddNode p pnode scale d = liftIO $ do
   let ptr = parentPointer p
-      ptrnode = parentPointer pnode 
+      ptrnode = parentPointer pnode
       scale' = realToFrac scale
       d' = fromBool d
   [C.exp| void { $(DebugRenderer* ptr)->AddNode($(Node* ptrnode), $(float scale'), $(int d') != 0) } |]
@@ -179,9 +178,9 @@ debugRendererAddBoundingBox :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   -> Color -- ^ color
   -> Bool -- ^ depth test
   -> m ()
-debugRendererAddBoundingBox p box c d = liftIO $ with box $ \box' -> with c $ \c' -> do 
+debugRendererAddBoundingBox p box c d = liftIO $ with box $ \box' -> with c $ \c' -> do
   let ptr = parentPointer p
-      d' = fromBool d 
+      d' = fromBool d
   [C.exp| void { $(DebugRenderer* ptr)->AddBoundingBox(*$(BoundingBox* box'), *$(Color* c'), $(int d') != 0) } |]
 
 -- | Add a bounding box with transform.
@@ -192,9 +191,9 @@ debugRendererAddBoundingBoxWithTransform :: (Parent DebugRenderer a, Pointer p a
   -> Color -- ^ color
   -> Bool -- ^ depth test
   -> m ()
-debugRendererAddBoundingBoxWithTransform p box t c d = liftIO $ with box $ \box' -> with t $ \t' -> with c $ \c' -> do 
+debugRendererAddBoundingBoxWithTransform p box t c d = liftIO $ with box $ \box' -> with t $ \t' -> with c $ \c' -> do
   let ptr = parentPointer p
-      d' = fromBool d 
+      d' = fromBool d
   [C.exp| void { $(DebugRenderer* ptr)->AddBoundingBox(*$(BoundingBox* box'), *$(Matrix3x4* t'), *$(Color* c'), $(int d') != 0) } |]
 
 -- | Add a frustum.
@@ -204,9 +203,9 @@ debugRendererAddFrustum :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   -> Color -- ^ color
   -> Bool -- ^ depth test
   -> m ()
-debugRendererAddFrustum p f c d = liftIO $ with f $ \f' -> with c $ \c' -> do 
+debugRendererAddFrustum p f c d = liftIO $ with f $ \f' -> with c $ \c' -> do
   let ptr = parentPointer p
-      d' = fromBool d 
+      d' = fromBool d
   [C.exp| void { $(DebugRenderer* ptr)->AddFrustum(*$(Frustum* f'), *$(Color* c'), $(int d') != 0) } |]
 
 -- | Add a polyhedron.
@@ -216,9 +215,9 @@ debugRendererAddPolyhedron :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   -> Color -- ^ color
   -> Bool -- ^ depth test
   -> m ()
-debugRendererAddPolyhedron p ph c d = liftIO $ with ph $ \ph' -> with c $ \c' -> do 
+debugRendererAddPolyhedron p ph c d = liftIO $ with ph $ \ph' -> with c $ \c' -> do
   let ptr = parentPointer p
-      d' = fromBool d 
+      d' = fromBool d
   [C.exp| void { $(DebugRenderer* ptr)->AddPolyhedron(*$(Polyhedron* ph'), *$(Color* c'), $(int d') != 0) } |]
 
 -- | Add a sphere.
@@ -228,9 +227,9 @@ debugRendererAddSphere :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   -> Color -- ^ color
   -> Bool -- ^ depth test
   -> m ()
-debugRendererAddSphere p s c d = liftIO $ with s $ \s' -> with c $ \c' -> do 
+debugRendererAddSphere p s c d = liftIO $ with s $ \s' -> with c $ \c' -> do
   let ptr = parentPointer p
-      d' = fromBool d 
+      d' = fromBool d
   [C.exp| void { $(DebugRenderer* ptr)->AddSphere(*$(Sphere* s'), *$(Color* c'), $(int d') != 0) } |]
 
 -- | Add a cylinder
@@ -242,10 +241,10 @@ debugRendererAddCylinder :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   -> Color -- ^ color
   -> Bool -- ^ depth test
   -> m ()
-debugRendererAddCylinder p pv r h c d = liftIO $ with pv $ \pv' -> with c $ \c' -> do 
+debugRendererAddCylinder p pv r h c d = liftIO $ with pv $ \pv' -> with c $ \c' -> do
   let ptr = parentPointer p
-      d' = fromBool d 
-      r' = realToFrac r      
+      d' = fromBool d
+      r' = realToFrac r
       h' = realToFrac h
   [C.exp| void { $(DebugRenderer* ptr)->AddCylinder(*$(Vector3* pv'), $(float r'), $(float h'), *$(Color* c'), $(int d') != 0) } |]
 
@@ -256,17 +255,17 @@ debugRendererAddSkeleton :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   -> Color -- ^ color
   -> Bool -- ^ depth test
   -> m ()
-debugRendererAddSkeleton p psk c d = liftIO $ with c $ \c' -> do 
+debugRendererAddSkeleton p psk c d = liftIO $ with c $ \c' -> do
   let ptr = parentPointer p
-      d' = fromBool d 
+      d' = fromBool d
   [C.exp| void { $(DebugRenderer* ptr)->AddSkeleton(*$(Skeleton* psk), *$(Color* c'), $(int d') != 0) } |]
 
 -- | Add a triangle mesh.
 debugRendererAddTriangleMesh :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to DebugRenderer or ascentor
-  -> Ptr () -- ^ vertex data 
+  -> Ptr () -- ^ vertex data
   -> Word -- ^ vertex size
-  -> Ptr () -- ^ index data 
+  -> Ptr () -- ^ index data
   -> Word -- ^ index size
   -> Word -- ^ index start
   -> Word -- ^ index count
@@ -274,9 +273,9 @@ debugRendererAddTriangleMesh :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   -> Color -- ^ color
   -> Bool -- ^ depth test
   -> m ()
-debugRendererAddTriangleMesh p vdata vsize idata isize istart icount tr c d = liftIO $ with tr $ \tr' -> with c $ \c' -> do 
+debugRendererAddTriangleMesh p vdata vsize idata isize istart icount tr c d = liftIO $ with tr $ \tr' -> with c $ \c' -> do
   let ptr = parentPointer p
-      d' = fromBool d 
+      d' = fromBool d
       vsize' = fromIntegral vsize
       isize' = fromIntegral isize
       istart' = fromIntegral istart
@@ -286,16 +285,16 @@ debugRendererAddTriangleMesh p vdata vsize idata isize istart icount tr c d = li
 -- | Add a circle.
 debugRendererAddCircle :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to DebugRenderer or ascentor
-  -> Vector3 -- ^ center 
-  -> Vector3 -- ^ normal 
+  -> Vector3 -- ^ center
+  -> Vector3 -- ^ normal
   -> Float -- ^ radius
   -> Color -- ^ color
   -> Int -- ^ steps (def 64)
   -> Bool -- ^ depth test
   -> m ()
-debugRendererAddCircle p cv nv r c stps d = liftIO $ with cv $ \cv' -> with nv $ \nv' -> with c $ \c' -> do 
+debugRendererAddCircle p cv nv r c stps d = liftIO $ with cv $ \cv' -> with nv $ \nv' -> with c $ \c' -> do
   let ptr = parentPointer p
-      d' = fromBool d 
+      d' = fromBool d
       stps' = fromIntegral stps
       r' = realToFrac r
   [C.exp| void { $(DebugRenderer* ptr)->AddCircle(*$(Vector3* cv'), *$(Vector3* nv'), $(float r'), *$(Color* c'), $(int stps'), $(int d') != 0) } |]
@@ -303,12 +302,12 @@ debugRendererAddCircle p cv nv r c stps d = liftIO $ with cv $ \cv' -> with nv $
 -- | Add a cross.
 debugRendererAddCross :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to DebugRenderer or ascentor
-  -> Vector3 -- ^ center 
+  -> Vector3 -- ^ center
   -> Float -- ^ size
   -> Color -- ^ color
   -> Bool -- ^ depth test
   -> m ()
-debugRendererAddCross p cv s c d = liftIO $ with cv $ \cv' -> with c $ \c' -> do 
+debugRendererAddCross p cv s c d = liftIO $ with cv $ \cv' -> with c $ \c' -> do
   let ptr = parentPointer p
       d' = fromBool d
       s' = realToFrac s
@@ -317,13 +316,13 @@ debugRendererAddCross p cv s c d = liftIO $ with cv $ \cv' -> with c $ \c' -> do
 -- | Add a quad on the XZ plane.
 debugRendererAddQuad :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to DebugRenderer or ascentor
-  -> Vector3 -- ^ center 
+  -> Vector3 -- ^ center
   -> Float -- ^ width
   -> Float -- ^ height
   -> Color -- ^ color
   -> Bool -- ^ depth test
   -> m ()
-debugRendererAddQuad p cv w h c d = liftIO $ with cv $ \cv' -> with c $ \c' -> do 
+debugRendererAddQuad p cv w h c d = liftIO $ with cv $ \cv' -> with c $ \c' -> do
   let ptr = parentPointer p
       d' = fromBool d
       w' = realToFrac w
@@ -334,7 +333,7 @@ debugRendererAddQuad p cv w h c d = liftIO $ with cv $ \cv' -> with c $ \c' -> d
 debugRendererRender :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to DebugRenderer or ascentor
   -> m ()
-debugRendererRender p = liftIO $ do 
+debugRendererRender p = liftIO $ do
   let ptr = parentPointer p
   [C.exp| void { $(DebugRenderer* ptr)->Render() } |]
 
@@ -342,7 +341,7 @@ debugRendererRender p = liftIO $ do
 debugRendererGetView :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to DebugRenderer or ascentor
   -> m Matrix3x4
-debugRendererGetView p = liftIO $ do 
+debugRendererGetView p = liftIO $ do
   let ptr = parentPointer p
   peek =<< [C.exp| const Matrix3x4* { &$(DebugRenderer* ptr)->GetView() } |]
 
@@ -350,7 +349,7 @@ debugRendererGetView p = liftIO $ do
 debugRendererGetProjection :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to DebugRenderer or ascentor
   -> m Matrix4
-debugRendererGetProjection p = liftIO $ do 
+debugRendererGetProjection p = liftIO $ do
   let ptr = parentPointer p
   peek =<< [C.exp| const Matrix4* { &$(DebugRenderer* ptr)->GetProjection() } |]
 
@@ -358,7 +357,7 @@ debugRendererGetProjection p = liftIO $ do
 debugRendererGetFrustum :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to DebugRenderer or ascentor
   -> m Frustum
-debugRendererGetFrustum p = liftIO $ do 
+debugRendererGetFrustum p = liftIO $ do
   let ptr = parentPointer p
   peek =<< [C.exp| const Frustum* { &$(DebugRenderer* ptr)->GetFrustum() } |]
 
@@ -367,7 +366,7 @@ debugRendererIsInside :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to DebugRenderer or ascentor
   -> BoundingBox -- ^ box
   -> m Bool
-debugRendererIsInside p bb = liftIO $ with bb $ \bb' -> do 
+debugRendererIsInside p bb = liftIO $ with bb $ \bb' -> do
   let ptr = parentPointer p
   toBool <$> [C.exp| int { (int) $(DebugRenderer* ptr)->IsInside(*$(BoundingBox* bb')) } |]
 
@@ -375,6 +374,6 @@ debugRendererIsInside p bb = liftIO $ with bb $ \bb' -> do
 debugRendererHasContent :: (Parent DebugRenderer a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to DebugRenderer or ascentor
   -> m Bool
-debugRendererHasContent p = liftIO $ do 
+debugRendererHasContent p = liftIO $ do
   let ptr = parentPointer p
   toBool <$> [C.exp| int { (int) $(DebugRenderer* ptr)->HasContent() } |]

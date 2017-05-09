@@ -26,15 +26,17 @@
      - Parenting scene nodes to allow more intuitive creation of groups of objects
      - Examining rendering performance with a somewhat large object and light count
 -}
+{-# LANGUAGE TypeApplications #-}
 module Main where
 
 import Control.Lens hiding (Context, element)
 import Control.Monad
+import Data.Bits
 import Data.IORef
+import Data.Proxy
 import Foreign
 import Graphics.Urho3D
 import Sample
-import Data.Bits
 
 main :: IO ()
 main = withObject () $ \cntx -> do
@@ -231,7 +233,7 @@ setupViewport app scene cameraNode = do
     use, but now we just use full screen and default render path configured in the engine command line options
   -}
   cntx <- getContext app
-  (cam :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent' cameraNode False
+  (cam :: Ptr Camera) <- fromJustTrace "Camera" <$> nodeGetComponent cameraNode False
   (viewport :: SharedPtr Viewport) <- newSharedObject (cntx, pointer scene, cam)
   rendererSetViewport renderer 0 viewport
 
@@ -288,7 +290,29 @@ moveCamera app cameraNode t camData = do
 
 -- | Rotate lights and billboards
 animateScene :: SharedPtr Application -> Float -> IO ()
-animateScene app t = pure ()
+animateScene app timeStep = do
+  (scene :: SharedPtr Scene) <- newSharedObject =<< getContext app
+  lightNodes :: [Ptr Node] <- nodeGetChildrenWithComponent scene (Proxy @Light) False
+  billboardNodes :: [Ptr Node] <- nodeGetChildrenWithComponent scene (Proxy @BillboardSet) False
+  print $ length lightNodes
+
+  let lightRotationSpeed = 20
+      billboardRotationSpeed = 50
+
+  -- Rotate the lights around the world Y-axis
+  forM_ lightNodes $ \node ->
+    nodeRotate node (quaternionFromEuler 0 (lightRotationSpeed * timeStep) 0) TS'World
+
+  -- Rotate the individual billboards within the billboard sets, then recommit to make the changes visible
+  forM_ billboardNodes $ \node -> do
+    mc <- nodeGetComponent node False
+    whenJust mc $ \(bset :: Ptr BillboardSet) -> do
+      n <- billboardSetGetNumBillboards bset
+      forM_ [0 .. n-1] $ \i -> do
+        bb <- billboardSetGetBillboard bset i
+        billboardSetSetBillboard bset i $ bb
+          & rotation +~ billboardRotationSpeed * timeStep
+      billboardSetCommit bset
 
 -- | Subscribe to application-wide logic update events.
 subscribeToEvents :: SharedPtr Application -> Ptr Node -> IO ()

@@ -21,8 +21,8 @@
 -}
 module Rotator where
 
-import Data.IORef 
-import Foreign 
+import Data.IORef
+import Foreign
 
 import Graphics.Urho3D
 
@@ -33,23 +33,23 @@ type Rotator = CustomLogicComponent
 -- At the case our state is rotation speed as Vector3.
 type RotatorSetup = CustomLogicComponentSetup Vector3
 -- | Type hash of our rotator component
-type RotatorType = ForeignPtr StringHash
+type RotatorType = StringHash
 
--- | Register rotator within Urho engine, resulting type is used for creation of 
+-- | Register rotator within Urho engine, resulting type is used for creation of
 -- the component instances.
 registerRotator :: MonadIO m => Ptr Context -> m RotatorType
-registerRotator cntx = registerCustomComponent cntx "Rotator" 0 rotatorDef 
+registerRotator cntx = registerCustomComponent cntx "Rotator" 0 rotatorDef
 
 -- | Update internal state of rotator. Changes rotation speed.
 setRotatorSpeed :: MonadIO m => Ptr Rotator -> Vector3 -> m ()
-setRotatorSpeed ptr v = liftIO $ do 
-  ref <- getCustomComponentState ptr 
-  writeIORef ref v 
+setRotatorSpeed ptr v = liftIO $ do
+  ref <- getCustomComponentState ptr
+  writeIORef ref v
 
 -- | Custom logic component for rotating a scene node.
 rotatorDef :: RotatorSetup
 rotatorDef = defaultCustomLogicComponent {
-    componentUpdate = Just $ \ref compNode t -> do 
+    componentUpdate = Just $ \ref compNode t -> do
       -- Component state is passed via reference
       rotSpeed <- readIORef ref
       -- Components have their scene node as a member variable for convenient access. Rotate the scene node now: construct a

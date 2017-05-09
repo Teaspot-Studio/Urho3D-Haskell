@@ -334,7 +334,7 @@ handleSceneUpdate sr _ = do
       tstate <- fromJustTrace "handleSceneUpdate:TouchState" <$> inputGetTouch input i
       unless (isNull $ tstate ^. touchedElement) $ do -- touch on empty space
         if tstate^.touchDelta.x /= 0 || tstate^.touchDelta.y /= 0 then do
-          mcam <- nodeGetComponent' cameraNode False
+          mcam <- nodeGetComponent cameraNode False
           Monad.void $ whenJust mcam $ \(cam :: Ptr Camera) -> do
             (graphics :: Ptr Graphics) <- fromJustTrace "handleSceneUpdate:Graphics" <$> getSubsystem app
 

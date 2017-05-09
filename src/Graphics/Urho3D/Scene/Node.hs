@@ -79,15 +79,15 @@ module Graphics.Urho3D.Scene.Node(
   , nodeRemoveComponents
   , nodeRemoveComponents'
   , nodeRemoveAllComponents
-  , nodeClone 
+  , nodeClone
   , nodeRemove
   , nodeSetParent
-  , nodeSetVar 
+  , nodeSetVar
   , nodeAddListener
   , nodeRemoveListener
   -- | Getters
   , nodeGetID
-  , nodeGetName 
+  , nodeGetName
   , nodeGetNameHash
   , nodeGetTags
   , nodeHasTag
@@ -123,18 +123,17 @@ module Graphics.Urho3D.Scene.Node(
   , nodeWorldToLocal2D
   , nodeIsDirty
   , nodeGetNumChildren
-  , nodeGetChildren 
+  , nodeGetChildren
   , nodeGetChildren'
   , nodeGetChildrenWithComponent
-  , nodeGetChildrenWithTag 
+  , nodeGetChildrenWithTag
   , nodeGetChildByIndex
   , nodeGetChildByName
   , nodeGetChildByNameHash
   , nodeGetNumComponents
   , nodeGetNumNetworkComponents
-  , nodeGetComponents 
-  , nodeGetComponentsByType
-  , nodeGetComponent'
+  , nodeGetComponents
+  , nodeGetComponentsByHash
   , nodeGetComponent
   , nodeGetParentComponent
   , nodeHasComponent
@@ -143,18 +142,18 @@ module Graphics.Urho3D.Scene.Node(
   , nodeGetVars
   ) where
 
-import qualified Language.C.Inline as C 
+import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Data.Monoid
 import Data.Proxy
-import Foreign 
+import Foreign
 import Foreign.C.String
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.Str
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Vector
-import Graphics.Urho3D.Core.Context 
+import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.Variant
 import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Quaternion
@@ -170,27 +169,27 @@ import Graphics.Urho3D.Scene.Internal.Node
 import Graphics.Urho3D.Network.Connection
 import System.IO.Unsafe (unsafePerformIO)
 
-C.context (C.cppCtx 
-  <> nodeCntx 
-  <> sharedNodePtrCntx 
+C.context (C.cppCtx
+  <> nodeCntx
+  <> sharedNodePtrCntx
   <> weakNodePtrCntx
-  <> contextContext 
-  <> stringHashContext 
-  <> componentContext 
-  <> quaternionContext 
-  <> vector2Context 
-  <> vector3Context 
-  <> vector4Context 
-  <> connectionContext 
-  <> variantContext 
-  <> stringContext 
-  <> sceneCntx 
+  <> contextContext
+  <> stringHashContext
+  <> componentContext
+  <> quaternionContext
+  <> vector2Context
+  <> vector3Context
+  <> vector4Context
+  <> connectionContext
+  <> variantContext
+  <> stringContext
+  <> sceneCntx
   <> matrix3x4Context
   <> podVectorNodePtrCntx)
 
 C.include "<Urho3D/Scene/Node.h>"
 C.include "<Urho3D/Scene/Component.h>"
-C.using "namespace Urho3D" 
+C.using "namespace Urho3D"
 
 C.verbatim "typedef Vector<SharedPtr<Node> > VectorSharedNodePtr;"
 C.verbatim "typedef Vector<SharedPtr<Component> > VectorSharedComponentPtr;"
@@ -199,7 +198,7 @@ C.verbatim "typedef PODVector<Node*> PODVectorNodePtr;"
 C.verbatim "typedef PODVector<Component*> PODVectorComponentPtr;"
 C.verbatim "typedef VariantMap HashMapStringHashVariant;"
 
-nodeContext :: C.Context 
+nodeContext :: C.Context
 nodeContext = sharedNodePtrCntx <> weakNodePtrCntx <> nodeCntx <> stringHashContext <> componentContext <> podVectorNodePtrCntx
 
 newNode :: Ptr Context -> IO (Ptr Node)
@@ -208,55 +207,53 @@ newNode ptr = [C.exp| Node* { new Node($(Context* ptr)) } |]
 deleteNode :: Ptr Node -> IO ()
 deleteNode ptr = [C.exp| void { delete $(Node* ptr) } |]
 
-instance Creatable (Ptr Node) where 
-  type CreationOptions (Ptr Node) = Ptr Context 
+instance Creatable (Ptr Node) where
+  type CreationOptions (Ptr Node) = Ptr Context
 
   newObject = liftIO . newNode
   deleteObject = liftIO . deleteNode
 
-sharedPtr "Node" 
-sharedWeakPtr "Node" 
+sharedPtr "Node"
+sharedWeakPtr "Node"
 podVectorPtr "Node"
 
 -- | Component and child node creation mode for networking.
-data CreateMode = 
+data CreateMode =
     CM'Replicated
-  | CM'Local 
+  | CM'Local
   deriving (Eq, Ord, Show, Bounded, Enum)
 
 -- | Transform space for translations and rotations.
 data TransformSpace =
     TS'Local
-  | TS'Parent 
-  | TS'World 
+  | TS'Parent
+  | TS'World
   deriving (Eq, Ord, Show, Bounded, Enum)
 
-class Parent Component a => NodeComponent a where 
-  nodeComponentType :: Proxy a -> Ptr StringHash 
+class Parent Component a => NodeComponent a where
+  nodeComponentType :: Proxy a -> StringHash
 
-instance NodeComponent Component where 
-  nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {
-    static StringHash h = Component::GetTypeStatic();
-    return &h;
-  } |]
+instance NodeComponent Component where
+  nodeComponentType _ = unsafePerformIO $ StringHash . fromIntegral <$> [C.exp|
+    unsigned int { Component::GetTypeStatic().Value() } |]
 
-instance Creatable (Ptr VectorSharedNodePtr) where 
+instance Creatable (Ptr VectorSharedNodePtr) where
   type CreationOptions (Ptr VectorSharedNodePtr) = ()
 
   newObject _ = liftIO [C.exp| VectorSharedNodePtr* { new VectorSharedNodePtr() } |]
   deleteObject ptr = liftIO $ [C.exp| void {delete $(VectorSharedNodePtr* ptr)} |]
 
-instance ReadableVector VectorSharedNodePtr where 
+instance ReadableVector VectorSharedNodePtr where
   type ReadVecElem VectorSharedNodePtr = SharedPtr Node
   foreignVectorLength ptr = fromIntegral <$>
     liftIO [C.exp| unsigned int {$(VectorSharedNodePtr* ptr)->Size()} |]
-  foreignVectorElement ptr i = liftIO $ do 
-    let i' = fromIntegral i 
+  foreignVectorElement ptr i = liftIO $ do
+    let i' = fromIntegral i
     peekSharedPtr =<< [C.exp| SharedNode* { new SharedPtr<Node>((*$(VectorSharedNodePtr* ptr))[$(int i')]) } |]
 
-instance WriteableVector VectorSharedNodePtr where 
+instance WriteableVector VectorSharedNodePtr where
   type WriteVecElem VectorSharedNodePtr = SharedPtr Node
-  foreignVectorAppend ptr sp = liftIO $ do 
+  foreignVectorAppend ptr sp = liftIO $ do
     let p = pointer sp
     [C.exp| void { $(VectorSharedNodePtr* ptr)->Push(SharedPtr<Node>($(Node* p))) } |]
 
@@ -265,8 +262,8 @@ nodeSetName :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
   -> String -- ^ Name
   -> m ()
-nodeSetName p str = liftIO $ withCString str $ \str' -> do 
-  let ptr = parentPointer p 
+nodeSetName p str = liftIO $ withCString str $ \str' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetName(String($(const char* str'))) } |]
 
 -- | Set position in parent space. If the scene node is on the root level (is child of the scene itself), this is same as world space.
@@ -274,8 +271,8 @@ nodeSetPosition :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
   -> Vector3 -- ^ Value
   -> m ()
-nodeSetPosition p v = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetPosition p v = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetPosition(*$(Vector3* v')) } |]
 
 -- | Set position in parent space (for Urho2D).
@@ -283,19 +280,19 @@ nodeSetPosition2D :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
   -> Vector2 -- ^ Value
   -> m ()
-nodeSetPosition2D p v = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetPosition2D p v = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetPosition2D(*$(Vector2* v')) } |]
 
 -- | Set position in parent space (for Urho2D).
 nodeSetPosition2D' :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
-  -> Float -- ^ X 
+  -> Float -- ^ X
   -> Float -- ^ Y
   -> m ()
-nodeSetPosition2D' p xv yv = liftIO $ do 
-  let ptr = parentPointer p 
-      x' = realToFrac xv 
+nodeSetPosition2D' p xv yv = liftIO $ do
+  let ptr = parentPointer p
+      x' = realToFrac xv
       y' = realToFrac yv
   [C.exp| void { $(Node* ptr)->SetPosition2D($(float x'), $(float y')) } |]
 
@@ -303,16 +300,16 @@ nodeSetPosition2D' p xv yv = liftIO $ do
 nodeSetRotation :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> Quaternion -- ^ Rotation
   -> m ()
-nodeSetRotation p q = liftIO $ with q $ \q' -> do 
-  let ptr = parentPointer p 
+nodeSetRotation p q = liftIO $ with q $ \q' -> do
+  let ptr = parentPointer p
   [C.exp| void {$(Node* ptr)->SetRotation(*$(Quaternion* q'))} |]
 
 -- | Set rotation in parent space (for Urho2D).
 nodeSetRotation2D :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> Float -- ^ Rotation
   -> m ()
-nodeSetRotation2D p a = liftIO $ do 
-  let ptr = parentPointer p 
+nodeSetRotation2D p a = liftIO $ do
+  let ptr = parentPointer p
       a' = realToFrac a
   [C.exp| void {$(Node* ptr)->SetRotation2D($(float a'))} |]
 
@@ -321,8 +318,8 @@ nodeSetDirection :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
   -> Vector3 -- ^ Value
   -> m ()
-nodeSetDirection p v = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetDirection p v = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetDirection(*$(Vector3* v')) } |]
 
 -- | Set scale in parent space.
@@ -330,16 +327,16 @@ nodeSetScale :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
   -> Vector3 -- ^ Scale factor by each axis
   -> m ()
-nodeSetScale p v = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetScale p v = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetScale(*$(Vector3* v')) } |]
 
 -- | Set uniform scale in parent space.
 nodeSetScale' :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> Float -- ^ Scale factor
   -> m ()
-nodeSetScale' p a = liftIO $ do 
-  let ptr = parentPointer p 
+nodeSetScale' p a = liftIO $ do
+  let ptr = parentPointer p
       a' = realToFrac a
   [C.exp| void {$(Node* ptr)->SetScale($(float a'))} |]
 
@@ -348,8 +345,8 @@ nodeSetScale2D :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
   -> Vector2 -- ^ Scale factor by each axis
   -> m ()
-nodeSetScale2D p v = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetScale2D p v = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetScale2D(*$(Vector2* v')) } |]
 
 -- | Set scale in parent space (for Urho2D).
@@ -358,9 +355,9 @@ nodeSetScale2D' :: (Parent Node a, Pointer p a, MonadIO m)
   -> Float -- ^ X factor
   -> Float -- ^ Y factor
   -> m ()
-nodeSetScale2D' p xv yv = liftIO $ do 
-  let ptr = parentPointer p 
-      x' = realToFrac xv 
+nodeSetScale2D' p xv yv = liftIO $ do
+  let ptr = parentPointer p
+      x' = realToFrac xv
       y' = realToFrac yv
   [C.exp| void { $(Node* ptr)->SetScale2D($(float x'), $(float y')) } |]
 
@@ -370,8 +367,8 @@ nodeSetTransform :: (Parent Node a, Pointer p a, MonadIO m)
   -> Vector3 -- ^ Position
   -> Quaternion -- ^ Rotation
   -> m ()
-nodeSetTransform p v q = liftIO $ with v $ \v' -> with q $ \q' -> do 
-  let ptr = parentPointer p 
+nodeSetTransform p v q = liftIO $ with v $ \v' -> with q $ \q' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetTransform(*$(Vector3* v'), *$(Quaternion* q')) } |]
 
 -- | Set both position, rotation and scale in parent space as an atomic operation.
@@ -381,8 +378,8 @@ nodeSetTransformAndScale :: (Parent Node a, Pointer p a, MonadIO m)
   -> Quaternion -- ^ Rotation
   -> Vector3 -- ^ Scale
   -> m ()
-nodeSetTransformAndScale p v q s = liftIO $ with v $ \v' -> with q $ \q' -> with s $ \s' -> do 
-  let ptr = parentPointer p 
+nodeSetTransformAndScale p v q s = liftIO $ with v $ \v' -> with q $ \q' -> with s $ \s' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetTransform(*$(Vector3* v'), *$(Quaternion* q'), *$(Vector3* s')) } |]
 
 -- | Set both position, rotation and uniform scale in parent space as an atomic operation.
@@ -392,8 +389,8 @@ nodeSetTransformAndScale' :: (Parent Node a, Pointer p a, MonadIO m)
   -> Quaternion -- ^ Rotation
   -> Float -- ^ Scale
   -> m ()
-nodeSetTransformAndScale' p v q s = liftIO $ with v $ \v' -> with q $ \q' -> do 
-  let ptr = parentPointer p 
+nodeSetTransformAndScale' p v q s = liftIO $ with v $ \v' -> with q $ \q' -> do
+  let ptr = parentPointer p
       s' = realToFrac s
   [C.exp| void { $(Node* ptr)->SetTransform(*$(Vector3* v'), *$(Quaternion* q'), $(float s')) } |]
 
@@ -403,8 +400,8 @@ nodeSetTransform2D :: (Parent Node a, Pointer p a, MonadIO m)
   -> Vector2 -- ^ Position
   -> Float -- ^ Rotation
   -> m ()
-nodeSetTransform2D p v q = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetTransform2D p v q = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
       q' = realToFrac q
   [C.exp| void { $(Node* ptr)->SetTransform2D(*$(Vector2* v'), $(float q')) } |]
 
@@ -415,8 +412,8 @@ nodeSetTransformAndScale2D :: (Parent Node a, Pointer p a, MonadIO m)
   -> Float -- ^ Rotation
   -> Vector2 -- ^ Scale
   -> m ()
-nodeSetTransformAndScale2D p v q s = liftIO $ with v $ \v' -> with s $ \s' -> do 
-  let ptr = parentPointer p 
+nodeSetTransformAndScale2D p v q s = liftIO $ with v $ \v' -> with s $ \s' -> do
+  let ptr = parentPointer p
       q' = realToFrac q
   [C.exp| void { $(Node* ptr)->SetTransform2D(*$(Vector2* v'), $(float q'), *$(Vector2* s')) } |]
 
@@ -427,8 +424,8 @@ nodeSetTransformAndScale2D' :: (Parent Node a, Pointer p a, MonadIO m)
   -> Float -- ^ Rotation
   -> Float -- ^ Scale
   -> m ()
-nodeSetTransformAndScale2D' p v q s = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetTransformAndScale2D' p v q s = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
       q' = realToFrac q
       s' = realToFrac s
   [C.exp| void { $(Node* ptr)->SetTransform2D(*$(Vector2* v'), $(float q'), $(float s')) } |]
@@ -438,8 +435,8 @@ nodeSetWorldPosition :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
   -> Vector3 -- ^ Value
   -> m ()
-nodeSetWorldPosition p v = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetWorldPosition p v = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetWorldPosition(*$(Vector3* v')) } |]
 
 -- | Set position in world space (for Urho2D).
@@ -447,19 +444,19 @@ nodeSetWorldPosition2D :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
   -> Vector2 -- ^ Value
   -> m ()
-nodeSetWorldPosition2D p v = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetWorldPosition2D p v = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetWorldPosition2D(*$(Vector2* v')) } |]
 
 -- | Set position in world space (for Urho2D).
 nodeSetWorldPosition2D' :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
-  -> Float -- ^ X 
+  -> Float -- ^ X
   -> Float -- ^ Y
   -> m ()
-nodeSetWorldPosition2D' p xv yv = liftIO $ do 
-  let ptr = parentPointer p 
-      x' = realToFrac xv 
+nodeSetWorldPosition2D' p xv yv = liftIO $ do
+  let ptr = parentPointer p
+      x' = realToFrac xv
       y' = realToFrac yv
   [C.exp| void { $(Node* ptr)->SetWorldPosition2D($(float x'), $(float y')) } |]
 
@@ -467,16 +464,16 @@ nodeSetWorldPosition2D' p xv yv = liftIO $ do
 nodeSetWorldRotation :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> Quaternion -- ^ Rotation
   -> m ()
-nodeSetWorldRotation p q = liftIO $ with q $ \q' -> do 
-  let ptr = parentPointer p 
+nodeSetWorldRotation p q = liftIO $ with q $ \q' -> do
+  let ptr = parentPointer p
   [C.exp| void {$(Node* ptr)->SetWorldRotation(*$(Quaternion* q'))} |]
 
 -- | Set rotation in world space (for Urho2D).
 nodeSetWorldRotation2D :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> Float -- ^ Rotation
   -> m ()
-nodeSetWorldRotation2D p a = liftIO $ do 
-  let ptr = parentPointer p 
+nodeSetWorldRotation2D p a = liftIO $ do
+  let ptr = parentPointer p
       a' = realToFrac a
   [C.exp| void {$(Node* ptr)->SetWorldRotation2D($(float a'))} |]
 
@@ -485,8 +482,8 @@ nodeSetWorldDirection :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
   -> Vector3 -- ^ Value
   -> m ()
-nodeSetWorldDirection p v = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetWorldDirection p v = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetWorldDirection(*$(Vector3* v')) } |]
 
 -- | Set scale in world space.
@@ -494,16 +491,16 @@ nodeSetWorldScale :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
   -> Vector3 -- ^ Scale factor by each axis
   -> m ()
-nodeSetWorldScale p v = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetWorldScale p v = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetWorldScale(*$(Vector3* v')) } |]
 
 -- | Set uniform scale in world space.
 nodeSetWorldScale' :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> Float -- ^ Scale factor
   -> m ()
-nodeSetWorldScale' p a = liftIO $ do 
-  let ptr = parentPointer p 
+nodeSetWorldScale' p a = liftIO $ do
+  let ptr = parentPointer p
       a' = realToFrac a
   [C.exp| void {$(Node* ptr)->SetWorldScale($(float a'))} |]
 
@@ -512,8 +509,8 @@ nodeSetWorldScale2D :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
   -> Vector2 -- ^ Scale factor by each axis
   -> m ()
-nodeSetWorldScale2D p v = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetWorldScale2D p v = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetWorldScale2D(*$(Vector2* v')) } |]
 
 -- | Set scale in world space (for Urho2D).
@@ -522,9 +519,9 @@ nodeSetWorldScale2D' :: (Parent Node a, Pointer p a, MonadIO m)
   -> Float -- ^ X factor
   -> Float -- ^ Y factor
   -> m ()
-nodeSetWorldScale2D' p xv yv = liftIO $ do 
-  let ptr = parentPointer p 
-      x' = realToFrac xv 
+nodeSetWorldScale2D' p xv yv = liftIO $ do
+  let ptr = parentPointer p
+      x' = realToFrac xv
       y' = realToFrac yv
   [C.exp| void { $(Node* ptr)->SetWorldScale2D($(float x'), $(float y')) } |]
 
@@ -534,8 +531,8 @@ nodeSetWorldTransform :: (Parent Node a, Pointer p a, MonadIO m)
   -> Vector3 -- ^ Position
   -> Quaternion -- ^ Rotation
   -> m ()
-nodeSetWorldTransform p v q = liftIO $ with v $ \v' -> with q $ \q' -> do 
-  let ptr = parentPointer p 
+nodeSetWorldTransform p v q = liftIO $ with v $ \v' -> with q $ \q' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetWorldTransform(*$(Vector3* v'), *$(Quaternion* q')) } |]
 
 -- | Set both position, rotation and scale in world space as an atomic operation.
@@ -545,8 +542,8 @@ nodeSetWorldTransformAndScale :: (Parent Node a, Pointer p a, MonadIO m)
   -> Quaternion -- ^ Rotation
   -> Vector3 -- ^ Scale
   -> m ()
-nodeSetWorldTransformAndScale p v q s = liftIO $ with v $ \v' -> with q $ \q' -> with s $ \s' -> do 
-  let ptr = parentPointer p 
+nodeSetWorldTransformAndScale p v q s = liftIO $ with v $ \v' -> with q $ \q' -> with s $ \s' -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->SetWorldTransform(*$(Vector3* v'), *$(Quaternion* q'), *$(Vector3* s')) } |]
 
 -- | Set both position, rotation and uniform scale in world space as an atomic operation.
@@ -556,8 +553,8 @@ nodeSetWorldTransformAndScale' :: (Parent Node a, Pointer p a, MonadIO m)
   -> Quaternion -- ^ Rotation
   -> Float -- ^ Scale
   -> m ()
-nodeSetWorldTransformAndScale' p v q s = liftIO $ with v $ \v' -> with q $ \q' -> do 
-  let ptr = parentPointer p 
+nodeSetWorldTransformAndScale' p v q s = liftIO $ with v $ \v' -> with q $ \q' -> do
+  let ptr = parentPointer p
       s' = realToFrac s
   [C.exp| void { $(Node* ptr)->SetWorldTransform(*$(Vector3* v'), *$(Quaternion* q'), $(float s')) } |]
 
@@ -567,8 +564,8 @@ nodeSetWorldTransform2D :: (Parent Node a, Pointer p a, MonadIO m)
   -> Vector2 -- ^ Position
   -> Float -- ^ Rotation
   -> m ()
-nodeSetWorldTransform2D p v q = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetWorldTransform2D p v q = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
       q' = realToFrac q
   [C.exp| void { $(Node* ptr)->SetWorldTransform2D(*$(Vector2* v'), $(float q')) } |]
 
@@ -579,8 +576,8 @@ nodeSetWorldTransformAndScale2D :: (Parent Node a, Pointer p a, MonadIO m)
   -> Float -- ^ Rotation
   -> Vector2 -- ^ Scale
   -> m ()
-nodeSetWorldTransformAndScale2D p v q s = liftIO $ with v $ \v' -> with s $ \s' -> do 
-  let ptr = parentPointer p 
+nodeSetWorldTransformAndScale2D p v q s = liftIO $ with v $ \v' -> with s $ \s' -> do
+  let ptr = parentPointer p
       q' = realToFrac q
   [C.exp| void { $(Node* ptr)->SetWorldTransform2D(*$(Vector2* v'), $(float q'), *$(Vector2* s')) } |]
 
@@ -591,8 +588,8 @@ nodeSetWorldTransformAndScale2D' :: (Parent Node a, Pointer p a, MonadIO m)
   -> Float -- ^ Rotation
   -> Float -- ^ Scale
   -> m ()
-nodeSetWorldTransformAndScale2D' p v q s = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeSetWorldTransformAndScale2D' p v q s = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
       q' = realToFrac q
       s' = realToFrac s
   [C.exp| void { $(Node* ptr)->SetWorldTransform2D(*$(Vector2* v'), $(float q'), $(float s')) } |]
@@ -603,8 +600,8 @@ nodeTranslate :: (Parent Node a, Pointer p a, MonadIO m)
   -> Vector3 -- ^ delta
   -> TransformSpace -- ^ space
   -> m ()
-nodeTranslate p v s = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeTranslate p v s = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
       s' = fromIntegral $ fromEnum s
   [C.exp| void { $(Node* ptr)->Translate(*$(Vector3* v'), (TransformSpace)$(int s')) } |]
 
@@ -614,8 +611,8 @@ nodeTranslate2D :: (Parent Node a, Pointer p a, MonadIO m)
   -> Vector2 -- ^ delta
   -> TransformSpace -- ^ space
   -> m ()
-nodeTranslate2D p v s = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+nodeTranslate2D p v s = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
       s' = fromIntegral $ fromEnum s
   [C.exp| void { $(Node* ptr)->Translate2D(*$(Vector2* v'), (TransformSpace)$(int s')) } |]
 
@@ -625,8 +622,8 @@ nodeRotate :: (Parent Node a, Pointer p a, MonadIO m)
   -> Quaternion -- ^ delta
   -> TransformSpace -- ^ space
   -> m ()
-nodeRotate p q s = liftIO $ with q $ \q' -> do 
-  let ptr = parentPointer p 
+nodeRotate p q s = liftIO $ with q $ \q' -> do
+  let ptr = parentPointer p
       s' = fromIntegral $ fromEnum s
   [C.exp| void { $(Node* ptr)->Rotate(*$(Quaternion* q'), (TransformSpace)$(int s')) } |]
 
@@ -636,8 +633,8 @@ nodeRotate2D :: (Parent Node a, Pointer p a, MonadIO m)
   -> Float -- ^ delta
   -> TransformSpace -- ^ space
   -> m ()
-nodeRotate2D p q s = liftIO $ do 
-  let ptr = parentPointer p 
+nodeRotate2D p q s = liftIO $ do
+  let ptr = parentPointer p
       q' = realToFrac q
       s' = fromIntegral $ fromEnum s
   [C.exp| void { $(Node* ptr)->Rotate2D($(float q'), (TransformSpace)$(int s')) } |]
@@ -649,8 +646,8 @@ nodeRotateAround :: (Parent Node a, Pointer p a, MonadIO m)
   -> Quaternion -- ^ delta
   -> TransformSpace -- ^ space
   -> m ()
-nodeRotateAround p pv q s = liftIO $ with pv $ \pv' -> with q $ \q' -> do 
-  let ptr = parentPointer p 
+nodeRotateAround p pv q s = liftIO $ with pv $ \pv' -> with q $ \q' -> do
+  let ptr = parentPointer p
       s' = fromIntegral $ fromEnum s
   [C.exp| void { $(Node* ptr)->RotateAround(*$(Vector3* pv'), *$(Quaternion* q'), (TransformSpace)$(int s')) } |]
 
@@ -661,8 +658,8 @@ nodeRotateAround2D :: (Parent Node a, Pointer p a, MonadIO m)
   -> Float -- ^ delta
   -> TransformSpace -- ^ space
   -> m ()
-nodeRotateAround2D p pv q s = liftIO $ with pv $ \pv' -> do 
-  let ptr = parentPointer p 
+nodeRotateAround2D p pv q s = liftIO $ with pv $ \pv' -> do
+  let ptr = parentPointer p
       q' = realToFrac q
       s' = fromIntegral $ fromEnum s
   [C.exp| void { $(Node* ptr)->RotateAround2D(*$(Vector2* pv'), $(float q'), (TransformSpace)$(int s')) } |]
@@ -670,35 +667,35 @@ nodeRotateAround2D p pv q s = liftIO $ with pv $ \pv' -> do
 
 -- | Rotate around the X axis
 nodePitch :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
-  -> Float -- ^ angle 
+  -> Float -- ^ angle
   -> TransformSpace -- ^ space
   -> m ()
-nodePitch p angle space = liftIO $ do 
-  let ptr = parentPointer p 
-      a  = realToFrac angle 
-      sp = fromIntegral $ fromEnum space 
+nodePitch p angle space = liftIO $ do
+  let ptr = parentPointer p
+      a  = realToFrac angle
+      sp = fromIntegral $ fromEnum space
   [C.exp| void { $(Node* ptr)->Pitch($(float a), (TransformSpace)$(int sp)) } |]
 
 -- | Rotate around the Y axis
 nodeYaw :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
-  -> Float -- ^ angle 
+  -> Float -- ^ angle
   -> TransformSpace -- ^ space
   -> m ()
-nodeYaw p angle space = liftIO $ do 
-  let ptr = parentPointer p 
-      a  = realToFrac angle 
-      sp = fromIntegral $ fromEnum space 
+nodeYaw p angle space = liftIO $ do
+  let ptr = parentPointer p
+      a  = realToFrac angle
+      sp = fromIntegral $ fromEnum space
   [C.exp| void { $(Node* ptr)->Yaw($(float a), (TransformSpace)$(int sp)) } |]
 
 -- | Rotate around the Z axis
 nodeRoll :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
-  -> Float -- ^ angle 
+  -> Float -- ^ angle
   -> TransformSpace -- ^ space
   -> m ()
-nodeRoll p angle space = liftIO $ do 
-  let ptr = parentPointer p 
-      a  = realToFrac angle 
-      sp = fromIntegral $ fromEnum space 
+nodeRoll p angle space = liftIO $ do
+  let ptr = parentPointer p
+      a  = realToFrac angle
+      sp = fromIntegral $ fromEnum space
   [C.exp| void { $(Node* ptr)->Roll($(float a), (TransformSpace)$(int sp)) } |]
 
 -- | Look at a target position in the chosen transform space. Note that the up vector is always specified in world space. Return true if successful, or false if resulted in an illegal rotation, in which case the current rotation remains.
@@ -707,102 +704,102 @@ nodeLookAt :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or 
   -> Vector3 -- ^ up
   -> TransformSpace -- ^ space
   -> m Bool
-nodeLookAt p target up space = liftIO $ with target $ \t -> with up $ \u -> do 
-  let ptr = parentPointer p 
-      sp = fromIntegral $ fromEnum space 
+nodeLookAt p target up space = liftIO $ with target $ \t -> with up $ \u -> do
+  let ptr = parentPointer p
+      sp = fromIntegral $ fromEnum space
   toBool <$> [C.exp| int { (int)$(Node* ptr)->LookAt(*$(Vector3* t), *$(Vector3* u), (TransformSpace)$(int sp)) } |]
 
 -- | Look at a target position in the chosen transform space. Note that the up vector is always specified in world space. Return true if successful, or false if resulted in an illegal rotation, in which case the current rotation remains.
 nodeLookAtSimple :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> Vector3 -- ^ target
   -> m Bool
-nodeLookAtSimple p target = nodeLookAt p target vec3Up TS'World 
+nodeLookAtSimple p target = nodeLookAt p target vec3Up TS'World
 
 -- | Modify scale in parent space uniformly.
 nodeScaleUniform :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
-  -> Float -- ^ scale 
+  -> Float -- ^ scale
   -> m ()
-nodeScaleUniform p scale = liftIO $ do 
-  let ptr = parentPointer p 
-      v  = realToFrac scale 
+nodeScaleUniform p scale = liftIO $ do
+  let ptr = parentPointer p
+      v  = realToFrac scale
   [C.exp| void { $(Node* ptr)->Scale($(float v)) } |]
 
 -- | Modify scale in parent space.
 nodeScale :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
-  -> Vector3-- ^ scale 
+  -> Vector3-- ^ scale
   -> m ()
-nodeScale p scale = liftIO $ with scale $ \v -> do 
-  let ptr = parentPointer p 
+nodeScale p scale = liftIO $ with scale $ \v -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->Scale(*$(Vector3* v)) } |]
 
 -- | Modify scale in parent space (for Urho2D).
 nodeScale2D :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
-  -> Vector2-- ^ scale 
+  -> Vector2-- ^ scale
   -> m ()
-nodeScale2D p scale = liftIO $ with scale $ \v -> do 
-  let ptr = parentPointer p 
+nodeScale2D p scale = liftIO $ with scale $ \v -> do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->Scale2D(*$(Vector2* v)) } |]
 
 -- | Set enabled/disabled state without recursion. Components in a disabled node become effectively disabled regardless of their own enable/disable state.
 nodeSetEnabled :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
-  -> Bool -- ^ enable 
+  -> Bool -- ^ enable
   -> m ()
-nodeSetEnabled p v = liftIO $ do 
-  let ptr = parentPointer p 
-      v' = fromBool v 
+nodeSetEnabled p v = liftIO $ do
+  let ptr = parentPointer p
+      v' = fromBool v
   [C.exp| void { $(Node* ptr)->SetEnabled($(int v') != 0) } |]
 
 -- | Set enabled state on self and child nodes. Nodes' own enabled state is remembered (IsEnabledSelf) and can be restored.
 nodeSetDeepEnabled :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
-  -> Bool -- ^ enable 
+  -> Bool -- ^ enable
   -> m ()
-nodeSetDeepEnabled p v = liftIO $ do 
-  let ptr = parentPointer p 
-      v' = fromBool v 
+nodeSetDeepEnabled p v = liftIO $ do
+  let ptr = parentPointer p
+      v' = fromBool v
   [C.exp| void { $(Node* ptr)->SetDeepEnabled($(int v') != 0) } |]
 
 -- | Reset enabled state to the node's remembered state prior to calling SetDeepEnabled.
 nodeResetDeepEnabled :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> m ()
-nodeResetDeepEnabled p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeResetDeepEnabled p = liftIO $ do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->ResetDeepEnabled() } |]
 
 -- | Set enabled state on self and child nodes. Unlike SetDeepEnabled this does not remember the nodes' own enabled state, but overwrites it.
 nodeSetEnabledRecursive :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
-  -> Bool -- ^ enable 
+  -> Bool -- ^ enable
   -> m ()
-nodeSetEnabledRecursive p v = liftIO $ do 
-  let ptr = parentPointer p 
-      v' = fromBool v 
+nodeSetEnabledRecursive p v = liftIO $ do
+  let ptr = parentPointer p
+      v' = fromBool v
   [C.exp| void { $(Node* ptr)->SetEnabledRecursive($(int v') != 0) } |]
 
 -- | Set owner connection for networking.
 nodeSetOwner :: (Parent Node a, Pointer p a, Parent Connection conn, Pointer pConn conn, MonadIO m) => p -- ^ Node pointer or child
-  -> pConn -- ^ owner 
+  -> pConn -- ^ owner
   -> m ()
-nodeSetOwner p v = liftIO $ do 
-  let ptr = parentPointer p 
-      v' = parentPointer v 
+nodeSetOwner p v = liftIO $ do
+  let ptr = parentPointer p
+      v' = parentPointer v
   [C.exp| void { $(Node* ptr)->SetOwner($(Connection* v')) } |]
 
 -- | Mark node and child nodes to need world transform recalculation. Notify listener components.
 nodeMarkDirty :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> m ()
-nodeMarkDirty p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeMarkDirty p = liftIO $ do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->MarkDirty() } |]
 
 -- | Create a child scene node (with specified ID if provided).
 nodeCreateChild :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> String -- ^ name, default ""
-  -> CreateMode -- ^ mode, default replicated 
-  -> Int -- ^ id, default 0 
+  -> CreateMode -- ^ mode, default replicated
+  -> Int -- ^ id, default 0
   -> m (Ptr Node)
-nodeCreateChild p name mode i = liftIO $ withCString name $ \name' -> do 
-  let ptr = parentPointer p 
-      mode' = fromIntegral $ fromEnum mode 
-      i' = fromIntegral i 
+nodeCreateChild p name mode i = liftIO $ withCString name $ \name' -> do
+  let ptr = parentPointer p
+      mode' = fromIntegral $ fromEnum mode
+      i' = fromIntegral i
   [C.exp| Node* { $(Node* ptr)->CreateChild(String($(const char* name')), (CreateMode)$(int mode'), $(int i')) } |]
 
 -- | Create a child scene node
@@ -815,9 +812,9 @@ nodeAddChild :: (Parent Node a, Pointer p a, Parent Node child, Pointer pChild c
   -> pChild -- ^ pointer to child node
   -> Maybe Int -- ^ maybe an index
   -> m ()
-nodeAddChild p c mi = liftIO $ do 
-  let ptr = parentPointer p 
-      child = parentPointer c 
+nodeAddChild p c mi = liftIO $ do
+  let ptr = parentPointer p
+      child = parentPointer c
       i = maybe [C.pure| int { M_MAX_UNSIGNED } |] fromIntegral mi
   [C.exp| void { $(Node* ptr)->AddChild($(Node* child), $(int i)) } |]
 
@@ -825,16 +822,16 @@ nodeAddChild p c mi = liftIO $ do
 nodeRemoveChild :: (Parent Node a, Pointer p a, Parent Node child, Pointer pChild child, MonadIO m) => p -- ^ Node pointer or child
   -> pChild -- ^ pointer to child node
   -> m ()
-nodeRemoveChild p c = liftIO $ do 
-  let ptr = parentPointer p 
-      child = parentPointer c 
+nodeRemoveChild p c = liftIO $ do
+  let ptr = parentPointer p
+      child = parentPointer c
   [C.exp| void { $(Node* ptr)->RemoveChild($(Node* child)) } |]
 
 -- | Remove all child scene nodes
 nodeRemoveAllChildren :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> m ()
-nodeRemoveAllChildren p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeRemoveAllChildren p = liftIO $ do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->RemoveAllChildren() } |]
 
 -- | Remove child scene nodes that match criteria
@@ -843,8 +840,8 @@ nodeRemoveChildren :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node poi
   -> Bool -- ^ removeLocal
   -> Bool -- ^ recursive
   -> m ()
-nodeRemoveChildren p removeReplicated removeLocal recursive = liftIO $ do 
-  let ptr = parentPointer p 
+nodeRemoveChildren p removeReplicated removeLocal recursive = liftIO $ do
+  let ptr = parentPointer p
       r' = fromBool removeReplicated
       l' = fromBool removeLocal
       rec' = fromBool recursive
@@ -854,65 +851,66 @@ nodeRemoveChildren p removeReplicated removeLocal recursive = liftIO $ do
 nodeCreateComponent :: forall a p c m . (Parent Node a, Pointer p a, NodeComponent c, MonadIO m)
   => p -- ^ Node pointer or child
   -> Maybe CreateMode -- ^ mode, default is replicated
-  -> Maybe Int -- ^ id, default is 0 
+  -> Maybe Int -- ^ id, default is 0
   -> m (Maybe (Ptr c))
-nodeCreateComponent p mc mi = liftIO $ do 
-  let ptr = parentPointer p 
-      c' = maybe [C.pure| int { (int)REPLICATED } |] (fromIntegral . fromEnum) mc 
+nodeCreateComponent p mc mi = liftIO $ do
+  let ptr = parentPointer p
+      c' = maybe [C.pure| int { (int)REPLICATED } |] (fromIntegral . fromEnum) mc
       i' = maybe 0 fromIntegral mi
-      th = nodeComponentType (Proxy :: Proxy c)
-  cp <- [C.exp| Component* { $(Node* ptr)->CreateComponent(*$(StringHash* th), (CreateMode)$(int c'), $(int i')) } |]
+      th = fromIntegral . stringHashValue $ nodeComponentType (Proxy :: Proxy c)
+  cp <- [C.exp| Component* { $(Node* ptr)->CreateComponent(StringHash($(unsigned int th)), (CreateMode)$(int c'), $(int i')) } |]
   join <$> checkNullPtr' cp (return . castToChild)
 
 -- | Create a component to this node (with specified ID if provided)
-nodeCreateCustomComponent :: forall a p c m . (Parent Node a, Pointer p a, NodeComponent c, MonadIO m)
+nodeCreateCustomComponent :: forall a p c m . (Parent Node a, Pointer p a, Parent Component c, MonadIO m)
   => p -- ^ Node pointer or child
-  -> ForeignPtr StringHash -- ^ Custom type
+  -> StringHash -- ^ Type hash that is got in runtime when custom component is registered
   -> Maybe CreateMode -- ^ mode, default is replicated
-  -> Maybe Int -- ^ id, default is 0 
+  -> Maybe Int -- ^ id, default is 0
   -> m (Maybe (Ptr c))
-nodeCreateCustomComponent p fct mc mi = liftIO $ withForeignPtr fct $ \ct -> do 
-  let ptr = parentPointer p 
-      c' = maybe [C.pure| int { (int)REPLICATED } |] (fromIntegral . fromEnum) mc 
+nodeCreateCustomComponent p ct mc mi = liftIO $ do
+  let ptr = parentPointer p
+      c' = maybe [C.pure| int { (int)REPLICATED } |] (fromIntegral . fromEnum) mc
       i' = maybe 0 fromIntegral mi
-  cp <- [C.exp| Component* { $(Node* ptr)->CreateComponent(*$(StringHash* ct), (CreateMode)$(int c'), $(int i')) } |]
+      ct' = fromIntegral . stringHashValue $ ct
+  cp <- [C.exp| Component* { $(Node* ptr)->CreateComponent(StringHash($(unsigned int ct')), (CreateMode)$(int c'), $(int i')) } |]
   join <$> checkNullPtr' cp (return . castToChild)
 
 -- | Create a component to this node if it does not exist already.
-nodeGetOrCreateComponent :: forall a p c m . (Parent Node a, Pointer p a, NodeComponent c, MonadIO m) 
+nodeGetOrCreateComponent :: forall a p c m . (Parent Node a, Pointer p a, NodeComponent c, MonadIO m)
   => p -- ^ Node pointer or child
   -> Maybe CreateMode -- ^ mode, default is replicated
-  -> Maybe Int -- ^ id, default is 0 
+  -> Maybe Int -- ^ id, default is 0
   -> m (Maybe (Ptr c))
-nodeGetOrCreateComponent p mc mi = liftIO $ do 
-  let ptr = parentPointer p 
-      c' = maybe [C.pure| int { (int)REPLICATED } |] (fromIntegral . fromEnum) mc 
-      i' = maybe 0 fromIntegral mi 
-      th = nodeComponentType (Proxy :: Proxy c)
-  cp <- [C.exp| Component* { $(Node* ptr)->GetOrCreateComponent(*$(StringHash* th), (CreateMode)$(int c'), $(int i')) } |]
+nodeGetOrCreateComponent p mc mi = liftIO $ do
+  let ptr = parentPointer p
+      c' = maybe [C.pure| int { (int)REPLICATED } |] (fromIntegral . fromEnum) mc
+      i' = maybe 0 fromIntegral mi
+      th = fromIntegral . stringHashValue $ nodeComponentType (Proxy :: Proxy c)
+  cp <- [C.exp| Component* { $(Node* ptr)->GetOrCreateComponent(StringHash($(unsigned int th)), (CreateMode)$(int c'), $(int i')) } |]
   join <$> checkNullPtr' cp (return . castToChild)
 
 -- |  Clone a component from another node using its create mode. Return the clone if successful or null on failure.
 nodeCloneComponent :: (Parent Node a, Pointer p a, Parent Component cmp, Pointer pComponent cmp, MonadIO m) => p -- ^ Node pointer or child
-  -> pComponent -- ^ Component pointer 
-  -> Maybe Int -- ^ id, default 0 
+  -> pComponent -- ^ Component pointer
+  -> Maybe Int -- ^ id, default 0
   -> m (Maybe (Ptr Component))
-nodeCloneComponent p pCmp mi = liftIO $ do 
-  let ptr = parentPointer p 
-      cmp = parentPointer pCmp 
+nodeCloneComponent p pCmp mi = liftIO $ do
+  let ptr = parentPointer p
+      cmp = parentPointer pCmp
       i' = maybe 0 fromIntegral mi
   cp <- [C.exp| Component* { $(Node* ptr)->CloneComponent($(Component* cmp), $(int i')) } |]
   checkNullPtr' cp return
 
 -- | Clone a component from another node and specify the create mode. Return the clone if successful or null on failure.
 nodeCloneComponent' :: (Parent Node a, Pointer p a, Parent Component cmp, Pointer pComponent cmp, MonadIO m) => p -- ^ Node pointer or child
-  -> pComponent -- ^ Component pointer 
+  -> pComponent -- ^ Component pointer
   -> CreateMode -- ^ mode
-  -> Maybe Int -- ^ id, default 0 
+  -> Maybe Int -- ^ id, default 0
   -> m (Maybe (Ptr Component))
-nodeCloneComponent' p pCmp cm mi = liftIO $ do 
-  let ptr = parentPointer p 
-      cmp = parentPointer pCmp 
+nodeCloneComponent' p pCmp cm mi = liftIO $ do
+  let ptr = parentPointer p
+      cmp = parentPointer pCmp
       cm' = fromIntegral $ fromEnum cm
       i' = maybe 0 fromIntegral mi
   cp <- [C.exp| Component* { $(Node* ptr)->CloneComponent($(Component* cmp), (CreateMode)$(int cm'), $(int i')) } |]
@@ -920,54 +918,58 @@ nodeCloneComponent' p pCmp cm mi = liftIO $ do
 
 -- | Remove a component from this node.
 nodeRemoveComponent :: (Parent Node a, Pointer p a, Parent Component cmp, Pointer pComponent cmp, MonadIO m) => p -- ^ Node pointer or child
-  -> pComponent -- ^ Component pointer 
+  -> pComponent -- ^ Component pointer
   -> m ()
-nodeRemoveComponent p pCmp = liftIO $ do 
-  let ptr = parentPointer p 
-      cmp = parentPointer pCmp 
-  [C.exp| void { $(Node* ptr)->RemoveComponent($(Component* cmp)) } |] 
+nodeRemoveComponent p pCmp = liftIO $ do
+  let ptr = parentPointer p
+      cmp = parentPointer pCmp
+  [C.exp| void { $(Node* ptr)->RemoveComponent($(Component* cmp)) } |]
 
 -- | Remove the first component of specific type from this node.
-nodeRemoveComponent' :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
-  -> Ptr StringHash -- ^ type
+nodeRemoveComponent' :: (Parent Node a, Pointer p a, MonadIO m, NodeComponent c)
+  => p -- ^ Node pointer or child
+  -> Proxy c -- ^ type
   -> m ()
-nodeRemoveComponent' p ph = liftIO $ do 
-  let ptr = parentPointer p 
-  [C.exp| void { $(Node* ptr)->RemoveComponent(*$(StringHash* ph)) } |]
+nodeRemoveComponent' p proxy = liftIO $ do
+  let ptr = parentPointer p
+      ph = fromIntegral . stringHashValue $ nodeComponentType proxy
+  [C.exp| void { $(Node* ptr)->RemoveComponent(StringHash($(unsigned int ph))) } |]
 
 -- | Remove components that match criteria.
 nodeRemoveComponents :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> Bool -- ^ removeReplicated
   -> Bool -- ^ removeLocal
   -> m ()
-nodeRemoveComponents p removeReplicated removeLocal = liftIO $ do 
-  let ptr = parentPointer p 
+nodeRemoveComponents p removeReplicated removeLocal = liftIO $ do
+  let ptr = parentPointer p
       r' = fromBool removeReplicated
       l' = fromBool removeLocal
   [C.exp| void { $(Node* ptr)->RemoveComponents($(int r') != 0, $(int l') != 0)} |]
 
 -- | Remove all components of specific type.
-nodeRemoveComponents' :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
-  -> Ptr StringHash -- ^ type
+nodeRemoveComponents' :: (Parent Node a, Pointer p a, MonadIO m, NodeComponent c)
+  => p -- ^ Node pointer or child
+  -> Proxy c -- ^ type
   -> m ()
-nodeRemoveComponents' p ph = liftIO $ do 
-  let ptr = parentPointer p 
-  [C.exp| void { $(Node* ptr)->RemoveComponents(*$(StringHash* ph)) } |]
+nodeRemoveComponents' p proxy = liftIO $ do
+  let ptr = parentPointer p
+      ph = fromIntegral . stringHashValue $ nodeComponentType proxy
+  [C.exp| void { $(Node* ptr)->RemoveComponents(StringHash($(unsigned int ph))) } |]
 
 -- | Remove all components from this node.
 nodeRemoveAllComponents :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> m ()
-nodeRemoveAllComponents p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeRemoveAllComponents p = liftIO $ do
+  let ptr = parentPointer p
   [C.exp| void { $(Node* ptr)->RemoveAllComponents() } |]
 
 -- | Clone scene node, components and child nodes. Return the clone.
 nodeClone :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
-  -> CreateMode 
+  -> CreateMode
   -> m (Ptr Node)
-nodeClone p cm = liftIO $ do 
-  let ptr = parentPointer p 
+nodeClone p cm = liftIO $ do
+  let ptr = parentPointer p
       cm' = fromIntegral . fromEnum $ cm
   [C.exp| Node* {$(Node* ptr)->Clone((CreateMode)$(int cm'))} |]
 
@@ -975,7 +977,7 @@ nodeClone p cm = liftIO $ do
 nodeRemove:: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m ()
-nodeRemove p = liftIO $ do 
+nodeRemove p = liftIO $ do
   let ptr = parentPointer p
   [C.exp| void {$(Node* ptr)->Remove()} |]
 
@@ -984,7 +986,7 @@ nodeSetParent:: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> Ptr Node -- ^ parent
   -> m ()
-nodeSetParent p parent = liftIO $ do 
+nodeSetParent p parent = liftIO $ do
   let ptr = parentPointer p
   [C.exp| void {$(Node* ptr)->SetParent($(Node* parent))} |]
 
@@ -994,7 +996,7 @@ nodeSetVar :: (Parent Node a, Pointer p a, VariantStorable v, MonadIO m)
   -> String -- ^ key
   -> v -- ^ value
   -> m ()
-nodeSetVar p key value = liftIO $ withObject key $ \pkey -> withVariant value $ \pvalue -> do 
+nodeSetVar p key value = liftIO $ withObject key $ \pkey -> withVariant value $ \pvalue -> do
   let ptr = parentPointer p
   [C.exp| void {$(Node* ptr)->SetVar(*$(StringHash* pkey), *$(Variant* pvalue))} |]
 
@@ -1003,7 +1005,7 @@ nodeAddListener:: (Parent Node a, Pointer p a, Parent Component b, Pointer pComp
   => p -- ^ Node pointer or pointer to ascentor
   -> pComponent -- ^ Pointer to component
   -> m ()
-nodeAddListener p pcmp = liftIO $ do 
+nodeAddListener p pcmp = liftIO $ do
   let ptr = parentPointer p
       cmp = parentPointer pcmp
   [C.exp| void {$(Node* ptr)->AddListener($(Component* cmp))} |]
@@ -1013,7 +1015,7 @@ nodeRemoveListener:: (Parent Node a, Pointer p a, Parent Component b, Pointer pC
   => p -- ^ Node pointer or pointer to ascentor
   -> pComponent -- ^ Pointer to component
   -> m ()
-nodeRemoveListener p pcmp = liftIO $ do 
+nodeRemoveListener p pcmp = liftIO $ do
   let ptr = parentPointer p
       cmp = parentPointer pcmp
   [C.exp| void {$(Node* ptr)->RemoveListener($(Component* cmp))} |]
@@ -1022,32 +1024,32 @@ nodeRemoveListener p pcmp = liftIO $ do
 nodeGetID :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Word
-nodeGetID p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetID p = liftIO $ do
+  let ptr = parentPointer p
   fromIntegral <$> [C.exp| unsigned int {$(Node* ptr)->GetID()} |]
 
 -- | Return name.
 nodeGetName :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m String
-nodeGetName p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetName p = liftIO $ do
+  let ptr = parentPointer p
   loadConstUrhoString =<< [C.exp| const String* {&$(Node* ptr)->GetName()} |]
 
--- | Return name hash. You need to delete the hash.
+-- | Return name hash.
 nodeGetNameHash :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
-  -> m (Ptr StringHash)
-nodeGetNameHash p = liftIO $ do 
-  let ptr = parentPointer p 
-  [C.exp| StringHash* {new StringHash($(Node* ptr)->GetNameHash())} |]
+  -> m StringHash
+nodeGetNameHash p = liftIO $ do
+  let ptr = parentPointer p
+  StringHash . fromIntegral <$> [C.exp| unsigned int { $(Node* ptr)->GetNameHash().Value() } |]
 
 -- | Return all tags.
 nodeGetTags :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v String)
   => p -- ^ Node pointer or pointer to ascentor
   -> m (v String) -- ^ Container with tags
-nodeGetTags p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetTags p = liftIO $ do
+  let ptr = parentPointer p
   peekForeignVectorAs =<< [C.exp| const StringVector* {&$(Node* ptr)->GetTags()} |]
 
 -- | Return whether has a specific tag.
@@ -1055,176 +1057,176 @@ nodeHasTag :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> String -- ^ tag
   -> m Bool
-nodeHasTag p tag = liftIO $ withCString tag $ \tag' -> do 
-  let ptr = parentPointer p 
+nodeHasTag p tag = liftIO $ withCString tag $ \tag' -> do
+  let ptr = parentPointer p
   toBool <$> [C.exp| int {(int)$(Node* ptr)->HasTag(String($(const char* tag')))} |]
 
 -- | Return parent scene node.
 nodeGetParent :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m (Ptr Node)
-nodeGetParent p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetParent p = liftIO $ do
+  let ptr = parentPointer p
   [C.exp| Node* {$(Node* ptr)->GetParent()} |]
 
 -- | Return scene.
 nodeGetScene :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m (Ptr Scene)
-nodeGetScene p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetScene p = liftIO $ do
+  let ptr = parentPointer p
   [C.exp| Scene* {$(Node* ptr)->GetScene()} |]
 
 -- | Return whether is enabled. Disables nodes effectively disable all their components.
 nodeIsEnabled :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Bool
-nodeIsEnabled p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeIsEnabled p = liftIO $ do
+  let ptr = parentPointer p
   toBool <$> [C.exp| int {(int)$(Node* ptr)->IsEnabled()} |]
 
 -- | Returns the node's last own enabled state. May be different than the value returned by IsEnabled when SetDeepEnabled has been used.
 nodeIsEnabledSelf :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Bool
-nodeIsEnabledSelf p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeIsEnabledSelf p = liftIO $ do
+  let ptr = parentPointer p
   toBool <$> [C.exp| int {(int)$(Node* ptr)->IsEnabledSelf()} |]
 
 -- | Return owner connection in networking.
 nodeGetOwner :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m (Ptr Connection)
-nodeGetOwner p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetOwner p = liftIO $ do
+  let ptr = parentPointer p
   [C.exp| Connection* {$(Node* ptr)->GetOwner()} |]
 
 -- | Return position in parent space.
 nodeGetPosition :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
-nodeGetPosition p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetPosition p = liftIO $ do
+  let ptr = parentPointer p
   peek =<< [C.exp| const Vector3* {&$(Node* ptr)->GetPosition()} |]
 
 -- | Return position in parent space (for Urho2D).
 nodeGetPosition2D :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector2
-nodeGetPosition2D p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetPosition2D p = liftIO $ do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector2* {new Vector2($(Node* ptr)->GetPosition2D())} |]
-  v <- peek pvec 
+  v <- peek pvec
   [C.exp| void {delete $(Vector2* pvec)} |]
-  return v 
+  return v
 
 -- | Returns node rotation in quaternion
-nodeGetRotation :: (Parent Node a, Pointer p a, MonadIO m) 
+nodeGetRotation :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or child
   -> m Quaternion
-nodeGetRotation p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetRotation p = liftIO $ do
+  let ptr = parentPointer p
   peek =<< [C.exp| const Quaternion* { &$(Node* ptr)->GetRotation() } |]
 
 -- | Return rotation in parent space (for Urho2D).
 nodeGetRotation2D :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Float
-nodeGetRotation2D p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetRotation2D p = liftIO $ do
+  let ptr = parentPointer p
   realToFrac <$> [C.exp| float {$(Node* ptr)->GetRotation2D()} |]
 
 -- | Return forward direction in parent space. Positive Z axis equals identity rotation.
 nodeGetDirection :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
-nodeGetDirection p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetDirection p = liftIO $ do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector3* {new Vector3($(Node* ptr)->GetDirection())} |]
-  v <- peek pvec 
+  v <- peek pvec
   [C.exp| void { delete $(Vector3* pvec) } |]
-  return v 
+  return v
 
 -- | Return up direction in parent space. Positive Y axis equals identity rotation.
 nodeGetUp :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
-nodeGetUp p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetUp p = liftIO $ do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector3* {new Vector3($(Node* ptr)->GetUp())} |]
-  v <- peek pvec 
+  v <- peek pvec
   [C.exp| void { delete $(Vector3* pvec) } |]
-  return v 
+  return v
 
 -- | Return right direction in parent space. Positive X axis equals identity rotation.
 nodeGetRight :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
-nodeGetRight p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetRight p = liftIO $ do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector3* {new Vector3($(Node* ptr)->GetRight())} |]
-  v <- peek pvec 
+  v <- peek pvec
   [C.exp| void { delete $(Vector3* pvec) } |]
-  return v 
+  return v
 
 -- | Return scale in parent space.
 nodeGetScale :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
-nodeGetScale p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetScale p = liftIO $ do
+  let ptr = parentPointer p
   peek =<< [C.exp| const Vector3* {&$(Node* ptr)->GetScale()} |]
 
 -- | Return scale in parent space (for Urho2D).
 nodeGetScale2D :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector2
-nodeGetScale2D p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetScale2D p = liftIO $ do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector2* {new Vector2($(Node* ptr)->GetScale2D())} |]
-  v <- peek pvec 
+  v <- peek pvec
   [C.exp| void {delete $(Vector2* pvec)} |]
-  return v 
+  return v
 
 -- | Return parent space transform matrix.
 nodeGetTransform :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Matrix3x4
-nodeGetTransform p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetTransform p = liftIO $ do
+  let ptr = parentPointer p
   pmat <- [C.exp| Matrix3x4* {new Matrix3x4($(Node* ptr)->GetTransform())} |]
-  mat <- peek pmat 
+  mat <- peek pmat
   [C.exp| void { delete $(Matrix3x4* pmat) } |]
-  return mat 
+  return mat
 
 -- | Return position in world space.
 nodeGetWorldPosition :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
-nodeGetWorldPosition p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetWorldPosition p = liftIO $ do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector3* {new Vector3($(Node* ptr)->GetWorldPosition())} |]
-  v <- peek pvec 
+  v <- peek pvec
   [C.exp| void { delete $(Vector3* pvec) } |]
-  return v 
+  return v
 
 -- | Return position in world space (for Urho2D).
 nodeGetWorldPosition2D :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector2
-nodeGetWorldPosition2D p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetWorldPosition2D p = liftIO $ do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector2* {new Vector2($(Node* ptr)->GetWorldPosition2D())} |]
-  v <- peek pvec 
+  v <- peek pvec
   [C.exp| void {delete $(Vector2* pvec)} |]
-  return v 
+  return v
 
 -- | Return rotation in world space.
 nodeGetWorldRotation :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Quaternion
-nodeGetWorldRotation p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetWorldRotation p = liftIO $ do
+  let ptr = parentPointer p
   pquat <- [C.exp| Quaternion* {new Quaternion($(Node* ptr)->GetWorldRotation())} |]
   quat <- peek pquat
   [C.exp| void { delete $(Quaternion* pquat) } |]
@@ -1234,152 +1236,152 @@ nodeGetWorldRotation p = liftIO $ do
 nodeGetWorldRotation2D :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Float
-nodeGetWorldRotation2D p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetWorldRotation2D p = liftIO $ do
+  let ptr = parentPointer p
   realToFrac <$> [C.exp| float {$(Node* ptr)->GetWorldRotation2D()} |]
 
 -- | Return direction in world space.
 nodeGetWorldDirection :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
-nodeGetWorldDirection p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetWorldDirection p = liftIO $ do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector3* {new Vector3($(Node* ptr)->GetWorldDirection())} |]
-  v <- peek pvec 
+  v <- peek pvec
   [C.exp| void { delete $(Vector3* pvec) } |]
-  return v 
+  return v
 
 -- | Return node's up vector in world space.
 nodeGetWorldUp :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
-nodeGetWorldUp p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetWorldUp p = liftIO $ do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector3* {new Vector3($(Node* ptr)->GetWorldUp())} |]
-  v <- peek pvec 
+  v <- peek pvec
   [C.exp| void { delete $(Vector3* pvec) } |]
-  return v 
+  return v
 
 -- | Return node's right vector in world space.
 nodeGetWorldRight :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
-nodeGetWorldRight p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetWorldRight p = liftIO $ do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector3* {new Vector3($(Node* ptr)->GetWorldRight())} |]
-  v <- peek pvec 
+  v <- peek pvec
   [C.exp| void { delete $(Vector3* pvec) } |]
-  return v 
+  return v
 
 -- | Return scale in world space.
 nodeGetWorldScale :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector3
-nodeGetWorldScale p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetWorldScale p = liftIO $ do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector3* {new Vector3($(Node* ptr)->GetWorldScale())} |]
-  v <- peek pvec 
+  v <- peek pvec
   [C.exp| void { delete $(Vector3* pvec) } |]
-  return v 
+  return v
 
 -- | Return scale in world space (for Urho2D).
 nodeGetWorldScale2D :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Vector2
-nodeGetWorldScale2D p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetWorldScale2D p = liftIO $ do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector2* {new Vector2($(Node* ptr)->GetWorldScale2D())} |]
-  v <- peek pvec 
+  v <- peek pvec
   [C.exp| void {delete $(Vector2* pvec)} |]
-  return v 
+  return v
 
 -- | Return world space transform matrix.
 nodeGetWorldTransform :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Matrix3x4
-nodeGetWorldTransform p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetWorldTransform p = liftIO $ do
+  let ptr = parentPointer p
   pmat <- [C.exp| Matrix3x4* {new Matrix3x4($(Node* ptr)->GetWorldTransform())} |]
-  mat <- peek pmat 
+  mat <- peek pmat
   [C.exp| void { delete $(Matrix3x4* pmat) } |]
-  return mat 
+  return mat
 
-class NodeLocalToWorld a where 
+class NodeLocalToWorld a where
   -- | Convert a local space position or rotation to world space.
   nodeLocalToWorld :: (Parent Node n, Pointer p n, MonadIO m)
     => p -- ^ Node pointer or pointer to ascentor
     -> a -- ^ position in local space
     -> m Vector3 -- ^ position in world space
 
-instance NodeLocalToWorld Vector3 where 
-  nodeLocalToWorld p v = liftIO $ with v $ \v' -> do 
-    let ptr = parentPointer p 
+instance NodeLocalToWorld Vector3 where
+  nodeLocalToWorld p v = liftIO $ with v $ \v' -> do
+    let ptr = parentPointer p
     pvec <- [C.exp| Vector3* {new Vector3($(Node* ptr)->LocalToWorld(*$(Vector3* v')))} |]
-    vec <- peek pvec 
+    vec <- peek pvec
     [C.exp| void { delete $(Vector3* pvec) } |]
     return vec
 
-instance NodeLocalToWorld Vector4 where 
-  nodeLocalToWorld p v = liftIO $ with v $ \v' -> do 
-    let ptr = parentPointer p 
+instance NodeLocalToWorld Vector4 where
+  nodeLocalToWorld p v = liftIO $ with v $ \v' -> do
+    let ptr = parentPointer p
     pvec <- [C.exp| Vector3* {new Vector3($(Node* ptr)->LocalToWorld(*$(Vector4* v')))} |]
-    vec <- peek pvec 
+    vec <- peek pvec
     [C.exp| void { delete $(Vector3* pvec) } |]
-    return vec 
+    return vec
 
 -- | Convert a local space position or rotation to world space (for Urho2D).
 nodeLocalToWorld2D :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> Vector2
-  -> m Vector2 
-nodeLocalToWorld2D p v = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+  -> m Vector2
+nodeLocalToWorld2D p v = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector2* {new Vector2($(Node* ptr)->LocalToWorld2D(*$(Vector2* v')))} |]
-  vec <- peek pvec 
+  vec <- peek pvec
   [C.exp| void {delete $(Vector2* pvec)} |]
-  return vec 
+  return vec
 
-class NodeWorldToLocal a where 
+class NodeWorldToLocal a where
   -- | Convert a world space position or rotation to local space.
   nodeWorldToLocal :: (Parent Node n, Pointer p n, MonadIO m)
     => p -- ^ Node pointer or pointer to ascentor
     -> a -- ^ position in local space
     -> m Vector3 -- ^ position in world space
 
-instance NodeWorldToLocal Vector3 where 
-  nodeWorldToLocal p v = liftIO $ with v $ \v' -> do 
-    let ptr = parentPointer p 
+instance NodeWorldToLocal Vector3 where
+  nodeWorldToLocal p v = liftIO $ with v $ \v' -> do
+    let ptr = parentPointer p
     pvec <- [C.exp| Vector3* {new Vector3($(Node* ptr)->WorldToLocal(*$(Vector3* v')))} |]
-    vec <- peek pvec 
+    vec <- peek pvec
     [C.exp| void { delete $(Vector3* pvec) } |]
-    return vec 
+    return vec
 
-instance NodeWorldToLocal Vector4 where 
-  nodeWorldToLocal p v = liftIO $ with v $ \v' -> do 
-    let ptr = parentPointer p 
+instance NodeWorldToLocal Vector4 where
+  nodeWorldToLocal p v = liftIO $ with v $ \v' -> do
+    let ptr = parentPointer p
     pvec <- [C.exp| Vector3* {new Vector3($(Node* ptr)->WorldToLocal(*$(Vector4* v')))} |]
-    vec <- peek pvec 
+    vec <- peek pvec
     [C.exp| void { delete $(Vector3* pvec) } |]
-    return vec 
+    return vec
 
 -- | Convert a world space position or rotation to local space (for Urho2D).
 nodeWorldToLocal2D :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> Vector2
-  -> m Vector2 
-nodeWorldToLocal2D p v = liftIO $ with v $ \v' -> do 
-  let ptr = parentPointer p 
+  -> m Vector2
+nodeWorldToLocal2D p v = liftIO $ with v $ \v' -> do
+  let ptr = parentPointer p
   pvec <- [C.exp| Vector2* {new Vector2($(Node* ptr)->WorldToLocal2D(*$(Vector2* v')))} |]
-  vec <- peek pvec 
+  vec <- peek pvec
   [C.exp| void {delete $(Vector2* pvec)} |]
-  return vec 
+  return vec
 
 -- | Return whether transform has changed and world transform needs recalculation.
 nodeIsDirty :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Bool
-nodeIsDirty p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeIsDirty p = liftIO $ do
+  let ptr = parentPointer p
   toBool <$> [C.exp| int { (int)$(Node* ptr)->IsDirty()} |]
 
 -- | Return number of child scene nodes.
@@ -1387,8 +1389,8 @@ nodeGetNumChildren :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> Bool -- ^ Recursive?
   -> m Int
-nodeGetNumChildren p r = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetNumChildren p r = liftIO $ do
+  let ptr = parentPointer p
       r' = fromBool r
   fromIntegral <$> [C.exp| unsigned int { $(Node* ptr)->GetNumChildren($(int r') != 0)} |]
 
@@ -1396,8 +1398,8 @@ nodeGetNumChildren p r = liftIO $ do
 nodeGetChildren  :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (SharedPtr Node))
   => p -- ^ Node pointer or pointer to ascentor
   -> m (v (SharedPtr Node))
-nodeGetChildren  p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetChildren  p = liftIO $ do
+  let ptr = parentPointer p
   peekForeignVectorAs =<< [C.exp| const VectorSharedNodePtr* { &$(Node* ptr)->GetChildren() } |]
 
 -- | Return child scene nodes, optionally recursive.
@@ -1405,32 +1407,33 @@ nodeGetChildren' :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorReprese
   => p -- ^ Node pointer or pointer to ascentor
   -> Bool -- ^ Recursive?
   -> m (v (Ptr Node))
-nodeGetChildren' p r = liftIO $ withObject () $ \(pvec :: Ptr PODVectorNodePtr) -> do 
-  let ptr = parentPointer p 
+nodeGetChildren' p r = liftIO $ withObject () $ \(pvec :: Ptr PODVectorNodePtr) -> do
+  let ptr = parentPointer p
       r' = fromBool r
   [C.exp| void { $(Node* ptr)->GetChildren(*$(PODVectorNodePtr* pvec), $(int r') != 0)} |]
   peekForeignVectorAs' pvec
 
 -- | Return child scene nodes with a specific component.
-nodeGetChildrenWithComponent :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (Ptr Node))
+nodeGetChildrenWithComponent :: (Parent Node a, Pointer p a, MonadIO m, ForeignVector v (Ptr Node), NodeComponent cmp)
   => p -- ^ Node pointer or pointer to ascentor
-  -> Ptr StringHash -- ^ type
+  -> Proxy cmp -- ^ Component type
   -> Bool -- ^ Recursive?
   -> m (v (Ptr Node))
-nodeGetChildrenWithComponent p phash r = liftIO $ withObject () $ \(pvec :: Ptr PODVectorNodePtr) -> do 
-  let ptr = parentPointer p 
+nodeGetChildrenWithComponent p proxy r = liftIO $ withObject () $ \(pvec :: Ptr PODVectorNodePtr) -> do
+  let ptr = parentPointer p
       r' = fromBool r
-  [C.exp| void { $(Node* ptr)->GetChildrenWithComponent(*$(PODVectorNodePtr* pvec), *$(StringHash* phash), $(int r') != 0)} |]
+      phash = fromIntegral . stringHashValue $ nodeComponentType proxy
+  [C.exp| void { $(Node* ptr)->GetChildrenWithComponent(*$(PODVectorNodePtr* pvec), StringHash($(unsigned int phash)), $(int r') != 0)} |]
   peekForeignVectorAs' pvec
 
 -- | Return child scene nodes with a specific tag.
 nodeGetChildrenWithTag  :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (Ptr Node))
   => p -- ^ Node pointer or pointer to ascentor
-  -> String -- ^ tag 
+  -> String -- ^ tag
   -> Bool -- ^ Recursive?
   -> m (v (Ptr Node))
-nodeGetChildrenWithTag p tag r = liftIO $ withCString tag $ \tag' -> withObject () $ \(pvec :: Ptr PODVectorNodePtr) -> do 
-  let ptr = parentPointer p 
+nodeGetChildrenWithTag p tag r = liftIO $ withCString tag $ \tag' -> withObject () $ \(pvec :: Ptr PODVectorNodePtr) -> do
+  let ptr = parentPointer p
       r' = fromBool r
   [C.exp| void { $(Node* ptr)->GetChildrenWithTag(*$(PODVectorNodePtr* pvec), String($(const char* tag')), $(int r') != 0) } |]
   peekForeignVectorAs' pvec
@@ -1440,117 +1443,112 @@ nodeGetChildByIndex :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> Int -- ^ index
   -> m (Ptr Node)
-nodeGetChildByIndex p i = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetChildByIndex p i = liftIO $ do
+  let ptr = parentPointer p
       i' = fromIntegral i
   [C.exp| Node* { $(Node* ptr)->GetChild($(unsigned int i'))} |]
 
 -- | Return child scene node by name.
 nodeGetChildByName :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
-  -> String -- ^ name 
+  -> String -- ^ name
   -> Bool -- ^ Recursive?
   -> m (Ptr Node)
-nodeGetChildByName p n r = liftIO $ withCString n $ \n' -> do 
-  let ptr = parentPointer p 
+nodeGetChildByName p n r = liftIO $ withCString n $ \n' -> do
+  let ptr = parentPointer p
       r' = fromBool r
   [C.exp| Node* { $(Node* ptr)->GetChild($(const char* n'), $(int r') != 0)} |]
 
 -- | Return child scene node by name hash.
 nodeGetChildByNameHash :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
-  -> Ptr StringHash -- ^ name hash
+  -> StringHash -- ^ name hash
   -> Bool -- ^ Recursive?
   -> m (Ptr Node)
-nodeGetChildByNameHash p phash r = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetChildByNameHash p phash r = liftIO $ do
+  let ptr = parentPointer p
       r' = fromBool r
-  [C.exp| Node* { $(Node* ptr)->GetChild(*$(StringHash* phash), $(int r') != 0)} |]
+      phash' = fromIntegral . stringHashValue $ phash
+  [C.exp| Node* { $(Node* ptr)->GetChild(StringHash($(unsigned int phash')), $(int r') != 0)} |]
 
 -- | Return number of components.
 nodeGetNumComponents :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Int
-nodeGetNumComponents p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetNumComponents p = liftIO $ do
+  let ptr = parentPointer p
   fromIntegral <$> [C.exp| unsigned int { $(Node* ptr)->GetNumComponents()} |]
 
 -- | Return number of non-local components.
 nodeGetNumNetworkComponents :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m Int
-nodeGetNumNetworkComponents p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetNumNetworkComponents p = liftIO $ do
+  let ptr = parentPointer p
   fromIntegral <$> [C.exp| unsigned int { $(Node* ptr)->GetNumNetworkComponents()} |]
 
 -- | Return all components.
 nodeGetComponents :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (SharedPtr Component))
   => p -- ^ Node pointer or pointer to ascentor
   -> m (v (SharedPtr Component))
-nodeGetComponents p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetComponents p = liftIO $ do
+  let ptr = parentPointer p
   peekForeignVectorAs =<< [C.exp| const VectorSharedComponentPtr* { &$(Node* ptr)->GetComponents()} |]
 
 -- | Return all components of type. Optionally recursive.
-nodeGetComponentsByType  :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (Ptr Component))
+nodeGetComponentsByHash  :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (Ptr Component))
   => p -- ^ Node pointer or pointer to ascentor
-  -> Ptr StringHash -- ^ type
+  -> StringHash -- ^ type
   -> Bool -- ^ Recursive?
   -> m (v (Ptr Component))
-nodeGetComponentsByType p phash r = liftIO $ withObject () $ \(pvec :: Ptr PODVectorComponentPtr) -> do 
-  let ptr = parentPointer p 
+nodeGetComponentsByHash p phash r = liftIO $ withObject () $ \(pvec :: Ptr PODVectorComponentPtr) -> do
+  let ptr = parentPointer p
       r' = fromBool r
-  [C.exp| void { $(Node* ptr)->GetComponents(*$(PODVectorComponentPtr* pvec), *$(StringHash* phash), $(int r') != 0) } |]
-  peekForeignVectorAs' pvec 
+      phash' = fromIntegral . stringHashValue $ phash
+  [C.exp| void { $(Node* ptr)->GetComponents(*$(PODVectorComponentPtr* pvec), StringHash($(unsigned int phash')), $(int r') != 0) } |]
+  peekForeignVectorAs' pvec
 
--- | Return component by type. If there are several, returns the first. High-level version of 'nodeGetComponent'
-nodeGetComponent' :: forall a p c m . (Parent Node a, Pointer p a, MonadIO m, NodeComponent c) 
+-- | Return component by type. If there are several, returns the first.
+nodeGetComponent :: forall a p c m . (Parent Node a, Pointer p a, MonadIO m, NodeComponent c)
   => p -- ^ Node pointer or pointer to ascentor
   -> Bool -- ^ Recursive?
   -> m (Maybe (Ptr c))
-nodeGetComponent' p r = do
-  let ct = nodeComponentType (Proxy :: Proxy c)
-  cp <- nodeGetComponent p ct r
-  join <$> checkNullPtr' cp (return . castToChild)
-
--- | Return component by type. If there are several, returns the first.
-nodeGetComponent :: (Parent Node a, Pointer p a, MonadIO m) 
-  => p -- ^ Node pointer or pointer to ascentor
-  -> Ptr StringHash -- ^ type
-  -> Bool -- ^ Recursive?
-  -> m (Ptr Component)
-nodeGetComponent p ct r = liftIO $ do 
+nodeGetComponent p r = liftIO $ do
   let ptr = parentPointer p
       r' = fromBool r
-  [C.exp| Component* { $(Node* ptr)->GetComponent(*$(StringHash* ct), $(int r') != 0) } |]
+      ct' = fromIntegral . stringHashValue $ nodeComponentType (Proxy :: Proxy c)
+  cp <- [C.exp| Component* { $(Node* ptr)->GetComponent(StringHash($(unsigned int ct')), $(int r') != 0) } |]
+  join <$> checkNullPtr' cp (return . castToChild)
 
 -- | Return component in parent node. If there are several, returns the first. May optional traverse up to the root node.
-nodeGetParentComponent :: (Parent Node a, Pointer p a, MonadIO m)
+nodeGetParentComponent :: (Parent Node a, Pointer p a, MonadIO m, NodeComponent c)
   => p -- ^ Node pointer or pointer to ascentor
-  -> Ptr StringHash -- ^ type 
+  -> Proxy c -- ^ type
   -> Bool -- ^ full traversal
   -> m (Ptr Component)
-nodeGetParentComponent p phash r = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetParentComponent p proxy r = liftIO $ do
+  let ptr = parentPointer p
       r' = fromBool r
-  [C.exp| Component* { $(Node* ptr)->GetParentComponent(*$(StringHash* phash), $(int r') != 0)} |]
+      phash' = fromIntegral . stringHashValue $ nodeComponentType proxy
+  [C.exp| Component* { $(Node* ptr)->GetParentComponent(StringHash($(unsigned int phash')), $(int r') != 0)} |]
 
 -- | Return whether has a specific component.
-nodeHasComponent :: (Parent Node a, Pointer p a, MonadIO m)
+nodeHasComponent :: (Parent Node a, Pointer p a, MonadIO m, NodeComponent c)
   => p -- ^ Node pointer or pointer to ascentor
-  -> Ptr StringHash -- ^ type
+  -> Proxy c -- ^ type
   -> m Bool
-nodeHasComponent p phash = liftIO $ do 
-  let ptr = parentPointer p 
-  toBool <$> [C.exp| int { (int)$(Node* ptr)->HasComponent(*$(StringHash* phash))} |]
+nodeHasComponent p proxy = liftIO $ do
+  let ptr = parentPointer p
+      phash = fromIntegral . stringHashValue $ nodeComponentType proxy
+  toBool <$> [C.exp| int { (int)$(Node* ptr)->HasComponent(StringHash($(unsigned int phash)))} |]
 
 -- | Return listener components.
 nodeGetListeners :: (Parent Node a, Pointer p a, MonadIO m, ForeignVectorRepresent v, ForeignElemConstr v (WeakPtr Component))
   => p -- ^ Node pointer or pointer to ascentor
   -> m (v (WeakPtr Component))
-nodeGetListeners p = liftIO $ do 
-  let ptr = parentPointer p 
-  peekForeignVectorAs =<< [C.block| const VectorWeakComponentPtr* { 
+nodeGetListeners p = liftIO $ do
+  let ptr = parentPointer p
+  peekForeignVectorAs =<< [C.block| const VectorWeakComponentPtr* {
       static Vector<WeakPtr<Component> > vec = $(Node* ptr)->GetListeners();
       return &vec;
     } |]
@@ -1560,16 +1558,16 @@ nodeGetVar :: (Parent Node a, Pointer p a, MonadIO m, VariantStorable b)
   => p -- ^ Node pointer or pointer to ascentor
   -> String -- ^ key
   -> m (Maybe b)
-nodeGetVar p key = liftIO $ withObject key $ \pkey -> do 
-  let ptr = parentPointer p 
+nodeGetVar p key = liftIO $ withObject key $ \pkey -> do
+  let ptr = parentPointer p
   getVariant =<< [C.exp| const Variant* { &$(Node* ptr)->GetVar(*$(StringHash* pkey))} |]
 
 -- | Return all user variables.
 nodeGetVars :: (Parent Node a, Pointer p a, MonadIO m)
   => p -- ^ Node pointer or pointer to ascentor
   -> m (Ptr VariantMap)
-nodeGetVars p = liftIO $ do 
-  let ptr = parentPointer p 
+nodeGetVars p = liftIO $ do
+  let ptr = parentPointer p
   [C.exp| const HashMapStringHashVariant* { &$(Node* ptr)->GetVars()} |]
 
 -- Stopped at: https://github.com/urho3d/Urho3D/blob/master/Source/Urho3D/Scene/Node.h#L520

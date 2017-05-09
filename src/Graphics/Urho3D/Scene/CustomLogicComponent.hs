@@ -11,14 +11,14 @@ module Graphics.Urho3D.Scene.CustomLogicComponent(
   , getCustomComponentState
   , registerCustomComponent
   , registerCustomComponentCat
-  ) where 
+  ) where
 
-import qualified Language.C.Inline as C 
+import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 import Text.RawString.QQ
 
 import Graphics.Urho3D.Scene.Internal.CustomLogicComponent
-import Graphics.Urho3D.Core.Context 
+import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.CustomFactory
 import Graphics.Urho3D.Core.TypeInfo
 import Graphics.Urho3D.Core.Object
@@ -27,23 +27,23 @@ import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Parent
 import Data.IORef
-import Data.Maybe 
+import Data.Maybe
 import Data.Monoid
 import Foreign
 import System.IO.Unsafe (unsafePerformIO)
 
-import Graphics.Urho3D.Scene.Animatable 
-import Graphics.Urho3D.Scene.Component 
-import Graphics.Urho3D.Scene.LogicComponent 
-import Graphics.Urho3D.Scene.Node 
-import Graphics.Urho3D.Scene.Scene 
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.Scene.Component
+import Graphics.Urho3D.Scene.LogicComponent
+import Graphics.Urho3D.Scene.Node
+import Graphics.Urho3D.Scene.Scene
 import Graphics.Urho3D.Scene.Serializable
 
 C.context (C.cppCtx <> C.funConstCtx <> customLogicComponentCntx <> logicComponentContext <> sharedCustomLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext <> serializableContext <> sceneContext <> customFactoryContext <> typeInfoContext)
 C.include "<Urho3D/Scene/LogicComponent.h>"
 C.include "<Urho3D/Core/Context.h>"
 C.include "<iostream>"
-C.using "namespace Urho3D" 
+C.using "namespace Urho3D"
 
 C.verbatim [r|
 extern "C" typedef void (*haskellIO)();
@@ -53,7 +53,7 @@ extern "C" typedef void (*haskellIOScene)(Scene*);
 
 class CustomLogicComponent : public LogicComponent {
   URHO3D_OBJECT(CustomLogicComponent, LogicComponent);
-  
+
   public:
 
   CustomLogicComponent(Context* context
@@ -89,17 +89,17 @@ class CustomLogicComponent : public LogicComponent {
     if (onSetEnabledFunc) onSetEnabledFunc(node_);
   }
 
-  virtual void Start() { 
+  virtual void Start() {
     LogicComponent::Start();
     if (startFunc) startFunc(node_);
   }
 
-  virtual void DelayedStart() { 
+  virtual void DelayedStart() {
     LogicComponent::DelayedStart();
     if (delayedStartFunc) delayedStartFunc(node_);
   }
 
-  virtual void Stop() { 
+  virtual void Stop() {
     LogicComponent::Stop();
     if (stopFunc) stopFunc();
   }
@@ -160,25 +160,25 @@ class CustomLogicComponent : public LogicComponent {
 -- | Defines custom components callbacks
 data CustomLogicComponentSetup a = CustomLogicComponentSetup {
   -- | Handle enabled/disabled state change. Changes update event subscription.
-  componentOnSetEnabled :: IORef a -> Ptr Node -> IO () 
+  componentOnSetEnabled :: IORef a -> Ptr Node -> IO ()
   -- | Called when the component is added to a scene node. Other components may not yet exist.
-, componentStart :: IORef a -> Ptr Node -> IO () 
+, componentStart :: IORef a -> Ptr Node -> IO ()
   -- | Called before the first update. At this point all other components of the node should exist. Will also be called if update events are not wanted; in that case the event is immediately unsubscribed afterward.
-, componentDelayedStart :: IORef a -> Ptr Node -> IO () 
+, componentDelayedStart :: IORef a -> Ptr Node -> IO ()
   -- | Called when the component is detached from a scene node, usually on destruction. Note that you will no longer have access to the node and scene at that point.
-, componentStop :: IORef a -> IO () 
+, componentStop :: IORef a -> IO ()
   -- | Called on scene update, variable timestep.
-, componentUpdate :: Maybe (IORef a -> Ptr Node -> Float -> IO ()) 
+, componentUpdate :: Maybe (IORef a -> Ptr Node -> Float -> IO ())
   -- | Called on scene post-update, variable timestep.
-, componentPostUpdate :: Maybe (IORef a -> Ptr Node -> Float -> IO ()) 
+, componentPostUpdate :: Maybe (IORef a -> Ptr Node -> Float -> IO ())
   -- | Called on physics update, fixed timestep.
-, componentFixedUpdate :: Maybe (IORef a -> Ptr Node -> Float -> IO ()) 
+, componentFixedUpdate :: Maybe (IORef a -> Ptr Node -> Float -> IO ())
   -- | Called on physics post-update, fixed timestep.
-, componentFixedPostUpdate :: Maybe (IORef a -> Ptr Node -> Float -> IO ()) 
+, componentFixedPostUpdate :: Maybe (IORef a -> Ptr Node -> Float -> IO ())
   -- | Handle scene node being assigned at creation.
-, componentFixedOnNodeSet :: IORef a -> Ptr Node -> IO () 
+, componentFixedOnNodeSet :: IORef a -> Ptr Node -> IO ()
   -- | Handle scene being assigned.
-, componentFixedOnSceneSet :: IORef a -> Ptr Scene -> IO () 
+, componentFixedOnSceneSet :: IORef a -> Ptr Scene -> IO ()
 }
 
 -- | Helper, all callbacks are Nothing
@@ -196,13 +196,13 @@ defaultCustomLogicComponent = CustomLogicComponentSetup {
 , componentFixedOnSceneSet = const . const $ return ()
 }
 
-customLogicComponentContext :: C.Context 
+customLogicComponentContext :: C.Context
 customLogicComponentContext = sharedCustomLogicComponentPtrCntx <> customLogicComponentCntx <> logicComponentContext <> stringHashContext
 
 newCustomLogicComponent :: forall m a . MonadIO m => Ptr Context -> a -> CustomLogicComponentSetup a -> m (Ptr CustomLogicComponent)
-newCustomLogicComponent ptr a CustomLogicComponentSetup {..} = liftIO $ do 
+newCustomLogicComponent ptr a CustomLogicComponentSetup {..} = liftIO $ do
   ref <- newIORef a
-  let 
+  let
     componentOnSetEnabledFunc = componentOnSetEnabled ref
     componentStartFunc = componentStart ref
     componentDelayedStartFunc = componentDelayedStart ref
@@ -211,7 +211,7 @@ newCustomLogicComponent ptr a CustomLogicComponentSetup {..} = liftIO $ do
     componentFixedOnSceneSetFunc = componentFixedOnSceneSet ref
 
     updateFunc = prepareFunc ref componentUpdate
-    postUpdateFunc = prepareFunc ref componentPostUpdate  
+    postUpdateFunc = prepareFunc ref componentPostUpdate
     fixedUpdateFunc = prepareFunc ref componentFixedUpdate
     fixedPostUpdateFunc = prepareFunc ref componentFixedPostUpdate
 
@@ -230,7 +230,7 @@ newCustomLogicComponent ptr a CustomLogicComponentSetup {..} = liftIO $ do
       , $funConst:(void (*componentFixedOnNodeSetFunc)(Node*))
       , $funConst:(void (*componentFixedOnSceneSetFunc)(Scene*))
       , $(void* statePtr)
-      ) 
+      )
   } |]
   logicComponentSetUpdateEventMask component emask
   -- print =<< logicComponentGetUpdateEventMask component
@@ -253,42 +253,40 @@ deleteCustomLogicComponent ptr = liftIO $ do
   freeStablePtr statePtr
   [C.exp| void { delete $(CustomLogicComponent* ptr) } |]
 
-sharedPtr "CustomLogicComponent" 
+sharedPtr "CustomLogicComponent"
 
 deriveParents [''Object, ''Serializable, ''Animatable, ''Component, ''LogicComponent] ''CustomLogicComponent
 
-instance NodeComponent CustomLogicComponent where 
-  nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {
-    static StringHash h = CustomLogicComponent::GetTypeStatic();
-    return &h;
-  } |]
+instance NodeComponent CustomLogicComponent where
+  nodeComponentType _ = unsafePerformIO $ StringHash . fromIntegral <$> [C.exp|
+    unsigned int { CustomLogicComponent::GetTypeStatic().Value() } |]
 
 -- | Return type of custom logic component
-customComponentTypeInfo :: Ptr TypeInfo 
+customComponentTypeInfo :: Ptr TypeInfo
 customComponentTypeInfo = [C.pure| const TypeInfo* {
     CustomLogicComponent::GetTypeInfoStatic()
   } |]
 
 -- | Getting component internal state, unsafe as you can cast state to any type
 getCustomComponentState :: (Parent CustomLogicComponent a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to component 
+  => p -- ^ Pointer to component
   -> m (IORef state)
-getCustomComponentState p = liftIO $ do 
-  let ptr = parentPointer p 
+getCustomComponentState p = liftIO $ do
+  let ptr = parentPointer p
   statePtr <- castPtrToStablePtr <$> [C.exp| void* { $(CustomLogicComponent* ptr)->GetHaskellState() } |]
-  deRefStablePtr statePtr 
+  deRefStablePtr statePtr
 
 -- | Create new custom factory for custom component
 createCustomComponentFactory :: (Parent Context a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to context
   -> String -- ^ Name of component type
   -> state -- ^ Inital state of component
-  -> CustomLogicComponentSetup state -- ^ Config of custom component 
+  -> CustomLogicComponentSetup state -- ^ Config of custom component
   -> m (Ptr CustomFactory, Ptr TypeInfo) -- ^ Return new factory and new type info
-createCustomComponentFactory p name a setup = liftIO $ do 
+createCustomComponentFactory p name a setup = liftIO $ do
   let ptr = parentPointer p
       maker :: Ptr Context -> IO (Ptr Object)
-      maker cntx = do 
+      maker cntx = do
         pobj <- newCustomLogicComponent cntx a setup
         return . castToParent $ pobj
   customType <- newTypeInfo name customComponentTypeInfo
@@ -300,9 +298,9 @@ registerCustomComponent :: (Parent Context a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to context
   -> String -- ^ Name of component type
   -> state -- ^ Inital state of component
-  -> CustomLogicComponentSetup state -- ^ Config of custom component 
-  -> m (ForeignPtr StringHash) -- ^ Return type hash of component
-registerCustomComponent p name a setup = liftIO $ do 
+  -> CustomLogicComponentSetup state -- ^ Config of custom component
+  -> m StringHash -- ^ Return type hash of component
+registerCustomComponent p name a setup = liftIO $ do
   (factory, customType) <- createCustomComponentFactory p name a setup
   contextRegisterFactory p factory
   typeInfoGetType customType
@@ -313,9 +311,9 @@ registerCustomComponentCat :: (Parent Context a, Pointer p a, MonadIO m)
   -> String -- ^ Name of component type
   -> String -- ^ Name of category to register fabric with
   -> state -- ^ Inital state of component
-  -> CustomLogicComponentSetup state -- ^ Config of custom component 
-  -> m (ForeignPtr StringHash) -- ^ Return type hash of component
-registerCustomComponentCat p name cat a setup = liftIO $ do 
+  -> CustomLogicComponentSetup state -- ^ Config of custom component
+  -> m StringHash -- ^ Return type hash of component
+registerCustomComponentCat p name cat a setup = liftIO $ do
   (factory, customType) <- createCustomComponentFactory p name a setup
   contextRegisterFactoryCat p factory cat
   typeInfoGetType customType

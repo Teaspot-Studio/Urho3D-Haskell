@@ -63,6 +63,7 @@ import Graphics.Urho3D.Core.Variant
 import Graphics.Urho3D.Graphics.Material
 import Graphics.Urho3D.Math.Color
 import Graphics.Urho3D.Math.Rect
+import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector2
 import Graphics.Urho3D.Math.Vector3
 import Graphics.Urho3D.Parent
@@ -105,10 +106,8 @@ instance Creatable (Ptr BillboardSet) where
   deleteObject ptr = liftIO $ [C.exp| void { delete $(BillboardSet* ptr) } |]
 
 instance NodeComponent BillboardSet where
-  nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {
-    static StringHash h = BillboardSet::GetTypeStatic();
-    return &h;
-  } |]
+  nodeComponentType _ = unsafePerformIO $ StringHash . fromIntegral <$> [C.exp|
+    unsigned int { BillboardSet::GetTypeStatic().Value() } |]
 
 -- | Set material
 billboardSetSetMaterial :: (Parent BillboardSet a, Pointer p a, MonadIO m)

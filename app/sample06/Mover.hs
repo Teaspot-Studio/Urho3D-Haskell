@@ -19,14 +19,14 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
 -}
-module Mover where 
+module Mover where
 
-import Data.IORef 
-import Foreign 
+import Data.IORef
+import Foreign
 import Control.Lens hiding (Context, element)
 
 import Graphics.Urho3D
-import Sample 
+import Sample
 
 -- | Custom logic component for moving the animated model and rotating at area edges.
 type Mover = CustomLogicComponent
@@ -41,13 +41,13 @@ data MoverState = MoverState {
 -- | Custom logic component setup that holds state and callbacks.
 type MoverSetup = CustomLogicComponentSetup MoverState
 -- | Type hash of our mover component
-type MoverType = ForeignPtr StringHash
+type MoverType = StringHash
 
--- | Register mover within Urho engine, resulting type is used for creation of 
+-- | Register mover within Urho engine, resulting type is used for creation of
 -- the component instances.
 registerMover :: MonadIO m => Ptr Context -> m MoverType
-registerMover cntx = registerCustomComponent cntx "Mover" moverState moverDef 
-  where 
+registerMover cntx = registerCustomComponent cntx "Mover" moverState moverDef
+  where
   moverState = MoverState {
       moverSpeed = 0
     , moverRotateSpeed = 0
@@ -56,51 +56,51 @@ registerMover cntx = registerCustomComponent cntx "Mover" moverState moverDef
 
 -- | Update internal state of mover. Set motion parameters: forward movement speed, rotation speed, and movement boundaries.
 setMoverParameters :: MonadIO m => Ptr Mover -> Float -> Float -> BoundingBox -> m ()
-setMoverParameters ptr moveSpeed rotateSpeed bounds = liftIO $ do 
-  ref <- getCustomComponentState ptr 
+setMoverParameters ptr moveSpeed rotateSpeed bounds = liftIO $ do
+  ref <- getCustomComponentState ptr
   writeIORef ref $ MoverState {
-      moverSpeed = moveSpeed 
-    , moverRotateSpeed = rotateSpeed 
+      moverSpeed = moveSpeed
+    , moverRotateSpeed = rotateSpeed
     , moverBounds = bounds
-    } 
+    }
 
 -- | Return forward movement speed.
-moverGetMoveSpeed :: MonadIO m => Ptr Mover -> m Float 
-moverGetMoveSpeed ptr = liftIO $ do 
-  ref <- getCustomComponentState ptr 
+moverGetMoveSpeed :: MonadIO m => Ptr Mover -> m Float
+moverGetMoveSpeed ptr = liftIO $ do
+  ref <- getCustomComponentState ptr
   moverSpeed <$> readIORef ref
 
 -- | Return rotation speed.
-moverGetRotationSpeed :: MonadIO m => Ptr Mover -> m Float 
-moverGetRotationSpeed ptr = liftIO $ do 
-  ref <- getCustomComponentState ptr 
+moverGetRotationSpeed :: MonadIO m => Ptr Mover -> m Float
+moverGetRotationSpeed ptr = liftIO $ do
+  ref <- getCustomComponentState ptr
   moverRotateSpeed <$> readIORef ref
 
 -- | Return movement boundaries.
-moverGetBounds :: MonadIO m => Ptr Mover -> m BoundingBox 
-moverGetBounds ptr = liftIO $ do 
-  ref <- getCustomComponentState ptr 
+moverGetBounds :: MonadIO m => Ptr Mover -> m BoundingBox
+moverGetBounds ptr = liftIO $ do
+  ref <- getCustomComponentState ptr
   moverBounds <$> readIORef ref
 
 -- | Custom logic component for rotating a scene node.
 moverDef :: MoverSetup
 moverDef = defaultCustomLogicComponent {
-    componentUpdate = Just $ \ref compNode t -> do 
+    componentUpdate = Just $ \ref compNode t -> do
       -- Component state is passed via reference
       MoverState {..} <- readIORef ref
 
       nodeTranslate compNode (vec3Forward * vec3 (moverSpeed * t)) TS'Local
 
       -- If in risk of going outside the plane, rotate the model right
-      pos <- nodeGetPosition compNode 
+      pos <- nodeGetPosition compNode
       when ((pos ^. x < moverBounds ^. minVector ^. x) || (pos ^. x > moverBounds ^. maxVector ^. x) ||
             (pos ^. z < moverBounds ^. minVector ^. z) || (pos ^. z > moverBounds ^. maxVector ^. z)) $
         nodeYaw compNode (moverRotateSpeed * t) TS'Local
 
       -- Get the model's first (only) animation state and advance its time. Note the convenience accessor to other components
       -- in the same scene node
-      (model :: Ptr AnimatedModel) <- fromJustTrace "AnimatedModel mover" <$> nodeGetComponent' compNode False
-      whenM ((> 0) <$> animatedModelGetNumAnimationStates model) $ do 
+      (model :: Ptr AnimatedModel) <- fromJustTrace "AnimatedModel mover" <$> nodeGetComponent compNode False
+      whenM ((> 0) <$> animatedModelGetNumAnimationStates model) $ do
         states <- animatedModelGetAnimationStates model
         animationStateAddTime (head states) t
   }

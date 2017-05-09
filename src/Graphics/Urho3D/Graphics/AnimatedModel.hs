@@ -110,10 +110,8 @@ animatedModelContext =
 deriveParents [''Object, ''Serializable, ''Animatable, ''Component, ''Drawable, ''StaticModel] ''AnimatedModel
 
 instance NodeComponent AnimatedModel where
-  nodeComponentType _ = unsafePerformIO $ [C.block| StringHash* {
-    static StringHash h = AnimatedModel::GetTypeStatic();
-    return &h;
-  } |]
+  nodeComponentType _ = unsafePerformIO $ StringHash . fromIntegral <$> [C.exp|
+    unsigned int { AnimatedModel::GetTypeStatic().Value() } |]
 
 instance Creatable (Ptr AnimatedModel) where
   type CreationOptions (Ptr AnimatedModel) = Ptr Context
