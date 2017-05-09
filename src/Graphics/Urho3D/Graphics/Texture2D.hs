@@ -4,7 +4,7 @@ module Graphics.Urho3D.Graphics.Texture2D(
   , texture2DContext
   ) where
 
-import qualified Language.C.Inline as C 
+import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.Texture2D
@@ -21,13 +21,10 @@ C.context (C.cppCtx <> texture2DCntx <> textureContext <> stringHashContext <> o
 C.include "<Urho3D/Graphics/Texture2D.h>"
 C.using "namespace Urho3D"
 
-texture2DContext :: C.Context 
+texture2DContext :: C.Context
 texture2DContext = texture2DCntx <> textureContext
 
-instance ResourceType Texture2D where 
-  resourceType _ = unsafePerformIO $ [C.block| StringHash* { 
-    static StringHash h = Texture2D::GetTypeStatic(); 
-    return &h; 
-    } |]
+instance ResourceType Texture2D where
+  resourceType _ = StringHash . fromIntegral $ [C.pure| unsigned int { Texture2D::GetTypeStatic().Value() } |]
 
 deriveParents [''Object, ''Resource, ''Texture] ''Texture2D
