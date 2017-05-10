@@ -21,7 +21,6 @@ import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign
-import Foreign.Concurrent as FC
 import Foreign.C.String
 
 C.context (C.cppCtx <> C.funConstCtx <> objectContext <> typeInfoCntx <> contextContext <> stringHashContext <> stringContext)

@@ -8,12 +8,16 @@ module Graphics.Urho3D.Container.Vector.Internal.Common(
   , PODVectorBillboard
   , VectorPODVectorWord
   , VectorPODVectorMatrix3x4
+  , SharedArrayWord8
+  , sharedArrayWord8PtrCntx
   , vectorCntx
   ) where
 
 import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Context as C
 import qualified Language.C.Types as C
+
+import Graphics.Urho3D.Container.Ptr
 
 import qualified Data.Map as Map
 
@@ -41,3 +45,5 @@ vectorCntx = mempty {
     , (C.TypeName "VectorPODVectorMatrix3x4", [t| VectorPODVectorMatrix3x4 |])
     ]
   }
+
+sharedArrayPtrImpl "Word8"

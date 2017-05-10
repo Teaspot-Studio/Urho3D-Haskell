@@ -1,20 +1,19 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Graphics.Internal.BillboardSetInstances(
 
   ) where
 
 import qualified Language.C.Inline as C
-import qualified Language.C.Inline.Context as C
 import qualified Language.C.Inline.Cpp as C
-import qualified Language.C.Types as C
 
 import Data.Monoid
 import Foreign
-import Graphics.Urho3D.Math.Color
+import Graphics.Urho3D.Math.Color()
 import Graphics.Urho3D.Math.Internal.Color
 import Graphics.Urho3D.Math.Internal.Rect
 import Graphics.Urho3D.Math.Internal.Vector2
 import Graphics.Urho3D.Math.Internal.Vector3
-import Graphics.Urho3D.Math.Rect
+import Graphics.Urho3D.Math.Rect()
 import Text.RawString.QQ
 
 import Graphics.Urho3D.Graphics.Internal.BillboardSet

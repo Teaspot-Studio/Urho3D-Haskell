@@ -39,6 +39,7 @@ library
     , inline-c >= 0.5
     , megaparsec >= 4.4
     , mtl >= 2.2
+    , primitive >= 0.6
     , stm >= 2.4
     , template-haskell >= 2.10
     , text >= 1.2

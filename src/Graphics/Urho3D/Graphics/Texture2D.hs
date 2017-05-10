@@ -10,7 +10,6 @@ import qualified Language.C.Inline.Cpp as C
 import Graphics.Urho3D.Graphics.Internal.Texture2D
 import Graphics.Urho3D.Math.StringHash
 import Data.Monoid
-import System.IO.Unsafe (unsafePerformIO)
 
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Resource.Resource

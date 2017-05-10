@@ -56,7 +56,6 @@ import Data.Monoid
 import Data.Typeable
 import Foreign
 import Foreign.C.String
-import System.IO.Unsafe (unsafePerformIO)
 import Text.RawString.QQ
 
 import Graphics.Urho3D.Resource.Resource

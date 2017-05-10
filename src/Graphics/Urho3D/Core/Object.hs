@@ -29,7 +29,6 @@ import Text.RawString.QQ
 import Data.Monoid
 import Foreign
 import Data.Proxy
-import Data.Hashable
 import System.IO.Unsafe (unsafePerformIO)
 
 C.context (C.cppCtx <> C.funConstCtx <> objectCntx <> contextCntx <> stringHashContext <> variantContext <> sharedObjectPtrCntx)
