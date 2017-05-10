@@ -11,6 +11,7 @@ module Graphics.Urho3D.Container.Ptr(
   , sharedWeakPtrImpl
   , peekSharedArrayPtr
   , withSharedArrayPtr
+  , modifySharedArray
   -- | Utilities for implementing shared pointers
   , SharedPointerFinalizer(..)
   , WeakPointerFinalizer(..)
@@ -173,6 +174,14 @@ peekSharedArrayPtr n ptr = liftIO $ do
 -- escape lambda scope.
 withSharedArrayPtr :: (SharedArrayPointerFinalizer p a, MonadIO m, Storable a) => SharedArrayPtr a -> (Int -> Ptr p -> m b) -> m b
 withSharedArrayPtr SharedArrayPtr{..} io = io sharedArrayPtrLength (castPtr sharedArrayPtrOrig)
+
+-- | Modify shared array as mutable vector. Note that if you loose refernce to haskell 'SharedArrayPtr'
+-- GC will collect and delete it including raw data. So, don't let the pointer
+-- escape lambda scope.
+--
+-- Note that the function is able to work with 'ST' and 'IO' monad.
+modifySharedArray :: (PrimMonad m, Storable a) => SharedArrayPtr a -> (V.MVector (PrimState m) a -> m b) -> m b
+modifySharedArray SharedArrayPtr{..} m = m $ V.MVector sharedArrayPtrLength unSharedArrayPtr
 
 -- | Creates new object and wraps it to shared pointer. Pointer is garbage collected. The created object
 -- will be destroyed as soon as there is no shared pointers pointed to it.
