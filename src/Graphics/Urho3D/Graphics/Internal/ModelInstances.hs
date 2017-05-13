@@ -78,3 +78,28 @@ instance Storable IndexBufferDesc where
       ptr->dataSize_ = $(unsigned int n');
       ptr->data_ = *$(SharedArrayWord8* datum');
     }|]
+
+instance Storable GeometryDesc where
+  sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(GeometryDesc) } |]
+  alignment _ = fromIntegral $ [C.pure| int { (int)Traits<GeometryDesc>::AlignmentOf } |]
+  peek ptr = do
+    _geometryDescPType <- toEnum . fromIntegral <$> [C.exp| int { (int)$(GeometryDesc* ptr)->type_ } |]
+    _geometryDescVbRef <- fromIntegral <$> [C.exp| unsigned int { $(GeometryDesc* ptr)->vbRef_ } |]
+    _geometryDescIbRef <- fromIntegral <$> [C.exp| unsigned int { $(GeometryDesc* ptr)->ibRef_ } |]
+    _geometryDescIndexStart <- fromIntegral <$> [C.exp| unsigned int { $(GeometryDesc* ptr)->indexStart_ } |]
+    _geometryDescIndexCount <- fromIntegral <$> [C.exp| unsigned int { $(GeometryDesc* ptr)->indexCount_ } |]
+    pure GeometryDesc {..}
+  poke ptr GeometryDesc{..} = do
+    let type_ = fromIntegral . fromEnum $ _geometryDescPType
+        vbRef_ = fromIntegral _geometryDescVbRef
+        ibRef_ = fromIntegral _geometryDescIbRef
+        indexStart_ = fromIntegral _geometryDescIndexStart
+        indexCount_ = fromIntegral _geometryDescIndexCount
+    [C.block| void {
+      GeometryDesc *ptr = $(GeometryDesc* ptr);
+      ptr->type_ = (PrimitiveType)$(int type_);
+      ptr->vbRef_ = $(unsigned int vbRef_);
+      ptr->ibRef_ = $(unsigned int ibRef_);
+      ptr->indexStart_ = $(unsigned int indexStart_);
+      ptr->indexCount_ = $(unsigned int indexCount_);
+    }|]
