@@ -57,3 +57,24 @@ instance Storable VertexBufferDesc where
       ptr->dataSize_ = $(unsigned int n');
       ptr->data_ = *$(SharedArrayWord8* datum');
     }|]
+
+instance Storable IndexBufferDesc where
+  sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(IndexBufferDesc) } |]
+  alignment _ = fromIntegral $ [C.pure| int { (int)Traits<IndexBufferDesc>::AlignmentOf } |]
+  peek ptr = do
+    _indexBufferDescIndexCount <- fromIntegral <$> [C.exp| unsigned int { $(IndexBufferDesc* ptr)->indexCount_ } |]
+    _indexBufferDescIndexSize <- fromIntegral <$> [C.exp| unsigned int { $(IndexBufferDesc* ptr)->indexSize_ } |]
+    dataSize <- fromIntegral <$> [C.exp| unsigned int { $(IndexBufferDesc* ptr)->dataSize_ } |]
+    _indexBufferDescDatum <- peekSharedArrayPtr dataSize =<< [C.exp| SharedArrayWord8* { new SharedArrayWord8($(IndexBufferDesc* ptr)->data_) } |]
+    pure IndexBufferDesc {..}
+  poke ptr IndexBufferDesc{..} = withSharedArrayPtr _indexBufferDescDatum $ \n datum' -> do
+    let ic = fromIntegral _indexBufferDescIndexCount
+        is = fromIntegral _indexBufferDescIndexSize
+        n' = fromIntegral n
+    [C.block| void {
+      IndexBufferDesc *ptr = $(IndexBufferDesc* ptr);
+      ptr->indexCount_ = $(unsigned int ic);
+      ptr->indexSize_ = $(unsigned int is);
+      ptr->dataSize_ = $(unsigned int n');
+      ptr->data_ = *$(SharedArrayWord8* datum');
+    }|]
