@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -ddump-splices #-}
 module Graphics.Urho3D.Container.Vector.Common(
     PODVectorWord8
   , PODVectorWord
@@ -7,6 +8,7 @@ module Graphics.Urho3D.Container.Vector.Common(
   , PODVectorFloat
   , PODVectorInt
   , PODVectorBillboard
+  , PODVectorVertexElement
   , VectorPODVectorWord
   , VectorPODVectorMatrix3x4
   , SharedArrayWord8
@@ -18,8 +20,10 @@ import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Container.Vector
 import Graphics.Urho3D.Container.Vector.Internal.Common
 import Graphics.Urho3D.Creatable
+import Graphics.Urho3D.Graphics.Defs
 import Graphics.Urho3D.Graphics.Internal.BillboardSet
 import Graphics.Urho3D.Graphics.Internal.BillboardSetInstances()
 import Graphics.Urho3D.Math.Matrix3x4
@@ -27,15 +31,16 @@ import Graphics.Urho3D.Monad
 import Data.Monoid
 import Foreign
 
-C.context (C.cppCtx <> vectorCntx <> matrix3x4Context <> billboardSetCntx <> sharedArrayWord8PtrCntx)
+C.context (C.cppCtx <> vectorCntx <> matrix3x4Context <> billboardSetCntx <> sharedArrayWord8PtrCntx <> podVectorVertexElementCntx <> graphDefsContext)
 C.include "<Urho3D/Container/Vector.h>"
 C.include "<Urho3D/Container/ArrayPtr.h>"
 C.include "<Urho3D/Math/Matrix3x4.h>"
 C.include "<Urho3D/Graphics/BillboardSet.h>"
+C.include "<Urho3D/Graphics/GraphicsDefs.h>"
 C.using "namespace Urho3D"
 
 vectorContext :: C.Context
-vectorContext = vectorCntx <> sharedArrayWord8PtrCntx
+vectorContext = vectorCntx <> sharedArrayWord8PtrCntx <> podVectorVertexElementCntx
 
 C.verbatim "typedef PODVector<unsigned char> PODVectorWord8;"
 C.verbatim "typedef PODVector<unsigned> PODVectorWord;"
@@ -242,3 +247,5 @@ instance WriteableVector VectorPODVectorMatrix3x4 where
     [C.exp| void {$(VectorPODVectorMatrix3x4* ptr)->Push(*$(PODVectorMatrix3x4* vptr))} |]
 
 sharedArrayPtr "unsigned char" "Word8"
+
+simplePODVector "VertexElement"

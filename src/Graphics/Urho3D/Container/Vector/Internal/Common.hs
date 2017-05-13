@@ -1,15 +1,17 @@
 module Graphics.Urho3D.Container.Vector.Internal.Common(
     PODVectorWord8
-  , PODVectorWord
-  , PODVectorMatrix3x4
+  , PODVectorBillboard
   , PODVectorBool
   , PODVectorFloat
   , PODVectorInt
-  , PODVectorBillboard
+  , PODVectorMatrix3x4
+  , PODVectorVertexElement
+  , PODVectorWord
   , VectorPODVectorWord
   , VectorPODVectorMatrix3x4
   , SharedArrayWord8
   , sharedArrayWord8PtrCntx
+  , podVectorVertexElementCntx
   , vectorCntx
   ) where
 
@@ -18,6 +20,7 @@ import qualified Language.C.Inline.Context as C
 import qualified Language.C.Types as C
 
 import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Container.Vector
 
 import qualified Data.Map as Map
 
@@ -47,3 +50,4 @@ vectorCntx = mempty {
   }
 
 sharedArrayPtrImpl "Word8"
+simplePODVectorImpl "VertexElement"

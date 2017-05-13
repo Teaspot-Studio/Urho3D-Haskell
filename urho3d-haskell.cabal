@@ -163,6 +163,7 @@ library
                        Graphics.Urho3D.Graphics.Internal.Light
                        Graphics.Urho3D.Graphics.Internal.Material
                        Graphics.Urho3D.Graphics.Internal.Model
+                       Graphics.Urho3D.Graphics.Internal.ModelInstances
                        Graphics.Urho3D.Graphics.Internal.ModelMorph
                        Graphics.Urho3D.Graphics.Internal.Octree
                        Graphics.Urho3D.Graphics.Internal.Renderer
@@ -246,6 +247,7 @@ library
                        src/Graphics/Urho3D/Graphics/Light.cpp
                        src/Graphics/Urho3D/Graphics/Material.cpp
                        src/Graphics/Urho3D/Graphics/Model.cpp
+                       src/Graphics/Urho3D/Graphics/Internal/ModelInstances.cpp
                        src/Graphics/Urho3D/Graphics/ModelMorph.cpp
                        src/Graphics/Urho3D/Graphics/Octree.cpp
                        src/Graphics/Urho3D/Graphics/Renderer.cpp
@@ -607,7 +609,7 @@ executable urho3d-haskell-sample34
   if flag(examples)
     Buildable: False
   else
-    Buildable: False
+    Buildable: True
 
 source-repository head
   type:     git
