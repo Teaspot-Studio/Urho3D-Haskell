@@ -99,6 +99,7 @@ library
                        Graphics.Urho3D.Math.Polyhedron
                        Graphics.Urho3D.Math.Quaternion
                        Graphics.Urho3D.Math.Random
+                       Graphics.Urho3D.Math.Ray
                        Graphics.Urho3D.Math.Rect
                        Graphics.Urho3D.Math.Sphere
                        Graphics.Urho3D.Math.StringHash
@@ -188,6 +189,7 @@ library
                        Graphics.Urho3D.Math.Internal.Plane
                        Graphics.Urho3D.Math.Internal.Polyhedron
                        Graphics.Urho3D.Math.Internal.Quaternion
+                       Graphics.Urho3D.Math.Internal.Ray
                        Graphics.Urho3D.Math.Internal.Rect
                        Graphics.Urho3D.Math.Internal.Sphere
                        Graphics.Urho3D.Math.Internal.StringHash
@@ -276,6 +278,7 @@ library
                        src/Graphics/Urho3D/Math/Polyhedron.cpp
                        src/Graphics/Urho3D/Math/Quaternion.cpp
                        src/Graphics/Urho3D/Math/Random.cpp
+                       src/Graphics/Urho3D/Math/Ray.cpp
                        src/Graphics/Urho3D/Math/Rect.cpp
                        src/Graphics/Urho3D/Math/Sphere.cpp
                        src/Graphics/Urho3D/Math/StringHash.cpp
