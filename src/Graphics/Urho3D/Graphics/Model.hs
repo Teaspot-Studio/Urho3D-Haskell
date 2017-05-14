@@ -96,7 +96,7 @@ sharedPtr "Model"
 
 -- | Set local-space bounding box.
 modelSetBoundingBox :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> BoundingBox
   -> m ()
 modelSetBoundingBox p b = liftIO $ with b $ \b' -> do
@@ -105,7 +105,7 @@ modelSetBoundingBox p b = liftIO $ with b $ \b' -> do
 
 -- | Set vertex buffers and their morph ranges.
 modelSetVertexBuffers :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Vector (SharedPtr VertexBuffer) -- ^ Buffers
   -> Vector Word -- ^ Morph range starts
   -> Vector Word -- ^ Morph range counts
@@ -122,7 +122,7 @@ modelSetVertexBuffers p buffers_ morphRangeStarts morphRangeCounts = liftIO $
 
 -- | Set index buffers.
 modelSetIndexBuffers :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Vector (SharedPtr IndexBuffer)
   -> m Bool
 modelSetIndexBuffers p buffers_ = liftIO $ withForeignVector () buffers_ $ \buffers' -> do
@@ -132,7 +132,7 @@ modelSetIndexBuffers p buffers_ = liftIO $ withForeignVector () buffers_ $ \buff
 
 -- | Set number of geometries.
 modelSetNumGeometries :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Word
   -> m ()
 modelSetNumGeometries p n = liftIO $ do
@@ -143,7 +143,7 @@ modelSetNumGeometries p n = liftIO $ do
 
 -- | Set number of LOD levels in a geometry.
 modelSetNumGeometryLodLevels :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Word -- ^ index
   -> Word -- ^ num
   -> m Bool
@@ -156,7 +156,7 @@ modelSetNumGeometryLodLevels p i n = liftIO $ do
 
 -- | Set geometry.
 modelSetGeometry :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Word -- ^ index
   -> Word -- ^ LOD level
   -> Ptr Geometry
@@ -170,7 +170,7 @@ modelSetGeometry p i l pg = liftIO $ do
 
 -- | Set geometry center.
 modelSetGeometryCenter :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Word -- ^ index
   -> Vector3 -- ^ center
   -> m Bool
@@ -182,7 +182,7 @@ modelSetGeometryCenter p i v = liftIO $ with v $ \v' -> do
 
 -- | Set skeleton.
 modelSetSkeleton :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Ptr Skeleton
   -> m ()
 modelSetSkeleton p s = liftIO $ do
@@ -192,7 +192,7 @@ modelSetSkeleton p s = liftIO $ do
 
 -- | Set bone mappings when model has more bones than the skinning shader can handle.
 modelSetGeometryBoneMappings :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Vector (Vector Word) -- ^ mappings
   -> m ()
 modelSetGeometryBoneMappings p mappings = liftIO $ withForeignVector () mappings $ \mappings' -> do
@@ -202,7 +202,7 @@ modelSetGeometryBoneMappings p mappings = liftIO $ withForeignVector () mappings
 
 -- | Set vertex morphs.
 modelSetMorphs :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Vector ModelMorph -- ^ morphs
   -> m ()
 modelSetMorphs p morphs = liftIO $ withForeignVector () morphs $ \morphs' -> do
@@ -212,7 +212,7 @@ modelSetMorphs p morphs = liftIO $ withForeignVector () morphs $ \morphs' -> do
 
 -- | Clone the model. The geometry data is deep-copied and can be modified in the clone without affecting the original.
 modelClone :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> String -- ^ clone name (default empty)
   -> m (SharedPtr Model)
 modelClone p nm = liftIO $ withCString nm $ \nm' -> do
@@ -222,7 +222,7 @@ modelClone p nm = liftIO $ withCString nm $ \nm' -> do
 
 -- | Return bounding box.
 modelGetBoundingBox :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> m BoundingBox
 modelGetBoundingBox p = liftIO $ alloca $ \b -> do
   let ptr = parentPointer p
@@ -232,7 +232,7 @@ modelGetBoundingBox p = liftIO $ alloca $ \b -> do
 
 -- | Return skeleton.
 modelGetSkeleton :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> m (Ptr Skeleton)
 modelGetSkeleton p = liftIO $ do
   let ptr = parentPointer p
@@ -241,7 +241,7 @@ modelGetSkeleton p = liftIO $ do
 
 -- | Return vertex buffers.
 modelGetVertexBuffers :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> m (Vector (SharedPtr VertexBuffer))
 modelGetVertexBuffers p = liftIO $ do
   let ptr = parentPointer p
@@ -250,7 +250,7 @@ modelGetVertexBuffers p = liftIO $ do
 
 -- | Return index buffers.
 modelGetIndexBuffers :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> m (Vector (SharedPtr IndexBuffer))
 modelGetIndexBuffers p = liftIO $ do
   let ptr = parentPointer p
@@ -259,7 +259,7 @@ modelGetIndexBuffers p = liftIO $ do
 
 -- | Return number of geometries.
 modelGetNumGeometries :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> m Word
 modelGetNumGeometries p = liftIO $ do
   let ptr = parentPointer p
@@ -268,7 +268,7 @@ modelGetNumGeometries p = liftIO $ do
 
 -- | Return number of LOD levels in geometry.
 modelGetNumGeometryLodLevels :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Word -- ^ index
   -> m Word
 modelGetNumGeometryLodLevels p i = liftIO $ do
@@ -279,7 +279,7 @@ modelGetNumGeometryLodLevels p i = liftIO $ do
 
 -- | Return geometry pointers.
 modelGetGeometries :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> m (Vector (Vector (SharedPtr Geometry)))
 modelGetGeometries p = liftIO $ do
   let ptr = parentPointer p
@@ -288,7 +288,7 @@ modelGetGeometries p = liftIO $ do
 
 -- | Return geometry center points.
 modelGetGeometryCenters :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> m (Vector Vector3)
 modelGetGeometryCenters p = liftIO $ do
   let ptr = parentPointer p
@@ -297,7 +297,7 @@ modelGetGeometryCenters p = liftIO $ do
 
 -- | Return geometry by index and LOD level. The LOD level is clamped if out of range.
 modelGetGeometry :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Word -- ^ index
   -> Word -- ^ LOD level
   -> m (Maybe (Ptr Geometry))
@@ -310,7 +310,7 @@ modelGetGeometry p i l = liftIO $ do
 
 -- | Return geometry center by index.
 modelGetGeometryCenter :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Word -- ^ index
   -> m Vector3
 modelGetGeometryCenter p i = liftIO $ do
@@ -321,7 +321,7 @@ modelGetGeometryCenter p i = liftIO $ do
 
 -- | Return geometery bone mappings.
 modelGetGeometryBoneMappings :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> m (Vector (Vector Word))
 modelGetGeometryBoneMappings p = liftIO $ do
   let ptr = parentPointer p
@@ -330,7 +330,7 @@ modelGetGeometryBoneMappings p = liftIO $ do
 
 -- | Return vertex morphs.
 modelGetMorphs :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> m (Vector ModelMorph)
 modelGetMorphs p = liftIO $ do
   let ptr = parentPointer p
@@ -339,7 +339,7 @@ modelGetMorphs p = liftIO $ do
 
 -- | Return number of vertex morphs.
 modelGetNumMorphs :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> m Word
 modelGetNumMorphs p = liftIO $ do
   let ptr = parentPointer p
@@ -349,13 +349,13 @@ modelGetNumMorphs p = liftIO $ do
 class ModelGetMorph a where
   -- | Return vertex morph by index.
   modelGetMorph :: (Parent Model a, Pointer p a, MonadIO m)
-    => p -- ^ Pointer to Animation or ascentor
+    => p -- ^ Pointer to Model or ascentor
     -> a
     -> m ModelMorph
 
   -- | Return vertex morph by index.
   modelSetMorph :: (Parent Model a, Pointer p a, MonadIO m)
-    => p -- ^ Pointer to Animation or ascentor
+    => p -- ^ Pointer to Model or ascentor
     -> a
     -> ModelMorph
     -> m ()
@@ -396,7 +396,7 @@ instance ModelGetMorph StringHash where
 
 -- | Return vertex buffer morph range start.
 modelGetMorphRangeStart :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Word -- ^ Buffer index
   -> m Word
 modelGetMorphRangeStart p i = liftIO $ do
@@ -407,7 +407,7 @@ modelGetMorphRangeStart p i = liftIO $ do
 
 -- | Return vertex buffer morph range vertex count.
 modelGetMorphRangeCount :: (Parent Model a, Pointer p a, MonadIO m)
-  => p -- ^ Pointer to Animation or ascentor
+  => p -- ^ Pointer to Model or ascentor
   -> Word -- ^ Buffer index
   -> m Word
 modelGetMorphRangeCount p i = liftIO $ do
