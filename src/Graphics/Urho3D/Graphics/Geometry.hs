@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Graphics.Urho3D.Graphics.Geometry(
     Geometry
   , SharedGeometry
@@ -28,6 +29,9 @@ module Graphics.Urho3D.Graphics.Geometry(
   , geometryGetBufferHash
   , geometryGetRawData
   , geometryGetRawDataShared
+  , geometryGetHitDistance
+  , geometryIsInside
+  , geometryIsEmpty
   ) where
 
 import qualified Language.C.Inline as C
@@ -48,6 +52,9 @@ import Graphics.Urho3D.Graphics.Defs
 import Graphics.Urho3D.Graphics.Graphics
 import Graphics.Urho3D.Graphics.IndexBuffer
 import Graphics.Urho3D.Graphics.VertexBuffer
+import Graphics.Urho3D.Math.Ray
+import Graphics.Urho3D.Math.Vector2
+import Graphics.Urho3D.Math.Vector3
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Parent
 
@@ -57,6 +64,9 @@ C.context (C.cppCtx
   <> objectContext
   <> sharedGeometryPtrCntx
   <> vertexBufferContext
+  <> vector2Context
+  <> vector3Context
+  <> rayContext
   <> vectorContext
   <> graphicsContext
   )
@@ -407,10 +417,34 @@ geometryGetRawDataShared p = liftIO $ alloca $ \vertexData -> alloca $ \vertexSi
 --    unsigned& indexSize, const PODVector<VertexElement>*& elements) const;
 
 -- | Return ray hit distance or infinity if no hit. Requires raw data to be set. Optionally return hit normal and hit uv coordinates at intersect point.
+geometryGetHitDistance :: (Parent Geometry a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to Geometry or ascentor
+  -> Ray -- ^ ray
+  -> m (Float, Vector3, Vector2)
+geometryGetHitDistance p ray = liftIO $ with ray $ \ray' -> alloca $ \hv' -> alloca $ \uv' -> do
+  let ptr = parentPointer p
+  d <- realToFrac <$> [C.exp| float {$(Geometry* ptr)->GetHitDistance(*$(Ray* ray'), $(Vector3* hv'), $(Vector2* uv'))} |]
+  (,,)
+    <$> pure d
+    <*> peek hv'
+    <*> peek uv'
 -- float GetHitDistance(const Ray& ray, Vector3* outNormal = 0, Vector2* outUV = 0) const;
 
 -- | Return whether or not the ray is inside geometry.
+geometryIsInside :: (Parent Geometry a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to Geometry or ascentor
+  -> Ray -- ^ ray
+  -> m Bool
+geometryIsInside p ray = liftIO $ with ray $ \ray' -> do
+  let ptr = parentPointer p
+  toBool <$> [C.exp| int {$(Geometry* ptr)->IsInside(*$(Ray* ray'))} |]
 -- bool IsInside(const Ray& ray) const;
 
 -- | Return whether has empty draw range.
+geometryIsEmpty :: (Parent Geometry a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to Geometry or ascentor
+  -> m Bool
+geometryIsEmpty p = liftIO $ do
+  let ptr = parentPointer p
+  toBool <$> [C.exp| int {$(Geometry* ptr)->IsEmpty()} |]
 -- bool IsEmpty() const { return indexCount_ == 0 && vertexCount_ == 0; }
