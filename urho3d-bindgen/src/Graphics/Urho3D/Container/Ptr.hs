@@ -99,6 +99,16 @@ instance WeakPointerFinalizer p a => Pointer (WeakPtr a) a where
     (pptr, fptr) <- makeWeakForeignPointer ptr
     pure (fptr, castPtr pptr)
 
+-- | Note that 'pointer' function is not safe for SharedArrayPtr as finalizer can run earlier than expected.
+--
+-- Also 'makePointer' doesn't embed info about array length, the size will be equal 0.
+instance SharedArrayPointerFinalizer p a => Pointer (SharedArrayPtr a) a where
+  pointer (SharedArrayPtr fp _ _) = unsafeForeignPtrToPtr fp
+  isNull (SharedArrayPtr fp _ _) = unsafePerformIO . withForeignPtr fp $ \ptr -> pure (ptr == nullPtr)
+  makePointer ptr = unsafePerformIO $ do
+    (pptr, fptr) <- makeSharedArrayForeignPointer ptr
+    pure $ SharedArrayPtr fptr 0 (castPtr pptr)
+
 class SharedPointerFinalizer pointer element | pointer -> element, element -> pointer where
   -- | Add automatic finalizer to the pointer and create SharedPtr<element>. Used in 'makePointer' of 'SharedPtr'.
   --
