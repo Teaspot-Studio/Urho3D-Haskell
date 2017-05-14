@@ -1,6 +1,6 @@
 module Graphics.Urho3D.Graphics(
     module X
-  ) where 
+  ) where
 
 import Graphics.Urho3D.Graphics.AnimatedModel as X
 import Graphics.Urho3D.Graphics.Animation as X
@@ -13,6 +13,7 @@ import Graphics.Urho3D.Graphics.Defs as X
 import Graphics.Urho3D.Graphics.Drawable as X
 import Graphics.Urho3D.Graphics.Geometry as X
 import Graphics.Urho3D.Graphics.Graphics as X
+import Graphics.Urho3D.Graphics.IndexBuffer as X
 import Graphics.Urho3D.Graphics.Light as X
 import Graphics.Urho3D.Graphics.Material as X
 import Graphics.Urho3D.Graphics.Model as X

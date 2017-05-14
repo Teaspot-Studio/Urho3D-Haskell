@@ -37,12 +37,13 @@ module Graphics.Urho3D.Graphics.AnimatedModel(
 import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
-import Graphics.Urho3D.Graphics.Internal.AnimatedModel
-import Graphics.Urho3D.Creatable
-import Graphics.Urho3D.Monad
 import Data.Monoid
+import Data.Vector (Vector)
 import Foreign
 import Foreign.C.String
+import Graphics.Urho3D.Creatable
+import Graphics.Urho3D.Graphics.Internal.AnimatedModel
+import Graphics.Urho3D.Monad
 import System.IO.Unsafe (unsafePerformIO)
 
 import Graphics.Urho3D.Graphics.Model
@@ -95,7 +96,7 @@ C.using "namespace Urho3D"
 
 C.verbatim "typedef Vector<SharedPtr<AnimationState> > VectorSharedAnimationStatePtr;"
 C.verbatim "typedef Vector<ModelMorph> VectorModelMorph;"
-C.verbatim "typedef Vector<SharedPtr<VertexBuffer> > VectorSharedVertexBufferPtr;"
+C.verbatim "typedef Vector<SharedPtr<VertexBuffer> > VectorSharedPtrVertexBuffer;"
 C.verbatim "typedef PODVector<unsigned char> PODVectorWord8;"
 C.verbatim "typedef Vector<PODVector<unsigned> > VectorPODVectorWord;"
 C.verbatim "typedef Vector<PODVector<Matrix3x4> > VectorPODVectorMatrix3x4;"
@@ -330,7 +331,7 @@ animatedModelGetMorphVertexBuffers :: (Parent AnimatedModel a, Pointer p a, Mona
   -> m (v (SharedPtr VertexBuffer))
 animatedModelGetMorphVertexBuffers p = liftIO $ do
   let ptr = parentPointer p
-  peekForeignVectorAs =<< [C.exp| const VectorSharedVertexBufferPtr* { &$(AnimatedModel* ptr)->GetMorphVertexBuffers() } |]
+  peekForeignVectorAs =<< [C.exp| const VectorSharedPtrVertexBuffer* { &$(AnimatedModel* ptr)->GetMorphVertexBuffers() } |]
 
 -- | Return number of vertex morphs.
 animatedModelGetNumMorphs :: (Parent AnimatedModel a, Pointer p a, MonadIO m)
@@ -456,13 +457,12 @@ animatedModelGetMorphsAttr p = liftIO $ do
   peekForeignVectorAs =<< [C.exp| const PODVectorWord8* { &$(AnimatedModel* ptr)->GetMorphsAttr() } |]
 
 -- | Return per-geometry bone mappings.
-animatedModelGetGeometryBoneMappings :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v1, ForeignElemConstr v1 (Ptr PODVectorWord), ForeignVectorRepresent v2, ForeignElemConstr v2 Word, Traversable v1)
+animatedModelGetGeometryBoneMappings :: (Parent AnimatedModel a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to AnimatedModel or ascentor
-  -> m (v1 (v2 Word))
+  -> m (Vector (Vector Word))
 animatedModelGetGeometryBoneMappings p = liftIO $ do
   let ptr = parentPointer p
-  vtemp <- peekForeignVectorAs =<< [C.exp| const VectorPODVectorWord* { &$(AnimatedModel* ptr)->GetGeometryBoneMappings() } |]
-  mapM peekForeignVectorAs vtemp
+  peekForeignVectorAs =<< [C.exp| const VectorPODVectorWord* { &$(AnimatedModel* ptr)->GetGeometryBoneMappings() } |]
 
 -- | Return per-geometry skin matrices. If empty, uses global skinning
 animatedModelGetGeometrySkinMatrices :: (Parent AnimatedModel a, Pointer p a, MonadIO m, ForeignVectorRepresent v1, ForeignElemConstr v1 (Ptr PODVectorMatrix3x4), ForeignVectorRepresent v2, ForeignElemConstr v2 Matrix3x4, Traversable v1)

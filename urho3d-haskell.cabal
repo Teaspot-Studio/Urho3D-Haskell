@@ -67,6 +67,7 @@ library
                        Graphics.Urho3D.Graphics.Drawable
                        Graphics.Urho3D.Graphics.Geometry
                        Graphics.Urho3D.Graphics.Graphics
+                       Graphics.Urho3D.Graphics.IndexBuffer
                        Graphics.Urho3D.Graphics.Light
                        Graphics.Urho3D.Graphics.Material
                        Graphics.Urho3D.Graphics.Model
@@ -160,6 +161,7 @@ library
                        Graphics.Urho3D.Graphics.Internal.Drawable
                        Graphics.Urho3D.Graphics.Internal.Geometry
                        Graphics.Urho3D.Graphics.Internal.Graphics
+                       Graphics.Urho3D.Graphics.Internal.IndexBuffer
                        Graphics.Urho3D.Graphics.Internal.Light
                        Graphics.Urho3D.Graphics.Internal.Material
                        Graphics.Urho3D.Graphics.Internal.Model
@@ -237,17 +239,18 @@ library
                        src/Graphics/Urho3D/Graphics/AnimationState.cpp
                        src/Graphics/Urho3D/Graphics/Batch.cpp
                        src/Graphics/Urho3D/Graphics/BillboardSet.cpp
-                       src/Graphics/Urho3D/Graphics/Internal/BillboardSetInstances.cpp
                        src/Graphics/Urho3D/Graphics/Camera.cpp
                        src/Graphics/Urho3D/Graphics/DebugRenderer.cpp
                        src/Graphics/Urho3D/Graphics/Defs.cpp
                        src/Graphics/Urho3D/Graphics/Drawable.cpp
                        src/Graphics/Urho3D/Graphics/Geometry.cpp
                        src/Graphics/Urho3D/Graphics/Graphics.cpp
+                       src/Graphics/Urho3D/Graphics/IndexBuffer.cpp
+                       src/Graphics/Urho3D/Graphics/Internal/BillboardSetInstances.cpp
+                       src/Graphics/Urho3D/Graphics/Internal/ModelInstances.cpp
                        src/Graphics/Urho3D/Graphics/Light.cpp
                        src/Graphics/Urho3D/Graphics/Material.cpp
                        src/Graphics/Urho3D/Graphics/Model.cpp
-                       src/Graphics/Urho3D/Graphics/Internal/ModelInstances.cpp
                        src/Graphics/Urho3D/Graphics/ModelMorph.cpp
                        src/Graphics/Urho3D/Graphics/Octree.cpp
                        src/Graphics/Urho3D/Graphics/Renderer.cpp

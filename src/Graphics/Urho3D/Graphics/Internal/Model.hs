@@ -13,6 +13,8 @@ module Graphics.Urho3D.Graphics.Internal.Model(
   , HasIbRef(..)
   , HasIndexStart(..)
   , modelCntx
+  , SharedModel
+  , sharedModelPtrCntx
   ) where
 
 import qualified Language.C.Inline as C
@@ -66,3 +68,5 @@ modelCntx = mempty {
     , (C.TypeName "GeometryDesc", [t| GeometryDesc |])
     ]
   }
+
+sharedPtrImpl "Model"

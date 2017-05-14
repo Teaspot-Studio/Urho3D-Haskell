@@ -18,6 +18,9 @@ module Graphics.Urho3D.Container.Vector.Common(
 import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
+import Data.Monoid
+import Data.Vector (Vector)
+import Foreign
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.Vector
@@ -28,8 +31,6 @@ import Graphics.Urho3D.Graphics.Internal.BillboardSet
 import Graphics.Urho3D.Graphics.Internal.BillboardSetInstances()
 import Graphics.Urho3D.Math.Matrix3x4
 import Graphics.Urho3D.Monad
-import Data.Monoid
-import Foreign
 
 C.context (C.cppCtx <> vectorCntx <> matrix3x4Context <> billboardSetCntx <> sharedArrayWord8PtrCntx <> podVectorVertexElementCntx <> graphDefsContext)
 C.include "<Urho3D/Container/Vector.h>"
@@ -212,18 +213,18 @@ instance Creatable (Ptr VectorPODVectorWord) where
   deleteObject ptr = liftIO [C.exp| void { delete $(VectorPODVectorWord* ptr)} |]
 
 instance ReadableVector VectorPODVectorWord where
-  type ReadVecElem VectorPODVectorWord = Ptr PODVectorWord
+  type ReadVecElem VectorPODVectorWord = Vector Word
 
   foreignVectorLength ptr = liftIO $ fromIntegral <$> [C.exp| int {$(VectorPODVectorWord* ptr)->Size()} |]
   foreignVectorElement ptr i = liftIO $ do
     let i' = fromIntegral i
-    [C.exp| PODVectorWord* { &((*$(VectorPODVectorWord* ptr))[$(unsigned int i')]) } |]
+    peekForeignVectorAs =<< [C.exp| PODVectorWord* { &((*$(VectorPODVectorWord* ptr))[$(unsigned int i')]) } |]
 
 instance WriteableVector VectorPODVectorWord where
-  type WriteVecElem VectorPODVectorWord = Ptr PODVectorWord
+  type WriteVecElem VectorPODVectorWord = Vector Word
 
-  foreignVectorAppend ptr vptr = liftIO $ do
-    [C.exp| void {$(VectorPODVectorWord* ptr)->Push(*$(PODVectorWord* vptr))} |]
+  foreignVectorAppend ptr v = liftIO $ withForeignVector () v $ \v' -> do
+    [C.exp| void {$(VectorPODVectorWord* ptr)->Push(*$(PODVectorWord* v'))} |]
 
 
 instance Creatable (Ptr VectorPODVectorMatrix3x4) where
