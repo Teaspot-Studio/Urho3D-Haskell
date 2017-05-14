@@ -6,6 +6,7 @@ module Graphics.Urho3D.Monad(
   , checkNullPtr
   , checkNullPtr'
   , checkNullPtrWith
+  , wrapNullPtr
   -- | Pointer abstraction
   , Parent(..)
   , Pointer(..)
@@ -60,7 +61,7 @@ checkNullPtr = checkNullPtrWith NullObjectPointerException
 checkNullPtr' :: (Monad m, Pointer p a) => p -> (p -> m b) -> m (Maybe b)
 checkNullPtr' ptr handler = if isNull ptr
   then return Nothing
-  else fmap Just $ handler ptr
+  else Just <$> handler ptr
 
 -- | Checks given ptr to be equal null, if then returns given @err@ as error
 -- if not null runs handler with this pointer
@@ -68,6 +69,10 @@ checkNullPtrWith :: (Exception e, MonadThrow m, Pointer p a) => e -> p -> (p -> 
 checkNullPtrWith err ptr handler = if isNull ptr
   then throwM err
   else handler ptr
+
+-- | Replace null with 'Nothing'
+wrapNullPtr :: Pointer p a => p -> Maybe p
+wrapNullPtr ptr = if isNull ptr then Nothing else Just ptr
 
 -- | Relation between classes, where a is parent for b
 class Parent parent child where

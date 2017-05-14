@@ -300,12 +300,12 @@ modelGetGeometry :: (Parent Model a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Animation or ascentor
   -> Word -- ^ index
   -> Word -- ^ LOD level
-  -> m (Ptr Geometry)
+  -> m (Maybe (Ptr Geometry))
 modelGetGeometry p i l = liftIO $ do
   let ptr = parentPointer p
       i' = fromIntegral i
       l' = fromIntegral l
-  [C.exp| Geometry* {$(Model* ptr)->GetGeometry($(unsigned int i'), $(unsigned int l'))} |]
+  wrapNullPtr <$> [C.exp| Geometry* {$(Model* ptr)->GetGeometry($(unsigned int i'), $(unsigned int l'))} |]
 -- Geometry* GetGeometry(unsigned index, unsigned lodLevel) const;
 
 -- | Return geometry center by index.
