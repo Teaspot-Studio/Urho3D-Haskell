@@ -44,12 +44,14 @@ import Graphics.Urho3D.Graphics.Internal.Model
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.Vector.Common
+import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Graphics.Geometry
-import Graphics.Urho3D.Graphics.Skeleton
-import Graphics.Urho3D.Graphics.ModelMorph
-import Graphics.Urho3D.Graphics.VertexBuffer
 import Graphics.Urho3D.Graphics.IndexBuffer
+import Graphics.Urho3D.Graphics.ModelMorph
+import Graphics.Urho3D.Graphics.Skeleton
+import Graphics.Urho3D.Graphics.VertexBuffer
 import Graphics.Urho3D.Math.BoundingBox
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector3
@@ -70,6 +72,7 @@ C.context (C.cppCtx
   <> vector3Context
   <> vectorContext
   <> vertexBufferContext
+  <> contextContext
   )
 
 C.include "<Urho3D/Graphics/Model.h>"
@@ -88,6 +91,12 @@ modelContext :: C.Context
 modelContext = modelCntx <> resourceContext <> sharedModelPtrCntx
 
 deriveParents [''Object, ''Resource] ''Model
+
+instance Creatable (Ptr Model) where
+  type CreationOptions (Ptr Model) = Ptr Context
+
+  newObject cntxPtr = liftIO $ [C.exp| Model* { new Model( $(Context* cntxPtr) ) } |]
+  deleteObject ptr = liftIO $ [C.exp| void { delete $(Model* ptr) } |]
 
 instance ResourceType Model where
   resourceType _ = StringHash . fromIntegral $ [C.pure| unsigned int { Model::GetTypeStatic().Value() } |]

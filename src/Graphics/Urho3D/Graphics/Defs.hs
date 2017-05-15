@@ -13,6 +13,7 @@ module Graphics.Urho3D.Graphics.Defs(
   , VertexElementType(..)
   , VertexElementSemantic(..)
   , VertexElement(..)
+  , vertexElement
   , HasElementType(..)
   , HasSemantic(..)
   , HasIndex(..)
@@ -124,6 +125,16 @@ public:
 
 graphDefsContext :: C.Context
 graphDefsContext = graphDefsCntx
+
+-- | Default vertex element constructor
+vertexElement :: VertexElementType -> VertexElementSemantic -> VertexElement
+vertexElement t s = VertexElement {
+    _vertexElementElementType = t
+  , _vertexElementSemantic = s
+  , _vertexElementIndex = 0
+  , _vertexElementPerInstance = False
+  , _vertexElementOffset = 0
+  }
 
 instance Storable VertexElement where
   sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(VertexElement) } |]

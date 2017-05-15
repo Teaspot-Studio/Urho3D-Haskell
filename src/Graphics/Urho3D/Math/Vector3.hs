@@ -17,6 +17,7 @@ module Graphics.Urho3D.Math.Vector3(
   , vec3Length
   , vec3Dot
   , vec3Scale
+  , vec3Cross
   ) where
 
 import qualified Language.C.Inline as C
@@ -177,3 +178,10 @@ vec3Dot (Vector3 x1 y1 z1) (Vector3 x2 y2 z2) = x1*x2 + y1*y2 + z1*z2
 -- | Scale vector by scalar
 vec3Scale :: Float -> Vector3 -> Vector3
 vec3Scale v = (Vector3 v v v *)
+
+-- | Cross product
+vec3Cross :: Vector3 -> Vector3 -> Vector3 
+vec3Cross (Vector3 x1 y1 z1) (Vector3 x2 y2 z2) = Vector3
+  (y1 * z2 - z1 * y2)
+  (z1 * x2 - x1 * z2)
+  (x1 * y2 - y1 * x2)

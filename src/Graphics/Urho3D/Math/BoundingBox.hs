@@ -6,12 +6,12 @@ module Graphics.Urho3D.Math.BoundingBox(
   , boundingBoxContext
   ) where
 
-import qualified Language.C.Inline as C 
+import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
-import Control.Lens 
+import Control.Lens
 import Data.Monoid
-import Foreign 
+import Foreign
 import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Defs
 import Graphics.Urho3D.Math.Vector3
@@ -23,7 +23,7 @@ C.context (C.cppCtx <> boundingBoxCntx <> vector3Context)
 C.include "<Urho3D/Math/BoundingBox.h>"
 C.using "namespace Urho3D"
 
-boundingBoxContext :: C.Context 
+boundingBoxContext :: C.Context
 boundingBoxContext = boundingBoxCntx
 
 C.verbatim [r|
@@ -33,7 +33,7 @@ class Traits
 public:
     struct AlignmentFinder
     {
-      char a; 
+      char a;
       T b;
     };
 
@@ -41,19 +41,19 @@ public:
 };
 |]
 
-instance Storable BoundingBox where 
+instance Storable BoundingBox where
   sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(BoundingBox) } |]
   alignment _ = fromIntegral $ [C.pure| int { (int)Traits<BoundingBox>::AlignmentOf } |]
-  peek ptr = do 
+  peek ptr = do
     minv <- peek =<< [C.exp| Vector3* { &$(BoundingBox* ptr)->min_ } |]
     maxv <- peek =<< [C.exp| Vector3* { &$(BoundingBox* ptr)->max_ } |]
     return $ BoundingBox minv maxv
-  poke ptr (BoundingBox minv maxv) = with minv $ \minv' -> with maxv $ \maxv' ->[C.block| void { 
+  poke ptr (BoundingBox minv maxv) = with minv $ \minv' -> with maxv $ \maxv' ->[C.block| void {
     $(BoundingBox* ptr)->min_ = *$(Vector3* minv');
     $(BoundingBox* ptr)->max_ = *$(Vector3* maxv');
     } |]
 
-instance Num BoundingBox where 
+instance Num BoundingBox where
   a + b = BoundingBox (a^.minVector + b^.minVector) (a^.maxVector + b^.maxVector)
   a - b = BoundingBox (a^.minVector - b^.minVector) (a^.maxVector - b^.maxVector)
   a * b = BoundingBox (a^.minVector * b^.minVector) (a^.maxVector * b^.maxVector)
@@ -61,7 +61,7 @@ instance Num BoundingBox where
   signum a = BoundingBox (signum $ a^.minVector) (signum $ a^.maxVector)
   fromInteger i = BoundingBox (fromIntegral i) (fromIntegral i)
 
-instance Fractional BoundingBox where 
+instance Fractional BoundingBox where
   a / b = BoundingBox (a^.minVector / b^.minVector) (a^.maxVector / b^.maxVector)
   fromRational v = BoundingBox (fromRational v) (fromRational v)
 
@@ -71,11 +71,11 @@ instance Creatable (Ptr BoundingBox) where
   newObject = liftIO . new
   deleteObject = liftIO . free
 
-instance UrhoRandom BoundingBox where 
+instance UrhoRandom BoundingBox where
   random = BoundingBox <$> random <*> random
-  randomUp maxv = BoundingBox 
-    <$> randomUp (maxv^.minVector) 
+  randomUp maxv = BoundingBox
+    <$> randomUp (maxv^.minVector)
     <*> randomUp (maxv^.maxVector)
-  randomRange minv maxv = BoundingBox 
-    <$> randomRange (minv^.minVector) (maxv^.minVector) 
+  randomRange minv maxv = BoundingBox
+    <$> randomRange (minv^.minVector) (maxv^.minVector)
     <*> randomRange (minv^.maxVector) (maxv^.maxVector)

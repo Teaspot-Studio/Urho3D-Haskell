@@ -250,8 +250,8 @@ vertexBufferGetElement p semantic_ index_ = liftIO $ do
   let ptr = parentPointer p
       semantic' = fromIntegral . fromEnum $ semantic_
       index' = fromIntegral index_
-  p <- [C.exp| const VertexElement* {$(VertexBuffer* ptr)->GetElement((VertexElementSemantic)$(int semantic'), $(unsigned char index'))} |]
-  checkNullPtr' p peek
+  ve <- [C.exp| const VertexElement* {$(VertexBuffer* ptr)->GetElement((VertexElementSemantic)$(int semantic'), $(unsigned char index'))} |]
+  checkNullPtr' ve peek
 -- const VertexElement* GetElement(VertexElementSemantic semantic, unsigned char index = 0) const;
 
 -- | Return vertex element with specific type, or null if does not exist.
@@ -266,8 +266,8 @@ vertexBufferGetElementByType p type_ semantic_ index_ = liftIO $ do
       type' = fromIntegral . fromEnum $ type_
       semantic' = fromIntegral . fromEnum $ semantic_
       index' = fromIntegral index_
-  p <- [C.exp| const VertexElement* {$(VertexBuffer* ptr)->GetElement((VertexElementType)$(int type'), (VertexElementSemantic)$(int semantic'), $(unsigned char index'))} |]
-  checkNullPtr' p peek
+  ve <- [C.exp| const VertexElement* {$(VertexBuffer* ptr)->GetElement((VertexElementType)$(int type'), (VertexElementSemantic)$(int semantic'), $(unsigned char index'))} |]
+  checkNullPtr' ve peek
 -- const VertexElement* GetElement(VertexElementType type, VertexElementSemantic semantic, unsigned char index = 0) const;
 
 -- | Return whether has a specified element semantic.

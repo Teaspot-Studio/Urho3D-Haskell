@@ -46,6 +46,7 @@ import Graphics.Urho3D.Graphics.Internal.Geometry
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.Vector.Common
+import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Graphics.Defs
@@ -69,6 +70,7 @@ C.context (C.cppCtx
   <> rayContext
   <> vectorContext
   <> graphicsContext
+  <> contextContext
   )
 C.include "<Urho3D/Graphics/Geometry.h>"
 C.using "namespace Urho3D"
@@ -78,6 +80,12 @@ geometryContext = geometryCntx
   <> sharedGeometryPtrCntx
 
 deriveParent ''Object ''Geometry
+
+instance Creatable (Ptr Geometry) where
+  type CreationOptions (Ptr Geometry) = Ptr Context
+
+  newObject cntxPtr = liftIO $ [C.exp| Geometry* { new Geometry( $(Context* cntxPtr) ) } |]
+  deleteObject ptr = liftIO $ [C.exp| void { delete $(Geometry* ptr) } |]
 
 sharedPtr "Geometry"
 

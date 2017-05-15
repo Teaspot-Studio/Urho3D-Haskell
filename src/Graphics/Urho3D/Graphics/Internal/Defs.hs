@@ -11,7 +11,7 @@ import Data.Word
 import GHC.Generics
 
 -- | Primitive type
-data PrimitiveType = 
+data PrimitiveType =
     TriangleList
   | LineList
   | PointList
@@ -35,7 +35,7 @@ data GeometryType =
 instance NFData GeometryType
 
 -- | Blending mode
-data BlendMode = 
+data BlendMode =
     BlendReplace
   | BlendAdd
   | BlendMultiply
@@ -50,7 +50,7 @@ data BlendMode =
 instance NFData BlendMode
 
 -- | Depht or stencil compare mode
-data CompareMode = 
+data CompareMode =
     CmpAlways
   | CmpEqual
   | CmpNotEqual
@@ -63,10 +63,10 @@ data CompareMode =
 instance NFData CompareMode
 
 -- | Culling mode
-data CullMode = 
+data CullMode =
     CullNone
   | CullCCW
-  | CullCW 
+  | CullCW
   deriving (Eq, Ord, Show, Enum, Bounded, Generic)
 
 instance NFData CullMode
@@ -81,7 +81,7 @@ data Fillmode =
 instance NFData Fillmode
 
 -- | Stencil operation
-data StencilOp = 
+data StencilOp =
     StencilKeep
   | StencilZero
   | StencilRef
@@ -92,7 +92,7 @@ data StencilOp =
 instance NFData StencilOp
 
 -- | Vertex/index buffer lock state
-data LockState = 
+data LockState =
     LockNone
   | LockHardware
   | LockShadow
@@ -102,7 +102,7 @@ data LockState =
 instance NFData LockState
 
 -- | Vertex elements
-data LegacyVertexElement = 
+data LegacyVertexElement =
     LegacyElementPosition
   | LegacyElementNormal
   | LegacyElementColor
@@ -121,11 +121,11 @@ data LegacyVertexElement =
 instance NFData LegacyVertexElement
 
 -- | Arbitrary vertex declaration element datatypes.
-data VertexElementType = 
-    Type'Int 
-  | Type'Float 
-  | Type'Vector2 
-  | Type'Vector3 
+data VertexElementType =
+    Type'Int
+  | Type'Float
+  | Type'Vector2
+  | Type'Vector3
   | Type'Vector4
   | Type'Ubyte4
   | Type'Ubyte4Norm
@@ -134,15 +134,15 @@ data VertexElementType =
 instance NFData VertexElementType
 
 -- | Arbitrary vertex declaration element semantics.
-data VertexElementSemantic = 
-    SEM'Poistion 
-  | SEM'Normal 
+data VertexElementSemantic =
+    SEM'Position
+  | SEM'Normal
   | SEM'Binormal
-  | SEM'Tangent 
-  | SEM'TexCoord 
-  | SEM'Color 
-  | SEM'BlendWeights 
-  | SEM'BlendIndices 
+  | SEM'Tangent
+  | SEM'TexCoord
+  | SEM'Color
+  | SEM'BlendWeights
+  | SEM'BlendIndices
   | SEM'ObjectIndex
   deriving (Eq, Ord, Show, Enum, Bounded, Generic)
 
@@ -160,7 +160,7 @@ data TextureFilterMode =
 instance NFData TextureFilterMode
 
 -- | Texture addressing mode
-data TextureAddressMode = 
+data TextureAddressMode =
     AddressWrap
   | AddressMirror
   | AddressClamp
@@ -189,8 +189,8 @@ data TextureUsage =
 instance NFData TextureUsage
 
 -- | Cube map faces
-data CubeMapFace = 
-    FacePositiveX 
+data CubeMapFace =
+    FacePositiveX
   | FaceNegativeX
   | FacePositiveY
   | FaceNegativeY
@@ -201,10 +201,10 @@ data CubeMapFace =
 instance NFData CubeMapFace
 
 -- | Cubemap single image layout modes
-data CubeMapLayout = 
+data CubeMapLayout =
     CubeMapLayoutHorizontal
   | CubeMapLayoutHorizontalNVIDIA
-  | CubeMapLaoyutHorizontalCross 
+  | CubeMapLaoyutHorizontalCross
   | CubeMapLayoutVerticalCross
   | CubeMapLayoutBlender
   deriving (Eq, Ord, Show, Enum, Bounded, Generic)
@@ -229,8 +229,8 @@ data ShaderType =
 instance NFData ShaderType
 
 -- | Shader parameter groups for determining need to update. On APIs that support constant buffers, these correspond to different constant buffers.
-data ShaderParameterGroup = 
-    SP'Frame 
+data ShaderParameterGroup =
+    SP'Frame
   | SP'Camera
   | SP'Zone
   | SP'Light
@@ -245,7 +245,7 @@ instance NFData ShaderParameterGroup
 data TextureUnit =
     TU'Diffuse
   | TU'AlbedoBuffer
-  | TU'Normal 
+  | TU'Normal
   | TU'NormalBuffer
   | TU'Specular
   | TU'Emissive
@@ -265,14 +265,14 @@ data TextureUnit =
 
 instance NFData TextureUnit
 
-maxMatrialTextureUnits :: Integral a => a 
+maxMatrialTextureUnits :: Integral a => a
 maxMatrialTextureUnits = 8
 
-maxTextureUnits :: Integral a => a 
+maxTextureUnits :: Integral a => a
 maxTextureUnits = 16
 
-instance Enum TextureUnit where 
-  toEnum i = case i of 
+instance Enum TextureUnit where
+  toEnum i = case i of
     0 -> TU'Diffuse
     1 -> TU'Normal
     2 -> TU'Specular
@@ -291,7 +291,7 @@ instance Enum TextureUnit where
     15 -> TU'Zone
     _ -> TU'Diffuse
 
-  fromEnum e = case e of 
+  fromEnum e = case e of
     TU'Diffuse -> 0
     TU'AlbedoBuffer -> 0
     TU'Normal -> 1
@@ -312,18 +312,18 @@ instance Enum TextureUnit where
     TU'Zone -> 15
 
 -- | Billboard camera facing modes
-data FaceCameraMode = 
-    FC'None 
+data FaceCameraMode =
+    FC'None
   | FC'RotateXYZ
-  | FC'RotateY 
+  | FC'RotateY
   | FC'LookAtXYZ
-  | FC'LookAtY 
+  | FC'LookAtY
   | FC'Direction
   deriving (Eq, Ord, Show, Enum, Bounded, Generic)
 
 instance NFData FaceCameraMode
 
-data Quality = 
+data Quality =
     Quality'Low
   | Quality'Medium
   | Quality'High
@@ -332,22 +332,22 @@ data Quality =
 
 instance NFData Quality
 
-instance Enum Quality where 
-  fromEnum q = case q of 
-    Quality'Low -> 0 
-    Quality'Medium -> 1 
-    Quality'High -> 2 
+instance Enum Quality where
+  fromEnum q = case q of
+    Quality'Low -> 0
+    Quality'Medium -> 1
+    Quality'High -> 2
     Quality'Max -> 15
 
-  toEnum i = case i of 
-    0 -> Quality'Low 
-    1 -> Quality'Medium 
+  toEnum i = case i of
+    0 -> Quality'Low
+    1 -> Quality'Medium
     2 -> Quality'High
-    15 -> Quality'Max 
-    _ -> Quality'Low 
+    15 -> Quality'Max
+    _ -> Quality'Low
 
-data ShadowQuality = 
-    ShadowQuality'Simple16Bit 
+data ShadowQuality =
+    ShadowQuality'Simple16Bit
   | ShadowQuality'Simple24Bit
   | ShadowQuality'PCF16Bit
   | ShadowQuality'PCF24Bit
@@ -357,8 +357,8 @@ data ShadowQuality =
 
 instance NFData ShadowQuality
 
-instance Enum ShadowQuality where 
-  fromEnum q = case q of 
+instance Enum ShadowQuality where
+  fromEnum q = case q of
     ShadowQuality'Simple16Bit -> 0
     ShadowQuality'Simple24Bit -> 1
     ShadowQuality'PCF16Bit -> 2
@@ -366,7 +366,7 @@ instance Enum ShadowQuality where
     ShadowQuality'VSM -> 4
     ShadowQuality'BlurVSM -> 5
 
-  toEnum i = case i of 
+  toEnum i = case i of
     0 -> ShadowQuality'Simple16Bit
     1 -> ShadowQuality'Simple24Bit
     2 -> ShadowQuality'PCF16Bit
@@ -375,13 +375,13 @@ instance Enum ShadowQuality where
     5 -> ShadowQuality'BlurVSM
     _ -> ShadowQuality'Simple16Bit
 
-data Mask = 
+data Mask =
     MaskNone
   | MaskPosition
   | MaskNormal
   | MaskColor
   | MaskTexCoord1
-  | MaskTexCoord2 
+  | MaskTexCoord2
   | MaskCubeTexCoord1
   | MaskCubeTexCoord2
   | MaskTangent
@@ -390,14 +390,14 @@ data Mask =
   | MaskInstanceMatrix1
   | MaskInstanceMatrix2
   | MaskInstanceMatrix3
-  | MaskDefault 
+  | MaskDefault
   | MaskNoElement
   deriving (Eq, Ord, Show, Bounded, Generic)
 
 instance NFData Mask
 
-instance Enum Mask where 
-  fromEnum q = case q of 
+instance Enum Mask where
+  fromEnum q = case q of
     MaskNone -> 0x0
     MaskPosition -> 0x1
     MaskNormal -> 0x2
@@ -415,8 +415,8 @@ instance Enum Mask where
     MaskDefault -> 0xffffffff
     MaskNoElement -> 0xffffffff
 
-  toEnum i = case i of 
-    0x0 -> MaskNone 
+  toEnum i = case i of
+    0x0 -> MaskNone
     0x1 -> MaskPosition
     0x2 -> MaskNormal
     0x4 -> MaskColor
@@ -433,22 +433,22 @@ instance Enum Mask where
     0xffffffff -> MaskDefault
     _ -> MaskDefault
 
-maxRenderTargets :: Integral a => a 
+maxRenderTargets :: Integral a => a
 maxRenderTargets = 4
 
-maxVertexStreams :: Integral a => a 
+maxVertexStreams :: Integral a => a
 maxVertexStreams = 4
 
-maxConstantRegisters :: Integral a => a 
+maxConstantRegisters :: Integral a => a
 maxConstantRegisters = 256
 
-bitsPerComponent :: Integral a => a 
+bitsPerComponent :: Integral a => a
 bitsPerComponent = 8
 
 -- | Vertex element description for arbitrary vertex declarations.
 data VertexElement = VertexElement {
   _vertexElementElementType :: VertexElementType -- ^ Data type of element
-, _vertexElementSemantic :: VertexElementSemantic -- ^ Semantic of element 
+, _vertexElementSemantic :: VertexElementSemantic -- ^ Semantic of element
 , _vertexElementIndex :: Word8 -- ^ Semantic index of element, for example multi-texcoords.
 , _vertexElementPerInstance :: Bool -- ^ Per-instance flag.
 , _vertexElementOffset :: Word -- ^ Offset of element from vertex start. Filled by VertexBuffer once the vertex declaration is built.
@@ -457,7 +457,7 @@ data VertexElement = VertexElement {
 
 makeFields ''VertexElement
 
-graphDefsCntx :: C.Context 
+graphDefsCntx :: C.Context
 graphDefsCntx = mempty {
     C.ctxTypesTable = Map.fromList [
       (C.TypeName "VertexElement", [t| VertexElement |])

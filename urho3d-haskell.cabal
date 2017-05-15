@@ -593,15 +593,17 @@ executable urho3d-haskell-sample34
   other-modules:       Sample
                        Internal.Sample
   build-depends:       base
-                     , urho3d-haskell
-                     , StateVar
+                     , bytestring
                      , lens
                      , mtl
-                     , thyme
                      , old-locale
                      , raw-strings-qq
+                     , StateVar
+                     , store-core
                      , text
-
+                     , thyme
+                     , urho3d-haskell
+                     , vector
   default-extensions:
     MultiWayIf
     OverloadedStrings
@@ -615,7 +617,7 @@ executable urho3d-haskell-sample34
   if flag(examples)
     Buildable: False
   else
-    Buildable: False
+    Buildable: True
 
 source-repository head
   type:     git
