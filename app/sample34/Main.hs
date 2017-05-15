@@ -44,7 +44,7 @@ import qualified Data.Vector as V
 import qualified Data.Vector.Mutable as MV
 
 main :: IO ()
-main = withObject () $ \cntx -> do
+main = withObject () $ \cntx ->
   newSample cntx "Billboards" joysticPatch (customStart cntx) >>= runSample
 
 -- | Setup after engine initialization and before running the main loop.
@@ -121,9 +121,9 @@ createScene app = do
   -- Detect duplicate vertices to allow seamless animation
   let vertexDuplicates = V.generate (V.length originalVertices) $ \i ->
         let v1 = originalVertices V.! i
-            checkDuplicate (j, v2) Nothing = if v1 == v2 then Just j else Nothing
-            checkDuplicate _ acc = acc
-        in fromMaybe i . V.foldr' checkDuplicate Nothing . V.indexed . V.take i $ originalVertices
+            checkDuplicate Nothing (j, v2) = if v1 == v2 then Just j else Nothing
+            checkDuplicate acc _ = acc
+        in fromMaybe i . V.foldl' checkDuplicate Nothing . V.indexed . V.take i $ originalVertices
 
   -- Create StaticModels in the scene. Clone the model for each so that we can modify the vertex data individually
   animatingBuffers <- V.generateM 9 $ \i -> do
@@ -196,11 +196,11 @@ createCustomModel scene context  = do
         ]
       -- Calculate face normals now
       normalData = V.generate (V.length vertexData `div` 3) $ \i -> let
-        v1 = vertexData V.! i
-        v2 = vertexData V.! i+1
-        v3 = vertexData V.! i+2
-        edge1 = v1 - v2
-        edge2 = v1 - v3
+        v1 = vertexData V.! (i*3)
+        v2 = vertexData V.! (i*3+1)
+        v3 = vertexData V.! (i*3+2)
+        edge1 = v2 - v1
+        edge2 = v3 - v1
         in vec3Normalize $ edge1 `vec3Cross` edge2
 
   fromScratchModel :: SharedPtr Model <- newSharedObject $ pointer context
@@ -337,12 +337,12 @@ animateScene :: SampleRef -> IORef Float -> Float -> AnimateData -> IO ()
 animateScene sr timeRef timeStep AnimateData{..} = do
   sr <- readIORef sr
   let scene = sr ^. sampleScene
-  modifyIORef' timeRef (+ (timeStep * 100))
+  modifyIORef' timeRef (+ timeStep)
   time <- readIORef timeRef
 
   -- Repeat for each of the cloned vertex buffers
   forM_ (V.indexed animatingBuffers) $ \(i, buffer) -> do
-    let startPhase = time + fromIntegral i  * 30
+    let startPhase = time + fromIntegral i  * pi / 6
     -- Lock the vertex buffer for update and rewrite positions with sine wave modulated ones
     -- Cannot use discard lock as there is other data (normals, UVs) that we are not overwriting
     cnt <- vertexBufferGetVertexCount buffer
@@ -352,10 +352,10 @@ animateScene sr timeRef timeStep AnimateData{..} = do
       numVertices <- vertexBufferGetVertexCount buffer
       forM_ (V.indexed originalVertices) $ \(j, src) -> do
         -- If there are duplicate vertices, animate them in phase of the original
-        let phase = startPhase + fromIntegral (vertexDuplicates V.! j) * 10
+        let phase = startPhase + fromIntegral (vertexDuplicates V.! j) * pi / 18
             dest = Vector3 (src ^. x * (1.0 + 0.1 * sin phase))
-                          (src ^. y * (1.0 + 0.1 * sin (phase + 60)))
-                          (src ^. z * (1.0 + 0.1 * sin (phase + 120)))
+                          (src ^. y * (1.0 + 0.1 * sin (phase + pi/3)))
+                          (src ^. z * (1.0 + 0.1 * sin (phase + pi/2)))
             ptr = vertexData `plusPtr` (j * fromIntegral vertexSize)
         poke ptr dest
       vertexBufferUnlock buffer
@@ -367,25 +367,34 @@ subscribeToEvents sr cameraNode adata = do
   let app = s ^. sampleApplication
   camDataRef <- newIORef $ CameraData 0 0 False
   timeRef <- newIORef 0
-  subscribeToEvent app $ handleUpdate sr cameraNode camDataRef timeRef adata
+  animateRef <- newIORef True
+  subscribeToEvent app $ handleUpdate sr cameraNode camDataRef timeRef animateRef adata
   subscribeToEvent app $ handlePostRenderUpdate app camDataRef
 
 -- | Handle the logic update event.
-handleUpdate :: SampleRef -> Ptr Node -> IORef CameraData -> IORef Float -> AnimateData -> EventUpdate -> IO ()
-handleUpdate sr cameraNode camDataRef timeRef adata e = do
+handleUpdate :: SampleRef -> Ptr Node -> IORef CameraData -> IORef Float -> IORef Bool -> AnimateData -> EventUpdate -> IO ()
+handleUpdate sr cameraNode camDataRef timeRef animateRef adata e = do
   s <- readIORef sr
   let app = s ^. sampleApplication
+
   -- Take the frame time step, which is stored as a float
   let t = e ^. timeStep
   camData <- readIORef camDataRef
-  -- Move the camera and animate the scene, scale movement with time step
+
+  -- Toggle animation with space
+  (input :: Ptr Input) <- fromJustTrace "Input" <$> getSubsystem app
+  whenM (inputGetKeyPress input KeySpace) $
+    modifyIORef' animateRef not
+
+  -- Move the camera, scale movement with time step
   writeIORef camDataRef =<< moveCamera app cameraNode t camData
-  animateScene sr timeRef t adata
+  -- Animate objects' vertex data if enabled
+  whenM (readIORef animateRef) $ animateScene sr timeRef t adata
 
 handlePostRenderUpdate :: SharedPtr Application -> IORef CameraData -> EventPostRenderUpdate -> IO ()
 handlePostRenderUpdate app camDataRef _ = do
   camData <- readIORef camDataRef
-  (renderer :: Ptr Renderer) <- fromJustTrace "Input" <$> getSubsystem app
+  (renderer :: Ptr Renderer) <- fromJustTrace "Renderer" <$> getSubsystem app
 
   -- If draw debug mode is enabled, draw viewport debug geometry, which will show eg. drawable bounding boxes and skeleton
   -- bones. Note that debug geometry has to be separately requested each frame. This time use depth test, as otherwise the result becomes
