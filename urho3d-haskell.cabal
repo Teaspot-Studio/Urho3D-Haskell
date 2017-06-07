@@ -74,10 +74,12 @@ library
                        Graphics.Urho3D.Graphics.ModelMorph
                        Graphics.Urho3D.Graphics.Octree
                        Graphics.Urho3D.Graphics.Renderer
+                       Graphics.Urho3D.Graphics.RenderSurface
                        Graphics.Urho3D.Graphics.Skeleton
                        Graphics.Urho3D.Graphics.StaticModel
                        Graphics.Urho3D.Graphics.Texture
                        Graphics.Urho3D.Graphics.Texture2D
+                       Graphics.Urho3D.Graphics.Texture2DArray
                        Graphics.Urho3D.Graphics.VertexBuffer
                        Graphics.Urho3D.Graphics.Viewport
                        Graphics.Urho3D.Graphics.Zone
@@ -170,10 +172,12 @@ library
                        Graphics.Urho3D.Graphics.Internal.ModelMorph
                        Graphics.Urho3D.Graphics.Internal.Octree
                        Graphics.Urho3D.Graphics.Internal.Renderer
+                       Graphics.Urho3D.Graphics.Internal.RenderSurface
                        Graphics.Urho3D.Graphics.Internal.Skeleton
                        Graphics.Urho3D.Graphics.Internal.StaticModel
                        Graphics.Urho3D.Graphics.Internal.Texture
                        Graphics.Urho3D.Graphics.Internal.Texture2D
+                       Graphics.Urho3D.Graphics.Internal.Texture2DArray
                        Graphics.Urho3D.Graphics.Internal.VertexBuffer
                        Graphics.Urho3D.Graphics.Internal.Viewport
                        Graphics.Urho3D.Graphics.Internal.Zone
@@ -256,10 +260,12 @@ library
                        src/Graphics/Urho3D/Graphics/ModelMorph.cpp
                        src/Graphics/Urho3D/Graphics/Octree.cpp
                        src/Graphics/Urho3D/Graphics/Renderer.cpp
+                       src/Graphics/Urho3D/Graphics/RenderSurface.cpp
                        src/Graphics/Urho3D/Graphics/Skeleton.cpp
                        src/Graphics/Urho3D/Graphics/StaticModel.cpp
                        src/Graphics/Urho3D/Graphics/Texture.cpp
                        src/Graphics/Urho3D/Graphics/Texture2D.cpp
+                       src/Graphics/Urho3D/Graphics/Texture2DArray.cpp
                        src/Graphics/Urho3D/Graphics/VertexBuffer.cpp
                        src/Graphics/Urho3D/Graphics/Viewport.cpp
                        src/Graphics/Urho3D/Graphics/Zone.cpp
