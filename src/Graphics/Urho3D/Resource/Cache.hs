@@ -1,7 +1,9 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Graphics.Urho3D.Resource.Cache(
     ResourceCache
   , resourceCacheContext
+  , cacheAddResourceDir
   , cacheGetResource
   ) where
 
@@ -42,13 +44,26 @@ instance Creatable (Ptr ResourceCache) where
 instance Subsystem ResourceCache where
   getSubsystemImpl ptr = [C.exp| ResourceCache* { $(Object* ptr)->GetSubsystem<ResourceCache>() } |]
 
+-- | Add a resource load directory. Optional priority parameter which will control search order.
+cacheAddResourceDir :: forall a m ptr . (Parent ResourceCache a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to ResourceCache or acenstor
+  -> FilePath -- ^ Path to directory
+  -> Word -- ^ Priority (default is priorityLast)
+  -> m Bool
+cacheAddResourceDir ptr pathName priority = liftIO $ withCString pathName $ \pathName' -> do
+  let ptr' = parentPointer ptr
+      priority' = fromIntegral priority
+  toBool <$> [C.exp| int { (int)$(ResourceCache* ptr')->AddResourceDir(String($(const char* pathName')), $(unsigned int priority')) } |]
+
 -- | Loading a resource by name
-cacheGetResource :: forall a m . (ResourceType a, MonadIO m) => Ptr ResourceCache
+cacheGetResource :: forall a b m ptr . (Parent ResourceCache a, Pointer ptr a, ResourceType b, MonadIO m)
+  => ptr -- ^ Pointer to ResourceCache or acenstor
   -> String -- ^ Resource name
   -> Bool -- ^ send event on failure?
-  -> m (Maybe (Ptr a)) -- ^ pointer to resource
+  -> m (Maybe (Ptr b)) -- ^ pointer to resource
 cacheGetResource ptr name sendEvent = liftIO $ withCString name $ \name' -> do
-  let rest = fromIntegral . stringHashValue $ resourceType (Proxy :: Proxy a)
-  let sendEvent' = if sendEvent then 1 else 0
-  resPtr <- [C.exp| Resource* { $(ResourceCache* ptr)->GetResource(StringHash($(unsigned int rest)), String($(const char* name')), $(int sendEvent') != 0) } |]
+  let ptr' = parentPointer ptr
+      rest = fromIntegral . stringHashValue $ resourceType (Proxy :: Proxy b)
+      sendEvent' = if sendEvent then 1 else 0
+  resPtr <- [C.exp| Resource* { $(ResourceCache* ptr')->GetResource(StringHash($(unsigned int rest)), String($(const char* name')), $(int sendEvent') != 0) } |]
   checkNullPtr' resPtr (return.castPtr)
