@@ -3,6 +3,7 @@
 module Graphics.Urho3D.Resource.Cache(
     ResourceCache
   , resourceCacheContext
+  , priorityLast
   , cacheAddResourceDir
   , cacheGetResource
   ) where
@@ -43,6 +44,10 @@ instance Creatable (Ptr ResourceCache) where
 
 instance Subsystem ResourceCache where
   getSubsystemImpl ptr = [C.exp| ResourceCache* { $(Object* ptr)->GetSubsystem<ResourceCache>() } |]
+
+-- | Default periority for resource cache
+priorityLast :: Word
+priorityLast = fromIntegral [C.pure| unsigned int { PRIORITY_LAST } |]
 
 -- | Add a resource load directory. Optional priority parameter which will control search order.
 cacheAddResourceDir :: forall a m ptr . (Parent ResourceCache a, Pointer ptr a, MonadIO m)
