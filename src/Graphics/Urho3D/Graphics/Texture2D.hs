@@ -2,6 +2,10 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Graphics.Urho3D.Graphics.Texture2D(
     Texture2D
+  , SharedTexture2D
+  , WeakTexture2D
+  , VectorSharedTexture2DPtr
+  , PODVectorTexture2DPtr
   , texture2DContext
   , texture2DSetSize
   , texture2DSetData
@@ -16,6 +20,9 @@ import Foreign
 import Graphics.Urho3D.Graphics.Internal.Texture2D
 import Graphics.Urho3D.Math.StringHash
 
+import Graphics.Urho3D.Container.ForeignVector
+import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Container.Vector
 import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Creatable
@@ -33,13 +40,25 @@ C.context (C.cppCtx
   <> stringHashContext
   <> objectContext
   <> resourceContext
-  <> imageContext)
+  <> imageContext
+  <> sharedTexture2DPtrCntx
+  <> weakTexture2DPtrCntx
+  <> podVectorTexture2DPtrCntx
+  )
+
 C.include "<Urho3D/Graphics/Texture2D.h>"
 C.using "namespace Urho3D"
+
+C.verbatim "typedef Vector<SharedPtr<Texture2D> > VectorSharedTexture2DPtr;"
 
 texture2DContext :: C.Context
 texture2DContext = texture2DCntx
   <> textureContext
+  <> sharedTexture2DPtrCntx
+
+sharedPtr "Texture2D"
+sharedWeakPtr "Texture2D"
+podVectorPtr "Texture2D"
 
 newTexture2D :: Ptr Context -> IO (Ptr Texture2D)
 newTexture2D ptr = [C.exp| Texture2D* { new Texture2D( $(Context* ptr) ) } |]
@@ -57,6 +76,26 @@ instance ResourceType Texture2D where
   resourceType _ = StringHash . fromIntegral $ [C.pure| unsigned int { Texture2D::GetTypeStatic().Value() } |]
 
 deriveParents [''Object, ''Resource, ''Texture] ''Texture2D
+
+instance Creatable (Ptr VectorSharedTexture2DPtr) where
+  type CreationOptions (Ptr VectorSharedTexture2DPtr) = ()
+
+  newObject _ = liftIO [C.exp| VectorSharedTexture2DPtr* { new VectorSharedTexture2DPtr() } |]
+  deleteObject ptr = liftIO $ [C.exp| void {delete $(VectorSharedTexture2DPtr* ptr)} |]
+
+instance ReadableVector VectorSharedTexture2DPtr where
+  type ReadVecElem VectorSharedTexture2DPtr = SharedPtr Texture2D
+  foreignVectorLength ptr = fromIntegral <$>
+    liftIO [C.exp| unsigned int {$(VectorSharedTexture2DPtr* ptr)->Size()} |]
+  foreignVectorElement ptr i = liftIO $ do
+    let i' = fromIntegral i
+    peekSharedPtr =<< [C.exp| SharedTexture2D* { new SharedPtr<Texture2D>((*$(VectorSharedTexture2DPtr* ptr))[$(int i')]) } |]
+
+instance WriteableVector VectorSharedTexture2DPtr where
+  type WriteVecElem VectorSharedTexture2DPtr = SharedPtr Texture2D
+  foreignVectorAppend ptr sp = liftIO $ do
+    let p = pointer sp
+    [C.exp| void { $(VectorSharedTexture2DPtr* ptr)->Push(SharedPtr<Texture2D>($(Texture2D* p))) } |]
 
 -- | Set size, format, usage and multisampling parameters for rendertargets. Zero size will follow application window size. Return true if successful.
 -- Autoresolve true means the multisampled texture will be automatically resolved to 1-sample after being rendered to and before being sampled as a texture.
