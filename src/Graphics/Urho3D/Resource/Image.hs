@@ -2,6 +2,10 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Graphics.Urho3D.Resource.Image(
     Image
+  , SharedImage
+  , WeakImage
+  , VectorSharedImagePtr
+  , PODVectorImagePtr
   , imageContext
   , imageSavePNG
   , imageSetSize2D
@@ -13,6 +17,12 @@ module Graphics.Urho3D.Resource.Image(
 import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
+import Data.Monoid
+import Foreign
+import Foreign.C.String
+import Graphics.Urho3D.Container.ForeignVector
+import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Container.Vector
 import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Color
@@ -20,16 +30,29 @@ import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Resource.Internal.Image
 import Graphics.Urho3D.Resource.Resource
-import Data.Monoid
-import Foreign
-import Foreign.C.String
 
-C.context (C.cppCtx <> imageCntx <> contextContext <> resourceContext <> colorContext)
+C.context (C.cppCtx
+  <> imageCntx
+  <> contextContext
+  <> resourceContext
+  <> colorContext
+  <> sharedImagePtrCntx
+  <> weakImagePtrCntx
+  <> podVectorImagePtrCntx
+  )
 C.include "<Urho3D/Resource/Image.h>"
 C.using "namespace Urho3D"
 
+C.verbatim "typedef Vector<SharedPtr<Image> > VectorSharedImagePtr;"
+
 imageContext :: C.Context
-imageContext = imageCntx <> resourceContext
+imageContext = imageCntx
+  <> resourceContext
+  <> sharedImagePtrCntx
+
+sharedPtr "Image"
+sharedWeakPtr "Image"
+podVectorPtr "Image"
 
 newImage :: Ptr Context -> IO (Ptr Image)
 newImage ptr = [C.exp| Image* { new Image( $(Context* ptr) ) } |]
@@ -45,6 +68,26 @@ instance Creatable (Ptr Image) where
 
 instance ResourceType Image where
   resourceType _ = StringHash . fromIntegral $ [C.pure| unsigned int { Image::GetTypeStatic().Value() } |]
+
+instance Creatable (Ptr VectorSharedImagePtr) where
+  type CreationOptions (Ptr VectorSharedImagePtr) = ()
+
+  newObject _ = liftIO [C.exp| VectorSharedImagePtr* { new VectorSharedImagePtr() } |]
+  deleteObject ptr = liftIO $ [C.exp| void {delete $(VectorSharedImagePtr* ptr)} |]
+
+instance ReadableVector VectorSharedImagePtr where
+  type ReadVecElem VectorSharedImagePtr = SharedPtr Image
+  foreignVectorLength ptr = fromIntegral <$>
+    liftIO [C.exp| unsigned int {$(VectorSharedImagePtr* ptr)->Size()} |]
+  foreignVectorElement ptr i = liftIO $ do
+    let i' = fromIntegral i
+    peekSharedPtr =<< [C.exp| SharedImage* { new SharedPtr<Image>((*$(VectorSharedImagePtr* ptr))[$(int i')]) } |]
+
+instance WriteableVector VectorSharedImagePtr where
+  type WriteVecElem VectorSharedImagePtr = SharedPtr Image
+  foreignVectorAppend ptr sp = liftIO $ do
+    let p = pointer sp
+    [C.exp| void { $(VectorSharedImagePtr* ptr)->Push(SharedPtr<Image>($(Image* p))) } |]
 
 -- | Saves image as PNG
 imageSavePNG :: (Pointer p a, Parent Image a, MonadIO m) => p -- ^ Pointer to image or child
