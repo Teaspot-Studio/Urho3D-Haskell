@@ -72,13 +72,13 @@ data CullMode =
 instance NFData CullMode
 
 -- | Fill mode
-data Fillmode =
+data FillMode =
     FillSolid
   | FillWireFrame
   | FillPoint
   deriving (Eq, Ord, Show, Enum, Bounded, Generic)
 
-instance NFData Fillmode
+instance NFData FillMode
 
 -- | Stencil operation
 data StencilOp =

@@ -6,7 +6,7 @@ module Graphics.Urho3D.Graphics.Defs(
   , BlendMode(..)
   , CompareMode(..)
   , CullMode(..)
-  , Fillmode(..)
+  , FillMode(..)
   , StencilOp(..)
   , LockState(..)
   , LegacyVertexElement(..)

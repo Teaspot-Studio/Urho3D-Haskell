@@ -1,8 +1,12 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Graphics.Urho3D.Graphics.Material(
     Material
   , SharedMaterial
   , materialContext
+  , materialSetShaderParameter
+  , materialSetTexture
+  , materialSetFillMode
   ) where
 
 import qualified Language.C.Inline as C
@@ -11,22 +15,37 @@ import qualified Language.C.Inline.Cpp as C
 import Graphics.Urho3D.Graphics.Internal.Material
 import Data.Monoid
 import Foreign
+import Foreign.C 
 
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Core.Variant
 import Graphics.Urho3D.Creatable
+import Graphics.Urho3D.Graphics.Defs
+import Graphics.Urho3D.Graphics.Texture
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Parent
 import Graphics.Urho3D.Resource.Resource
 
-C.context (C.cppCtx <> materialCntx <> resourceContext <> objectContext  <> sharedMaterialPtrCntx <> contextContext)
+C.context (C.cppCtx
+  <> materialCntx
+  <> resourceContext
+  <> objectContext
+  <> sharedMaterialPtrCntx
+  <> contextContext
+  <> textureContext
+  <> variantContext
+  )
+
 C.include "<Urho3D/Graphics/Material.h>"
 C.using "namespace Urho3D"
 
 materialContext :: C.Context
-materialContext = materialCntx <> resourceContext <> sharedMaterialPtrCntx
+materialContext = materialCntx
+  <> resourceContext
+  <> sharedMaterialPtrCntx
 
 deriveParents [''Object, ''Resource] ''Material
 
@@ -39,3 +58,34 @@ instance Creatable (Ptr Material) where
   deleteObject ptr = liftIO [C.exp| void {delete $(Material* ptr)} |]
 
 sharedPtr "Material"
+
+-- | Set shader parameter.
+materialSetShaderParameter :: (Parent Material a, Pointer p a, VariantStorable b, MonadIO m)
+  => p -- ^ Pointer to material or acenstor
+  -> String -- ^ Name of parameter
+  -> b -- ^ Value for shader
+  -> m ()
+materialSetShaderParameter p name v = liftIO $ withCString name $ \name' -> withVariant v $ \v' -> do
+  let ptr = parentPointer p
+  [C.exp| void { $(Material* ptr)->SetShaderParameter(String($(const char* name')), *$(Variant* v')) } |]
+
+-- | Set material texture unit
+materialSetTexture :: (Parent Material a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to material or acenstor
+  -> TextureUnit -- ^ Slot for texture
+  -> Ptr Texture
+  -> m ()
+materialSetTexture p unit texture = liftIO $ do
+  let ptr = parentPointer p
+      unit' = fromIntegral . fromEnum $ unit
+  [C.exp| void { $(Material* ptr)->SetTexture((TextureUnit)$(int unit'), $(Texture* texture)) } |]
+
+-- | Set polygon fill mode. Interacts with the camera's fill mode setting so that the "least filled" mode will be used.
+materialSetFillMode :: (Parent Material a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to material or acenstor
+  -> FillMode
+  -> m ()
+materialSetFillMode p mode = liftIO $ do
+  let ptr = parentPointer p
+      mode' = fromIntegral . fromEnum $ mode
+  [C.exp| void { $(Material* ptr)->SetFillMode((FillMode)$(int mode')) } |]
