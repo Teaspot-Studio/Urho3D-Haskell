@@ -9,11 +9,11 @@ import qualified Language.C.Types as C
 
 import qualified Data.Map as Map
 
-data Texture2D 
+data Texture2D
 
-texture2DCntx :: C.Context 
+texture2DCntx :: C.Context
 texture2DCntx = mempty {
     C.ctxTypesTable = Map.fromList [
       (C.TypeName "Texture2D", [t| Texture2D |])
     ]
-  } 
+  }
