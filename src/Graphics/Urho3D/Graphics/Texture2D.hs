@@ -16,7 +16,9 @@ import Foreign
 import Graphics.Urho3D.Graphics.Internal.Texture2D
 import Graphics.Urho3D.Math.StringHash
 
+import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Graphics.Defs
 import Graphics.Urho3D.Graphics.Texture
 import Graphics.Urho3D.Monad
@@ -25,6 +27,7 @@ import Graphics.Urho3D.Resource.Image
 import Graphics.Urho3D.Resource.Resource
 
 C.context (C.cppCtx
+  <> contextContext
   <> texture2DCntx
   <> textureContext
   <> stringHashContext
@@ -37,6 +40,18 @@ C.using "namespace Urho3D"
 texture2DContext :: C.Context
 texture2DContext = texture2DCntx
   <> textureContext
+
+newTexture2D :: Ptr Context -> IO (Ptr Texture2D)
+newTexture2D ptr = [C.exp| Texture2D* { new Texture2D( $(Context* ptr) ) } |]
+
+deleteTexture2D :: Ptr Texture2D -> IO ()
+deleteTexture2D ptr = [C.exp| void { delete $(Texture2D* ptr) } |]
+
+instance Creatable (Ptr Texture2D) where
+  type CreationOptions (Ptr Texture2D) = Ptr Context
+
+  newObject = liftIO . newTexture2D
+  deleteObject = liftIO . deleteTexture2D
 
 instance ResourceType Texture2D where
   resourceType _ = StringHash . fromIntegral $ [C.pure| unsigned int { Texture2D::GetTypeStatic().Value() } |]
