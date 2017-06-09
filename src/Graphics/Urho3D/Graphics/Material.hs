@@ -15,7 +15,7 @@ import qualified Language.C.Inline.Cpp as C
 import Graphics.Urho3D.Graphics.Internal.Material
 import Data.Monoid
 import Foreign
-import Foreign.C 
+import Foreign.C
 
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Core.Context
@@ -70,15 +70,16 @@ materialSetShaderParameter p name v = liftIO $ withCString name $ \name' -> with
   [C.exp| void { $(Material* ptr)->SetShaderParameter(String($(const char* name')), *$(Variant* v')) } |]
 
 -- | Set material texture unit
-materialSetTexture :: (Parent Material a, Pointer p a, MonadIO m)
+materialSetTexture :: (Parent Material a, Pointer p a, Parent Texture b, Pointer ptex b, MonadIO m)
   => p -- ^ Pointer to material or acenstor
   -> TextureUnit -- ^ Slot for texture
-  -> Ptr Texture
+  -> ptex -- ^ Pointer to texture
   -> m ()
 materialSetTexture p unit texture = liftIO $ do
   let ptr = parentPointer p
       unit' = fromIntegral . fromEnum $ unit
-  [C.exp| void { $(Material* ptr)->SetTexture((TextureUnit)$(int unit'), $(Texture* texture)) } |]
+      texture' = parentPointer texture
+  [C.exp| void { $(Material* ptr)->SetTexture((TextureUnit)$(int unit'), $(Texture* texture')) } |]
 
 -- | Set polygon fill mode. Interacts with the camera's fill mode setting so that the "least filled" mode will be used.
 materialSetFillMode :: (Parent Material a, Pointer p a, MonadIO m)
