@@ -9,6 +9,7 @@ module Graphics.Urho3D.Graphics.Texture(
   , textureDepth
   , textureSetNumLevels
   , textureSetFilterMode
+  , textureSetAddressMode
   ) where
 
 import qualified Language.C.Inline as C
@@ -70,3 +71,15 @@ textureSetFilterMode ptr mode = liftIO $ do
   let ptr' = parentPointer ptr
       mode' = fromIntegral . fromEnum $ mode
   [C.exp| void { $(Texture* ptr')->SetFilterMode((TextureFilterMode)$(int mode')) } |]
+
+-- | Set addressing mode by texture coordinate.
+textureSetAddressMode :: (Parent Texture a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to texture or ancestor
+  -> TextureCoordinate -- ^ Which coordinate component
+  -> TextureAddressMode -- ^ Wrap, clamp and other modes
+  -> m ()
+textureSetAddressMode ptr coord address = liftIO $ do
+  let ptr' = parentPointer ptr
+      coord' = fromIntegral . fromEnum $ coord
+      address' = fromIntegral . fromEnum $ address
+  [C.exp| void { $(Texture* ptr')->SetAddressMode((TextureCoordinate)$(int coord'), (TextureAddressMode)$(int address')) } |]
