@@ -1,6 +1,11 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Graphics.Urho3D.Graphics.Texture2DArray(
     Texture2DArray
+  , SharedTexture2DArray
+  , WeakTexture2DArray
+  , VectorSharedTexture2DArrayPtr
+  , PODVectorTexture2DArrayPtr
   , texture2DArrayContext
   , texture2DArraySetLayers
   , texture2DArraySetSize
@@ -19,7 +24,12 @@ import Foreign
 import Graphics.Urho3D.Graphics.Internal.Texture2DArray
 import Graphics.Urho3D.Math.StringHash
 
+import Graphics.Urho3D.Container.ForeignVector
+import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Container.Vector
+import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Graphics.Defs
 import Graphics.Urho3D.Graphics.RenderSurface
 import Graphics.Urho3D.Graphics.Texture
@@ -29,6 +39,7 @@ import Graphics.Urho3D.Resource.Image
 import Graphics.Urho3D.Resource.Resource
 
 C.context (C.cppCtx
+  <> contextContext
   <> texture2DArrayCntx
   <> textureContext
   <> stringHashContext
@@ -36,17 +47,58 @@ C.context (C.cppCtx
   <> resourceContext
   <> imageContext
   <> renderSurfaceContext
+  <> sharedTexture2DArrayPtrCntx
+  <> weakTexture2DArrayPtrCntx
+  <> podVectorTexture2DArrayPtrCntx
   )
 C.include "<Urho3D/Graphics/Texture2DArray.h>"
 C.using "namespace Urho3D"
 
+C.verbatim "typedef Vector<SharedPtr<Texture2DArray> > VectorSharedTexture2DArrayPtr;"
+
 texture2DArrayContext :: C.Context
 texture2DArrayContext = texture2DArrayCntx <> textureContext
+
+sharedPtr "Texture2DArray"
+sharedWeakPtr "Texture2DArray"
+podVectorPtr "Texture2DArray"
+
+newTexture2DArray :: Ptr Context -> IO (Ptr Texture2DArray)
+newTexture2DArray ptr = [C.exp| Texture2DArray* { new Texture2DArray( $(Context* ptr) ) } |]
+
+deleteTexture2DArray :: Ptr Texture2DArray -> IO ()
+deleteTexture2DArray ptr = [C.exp| void { delete $(Texture2DArray* ptr) } |]
+
+instance Creatable (Ptr Texture2DArray) where
+  type CreationOptions (Ptr Texture2DArray) = Ptr Context
+
+  newObject = liftIO . newTexture2DArray
+  deleteObject = liftIO . deleteTexture2DArray
 
 instance ResourceType Texture2DArray where
   resourceType _ = StringHash . fromIntegral $ [C.pure| unsigned int { Texture2DArray::GetTypeStatic().Value() } |]
 
 deriveParents [''Object, ''Resource, ''Texture] ''Texture2DArray
+
+instance Creatable (Ptr VectorSharedTexture2DArrayPtr) where
+  type CreationOptions (Ptr VectorSharedTexture2DArrayPtr) = ()
+
+  newObject _ = liftIO [C.exp| VectorSharedTexture2DArrayPtr* { new VectorSharedTexture2DArrayPtr() } |]
+  deleteObject ptr = liftIO $ [C.exp| void {delete $(VectorSharedTexture2DArrayPtr* ptr)} |]
+
+instance ReadableVector VectorSharedTexture2DArrayPtr where
+  type ReadVecElem VectorSharedTexture2DArrayPtr = SharedPtr Texture2DArray
+  foreignVectorLength ptr = fromIntegral <$>
+    liftIO [C.exp| unsigned int {$(VectorSharedTexture2DArrayPtr* ptr)->Size()} |]
+  foreignVectorElement ptr i = liftIO $ do
+    let i' = fromIntegral i
+    peekSharedPtr =<< [C.exp| SharedTexture2DArray* { new SharedPtr<Texture2DArray>((*$(VectorSharedTexture2DArrayPtr* ptr))[$(int i')]) } |]
+
+instance WriteableVector VectorSharedTexture2DArrayPtr where
+  type WriteVecElem VectorSharedTexture2DArrayPtr = SharedPtr Texture2DArray
+  foreignVectorAppend ptr sp = liftIO $ do
+    let p = pointer sp
+    [C.exp| void { $(VectorSharedTexture2DArrayPtr* ptr)->Push(SharedPtr<Texture2DArray>($(Texture2DArray* p))) } |]
 
 -- | Set the number of layers in the texture. To be used before SetData.
 texture2DArraySetLayers :: (Parent Texture2DArray a, Pointer p a, MonadIO m)
