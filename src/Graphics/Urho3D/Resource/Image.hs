@@ -12,6 +12,13 @@ module Graphics.Urho3D.Resource.Image(
   , imageSetData
   , imageSetPixel2D
   , imageSetPixel2DInt
+  , imageGetPixel2D
+  , imageGetPixel2DInt
+  , imageGetWidth
+  , imageGetHeight
+  , imageGetDepth
+  , imageGetComponents
+  , imageGetData
   ) where
 
 import qualified Language.C.Inline as C
@@ -147,3 +154,70 @@ imageSetPixel2DInt p x y uintColor = liftIO $ do
       y' = fromIntegral y
       uintColor' = fromIntegral uintColor
   [C.exp| void {$(Image* ptr)->SetPixelInt($(int x'), $(int y'), $(unsigned int uintColor'))} |]
+
+-- | Return a 2D pixel color.
+imageGetPixel2D :: (Pointer p a, Parent Image a, MonadIO m)
+  => p -- ^ Pointer to image or child
+  -> Int -- ^ x
+  -> Int -- ^ y
+  -> m Color
+imageGetPixel2D p x y = liftIO $ alloca $ \color' -> do
+  let ptr = parentPointer p
+      x' = fromIntegral x
+      y' = fromIntegral y
+  [C.block| void {
+    *$(Color* color') = $(Image* ptr)->GetPixel($(int x'), $(int y'));
+  } |]
+  peek color'
+
+-- | Return a 2D pixel integer color. R component is in the 8 lowest bits.
+imageGetPixel2DInt :: (Pointer p a, Parent Image a, MonadIO m)
+  => p -- ^ Pointer to image or child
+  -> Int -- ^ x
+  -> Int -- ^ y
+  -> m Word
+imageGetPixel2DInt p x y = liftIO $ do
+  let ptr = parentPointer p
+      x' = fromIntegral x
+      y' = fromIntegral y
+  fromIntegral <$> [C.exp| unsigned int {$(Image* ptr)->GetPixelInt($(int x'), $(int y'))} |]
+
+-- | Return width.
+imageGetWidth :: (Pointer p a, Parent Image a, MonadIO m)
+  => p -- ^ Pointer to image or child
+  -> m Int
+imageGetWidth p = liftIO $ do
+  let ptr = parentPointer p
+  fromIntegral <$> [C.exp| int {$(Image* ptr)->GetWidth()} |]
+
+-- | Return height.
+imageGetHeight :: (Pointer p a, Parent Image a, MonadIO m)
+  => p -- ^ Pointer to image or child
+  -> m Int
+imageGetHeight p = liftIO $ do
+  let ptr = parentPointer p
+  fromIntegral <$> [C.exp| int {$(Image* ptr)->GetHeight()} |]
+
+-- | Return depth.
+imageGetDepth :: (Pointer p a, Parent Image a, MonadIO m)
+  => p -- ^ Pointer to image or child
+  -> m Int
+imageGetDepth p = liftIO $ do
+  let ptr = parentPointer p
+  fromIntegral <$> [C.exp| int {$(Image* ptr)->GetDepth()} |]
+
+-- | Return number of color components..
+imageGetComponents :: (Pointer p a, Parent Image a, MonadIO m)
+  => p -- ^ Pointer to image or child
+  -> m Word
+imageGetComponents p = liftIO $ do
+  let ptr = parentPointer p
+  fromIntegral <$> [C.exp| int {$(Image* ptr)->GetComponents()} |]
+
+-- | Return number of color components..
+imageGetData :: (Pointer p a, Parent Image a, MonadIO m)
+  => p -- ^ Pointer to image or child
+  -> m (Ptr ())
+imageGetData p = liftIO $ do
+  let ptr = parentPointer p
+  castPtr <$> [C.exp| unsigned char* {$(Image* ptr)->GetData()} |]
