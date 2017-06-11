@@ -4,6 +4,8 @@ module Graphics.Urho3D.Graphics.Material(
     Material
   , SharedMaterial
   , materialContext
+  , materialSetVertexShaderDefines
+  , materialSetPixelShaderDefines
   , materialSetShaderParameter
   , materialSetTexture
   , materialSetFillMode
@@ -58,6 +60,24 @@ instance Creatable (Ptr Material) where
   deleteObject ptr = liftIO [C.exp| void {delete $(Material* ptr)} |]
 
 sharedPtr "Material"
+
+-- | Set additional vertex shader defines. Separate multiple defines with spaces. Setting defines at the material level causes technique(s) to be cloned as necessary.
+materialSetVertexShaderDefines :: (Parent Material a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to material or acenstor
+  -> String -- ^ Defines separated by space
+  -> m ()
+materialSetVertexShaderDefines p defines = liftIO $ withCString defines $ \defines' -> do
+  let ptr = parentPointer p
+  [C.exp| void { $(Material* ptr)->SetVertexShaderDefines(String($(const char* defines'))) } |]
+
+-- | Set additional pixel shader defines. Separate multiple defines with spaces. Setting defines at the material level causes technique(s) to be cloned as necessary.
+materialSetPixelShaderDefines :: (Parent Material a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to material or acenstor
+  -> String -- ^ Defines separated by space
+  -> m ()
+materialSetPixelShaderDefines p defines = liftIO $ withCString defines $ \defines' -> do
+  let ptr = parentPointer p
+  [C.exp| void { $(Material* ptr)->SetPixelShaderDefines(String($(const char* defines'))) } |]
 
 -- | Set shader parameter.
 materialSetShaderParameter :: (Parent Material a, Pointer p a, VariantStorable b, MonadIO m)
