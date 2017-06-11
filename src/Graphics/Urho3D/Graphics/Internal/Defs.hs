@@ -154,6 +154,7 @@ data TextureFilterMode =
   | FilterBiLinear
   | FilterTriLinear
   | FilterAnisotropic
+  | FilterNearestAnisotropic
   | FilterDefault
   deriving (Eq, Ord, Show, Enum, Bounded, Generic)
 
