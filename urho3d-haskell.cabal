@@ -77,6 +77,7 @@ library
                        Graphics.Urho3D.Graphics.RenderSurface
                        Graphics.Urho3D.Graphics.Skeleton
                        Graphics.Urho3D.Graphics.StaticModel
+                       Graphics.Urho3D.Graphics.Technique
                        Graphics.Urho3D.Graphics.Texture
                        Graphics.Urho3D.Graphics.Texture2D
                        Graphics.Urho3D.Graphics.Texture2DArray
@@ -175,6 +176,7 @@ library
                        Graphics.Urho3D.Graphics.Internal.RenderSurface
                        Graphics.Urho3D.Graphics.Internal.Skeleton
                        Graphics.Urho3D.Graphics.Internal.StaticModel
+                       Graphics.Urho3D.Graphics.Internal.Technique
                        Graphics.Urho3D.Graphics.Internal.Texture
                        Graphics.Urho3D.Graphics.Internal.Texture2D
                        Graphics.Urho3D.Graphics.Internal.Texture2DArray
@@ -263,6 +265,7 @@ library
                        src/Graphics/Urho3D/Graphics/RenderSurface.cpp
                        src/Graphics/Urho3D/Graphics/Skeleton.cpp
                        src/Graphics/Urho3D/Graphics/StaticModel.cpp
+                       src/Graphics/Urho3D/Graphics/Technique.cpp
                        src/Graphics/Urho3D/Graphics/Texture.cpp
                        src/Graphics/Urho3D/Graphics/Texture2D.cpp
                        src/Graphics/Urho3D/Graphics/Texture2DArray.cpp

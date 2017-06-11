@@ -4,11 +4,13 @@ module Graphics.Urho3D.Graphics.Material(
     Material
   , SharedMaterial
   , materialContext
-  , materialSetVertexShaderDefines
+  , materialSetFillMode
+  , materialSetNumTechniques
   , materialSetPixelShaderDefines
   , materialSetShaderParameter
+  , materialSetTechnique
   , materialSetTexture
-  , materialSetFillMode
+  , materialSetVertexShaderDefines
   ) where
 
 import qualified Language.C.Inline as C
@@ -25,6 +27,7 @@ import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Core.Variant
 import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Graphics.Defs
+import Graphics.Urho3D.Graphics.Technique
 import Graphics.Urho3D.Graphics.Texture
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
@@ -39,6 +42,7 @@ C.context (C.cppCtx
   <> contextContext
   <> textureContext
   <> variantContext
+  <> techniqueContext
   )
 
 C.include "<Urho3D/Graphics/Material.h>"
@@ -60,6 +64,31 @@ instance Creatable (Ptr Material) where
   deleteObject ptr = liftIO [C.exp| void {delete $(Material* ptr)} |]
 
 sharedPtr "Material"
+
+-- | Set number of techniques.
+materialSetNumTechniques :: (Parent Material a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to material or acenstor
+  -> Word -- ^ number
+  -> m ()
+materialSetNumTechniques p num = liftIO $ do
+  let ptr = parentPointer p
+      num' = fromIntegral num
+  [C.exp| void { $(Material* ptr)->SetNumTechniques($(unsigned int num')) } |]
+
+-- | Set number of techniques.
+materialSetTechnique :: (Parent Material a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to material or acenstor
+  -> Word -- ^ index
+  -> Ptr Technique -- ^ tech
+  -> Word -- ^ quality level (default 0)
+  -> Float -- ^ lod distance (default 0.0)
+  -> m ()
+materialSetTechnique p index tech qualityLevel lodDistance = liftIO $ do
+  let ptr = parentPointer p
+      index' = fromIntegral index
+      qualityLevel' = fromIntegral qualityLevel
+      lodDistance' = realToFrac lodDistance
+  [C.exp| void { $(Material* ptr)->SetTechnique($(unsigned int index'), $(Technique* tech), $(unsigned int qualityLevel'), $(float lodDistance')) } |]
 
 -- | Set additional vertex shader defines. Separate multiple defines with spaces. Setting defines at the material level causes technique(s) to be cloned as necessary.
 materialSetVertexShaderDefines :: (Parent Material a, Pointer p a, MonadIO m)
