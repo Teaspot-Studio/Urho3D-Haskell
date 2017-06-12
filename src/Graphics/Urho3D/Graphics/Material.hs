@@ -11,6 +11,7 @@ module Graphics.Urho3D.Graphics.Material(
   , materialSetTechnique
   , materialSetTexture
   , materialSetVertexShaderDefines
+  , materialClone
   ) where
 
 import qualified Language.C.Inline as C
@@ -139,3 +140,12 @@ materialSetFillMode p mode = liftIO $ do
   let ptr = parentPointer p
       mode' = fromIntegral . fromEnum $ mode
   [C.exp| void { $(Material* ptr)->SetFillMode((FillMode)$(int mode')) } |]
+
+-- | Clone the material.
+materialClone :: (Parent Material a, Pointer p a, MonadIO m)
+  => p -- ^ Pointer to material or acenstor
+  -> String -- ^ Clone name (default "")
+  -> m (SharedPtr Material)
+materialClone p name = liftIO $ withCString name $ \name' -> do
+  let ptr = parentPointer p
+  peekSharedPtr =<< [C.exp| SharedMaterial* { new SharedPtr<Material>($(Material* ptr)->Clone(String($(const char* name')))) } |]
