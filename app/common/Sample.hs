@@ -372,9 +372,6 @@ whenNothing :: Monad m => Maybe a -> b -> m b -> m b
 whenNothing Nothing _ f = f
 whenNothing (Just _) a _ = return a
 
-clamp :: Ord a => a -> a -> a -> a
-clamp mina maxa = max mina . min maxa
-
 vec3 :: Float -> Vector3
 vec3 a = Vector3 a a a
 

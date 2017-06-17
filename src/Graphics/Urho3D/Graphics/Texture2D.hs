@@ -133,7 +133,7 @@ texture2DSetData p level x y width height datum = liftIO $ do
   let ptr = parentPointer p
       level' = fromIntegral level
       x' = fromIntegral x
-      y' = fromIntegral x
+      y' = fromIntegral y
       width' = fromIntegral width
       height' = fromIntegral height
   toBool <$> [C.exp| int { (int)$(Texture2D* ptr)->SetData($(int level'), $(int x'), $(int y'), $(int width'), $(int height'), $(void* datum)) } |]

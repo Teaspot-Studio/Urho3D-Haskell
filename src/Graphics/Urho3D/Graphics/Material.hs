@@ -84,12 +84,12 @@ materialSetTechnique :: (Parent Material a, Pointer p a, MonadIO m)
   -> Word -- ^ quality level (default 0)
   -> Float -- ^ lod distance (default 0.0)
   -> m ()
-materialSetTechnique p index tech qualityLevel lodDistance = liftIO $ do
+materialSetTechnique p i tech qualityLevel lodDistance = liftIO $ do
   let ptr = parentPointer p
-      index' = fromIntegral index
+      i' = fromIntegral i
       qualityLevel' = fromIntegral qualityLevel
       lodDistance' = realToFrac lodDistance
-  [C.exp| void { $(Material* ptr)->SetTechnique($(unsigned int index'), $(Technique* tech), $(unsigned int qualityLevel'), $(float lodDistance')) } |]
+  [C.exp| void { $(Material* ptr)->SetTechnique($(unsigned int i'), $(Technique* tech), $(unsigned int qualityLevel'), $(float lodDistance')) } |]
 
 -- | Set additional vertex shader defines. Separate multiple defines with spaces. Setting defines at the material level causes technique(s) to be cloned as necessary.
 materialSetVertexShaderDefines :: (Parent Material a, Pointer p a, MonadIO m)

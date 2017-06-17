@@ -19,14 +19,15 @@ import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Monad
 import Data.Monoid
-import Foreign 
+import Foreign
 import System.IO.Unsafe (unsafePerformIO)
 
 import Graphics.Urho3D.Core.Object
-import Graphics.Urho3D.Scene.Serializable
-import Graphics.Urho3D.Scene.Animatable
-import Graphics.Urho3D.UI.Element
+import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Parent
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.UI.Element
 
 C.context (C.cppCtx <> sharedTextPtrCntx <> textCntx <> contextContext <> uiElementContext <> fontContext <> animatableContext <> serializableContext <> objectContext)
 C.include "<Urho3D/UI/Text.h>"
@@ -44,10 +45,8 @@ instance Creatable (Ptr Text) where
 deriveParents [''Object, ''Serializable, ''Animatable, ''UIElement] ''Text
 
 instance UIElem Text where
-  uiElemType _ = unsafePerformIO $ [C.block| StringHash* {
-      static StringHash h = Text::GetTypeStatic();
-      return &h;
-    } |]
+  uiElemType _ = unsafePerformIO $ StringHash . fromIntegral <$> [C.exp|
+    unsigned int { Text::GetTypeStatic().Value() } |]
 
 sharedPtr "Text"
 
