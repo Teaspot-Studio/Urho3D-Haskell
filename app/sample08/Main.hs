@@ -91,7 +91,7 @@ createScene app = do
   -- Set same volume as the Octree, set a close bluish fog and some ambient light
   zoneSetBoundingBox zone $ BoundingBox (-1000) 1000
   zoneSetAmbientColor zone $ rgb 0.15 0.15 0.15
-  zoneSetFogColor $ rgb 0.5 0.5 0.7
+  zoneSetFogColor zone $ rgb 0.5 0.5 0.7
   zoneSetFogStart zone 100
   zoneSetFogEnd zone 300
 
@@ -101,9 +101,9 @@ createScene app = do
   (light :: Ptr Light) <- fromJustTrace "Light" <$> nodeCreateComponent lightNode Nothing Nothing
   lightSetLightType light LT'Directional
   drawableSetCastShadows light True
-  lightSetShadowBias $ BiasParameters 0.00025 0.5
+  lightSetShadowBias light $ BiasParameters 0.00025 0.5
   -- Set cascade splits at 10, 50 and 200 world units, fade shadows out at 80% of maximum shadow distance
-  lightSetShadowCascade $ CascadeParameters 10 50 200 0 0.8
+  lightSetShadowCascade light $ CascadeParameters 10 50 200 1000 0 0.8
 
   -- Create some mushrooms
   let numMushrooms = 240
@@ -127,14 +127,14 @@ createScene app = do
   -- rendering to a low-resolution depth-only buffer to test the objects in the view frustum for visibility
   let numBoxes = 20
   replicateM_ numBoxes $ do
-    boxNode <- nodeCreateChild scene "Box" Nothing Nothing
+    boxNode <- nodeCreateChild scene "Box" CM'Local 0
     r1 <- randomUp 10
     let size = 1 + r1
     r2 <- randomUp 80
     r3 <- randomUp 80
     nodeSetPosition boxNode $ Vector3 (r2 - 40) (size * 0.5) (r3 - 40)
-    nodeSetScale boxNode size
-    boxObject :: Ptr StaticModel <- nodeCreateComponent boxNode Nothing Nothing
+    nodeSetScale boxNode $ Vector3 size size size
+    boxObject :: Ptr StaticModel <- fromJustTrace "Box model" <$> nodeCreateComponent boxNode Nothing Nothing
     boxModel :: Ptr Model <- fromJustTrace "Box.mdl" <$> cacheGetResource cache "Models/Box.mdl" True
     boxMaterial :: Ptr Material <- fromJustTrace "Stone.xml" <$> cacheGetResource cache "Materials/Stone.xml" True
     staticModelSetModel boxObject boxModel
@@ -143,7 +143,7 @@ createScene app = do
     when (size > 3) $ drawableSetOccluder boxObject True
 
   -- Create the camera. Limit far clip distance to match the fog
-  cameraNode <- nodeCreateChild scene "Camera" CM'Replicated 0
+  cameraNode <- nodeCreateChild scene "Camera" CM'Local 0
   (cam :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
   cameraSetFarClip cam 300
 
@@ -164,7 +164,7 @@ createUI app = do
   -- control the camera, and when visible, it will point the raycast target
   style :: Ptr XMLFile <- fromJustTrace "DefaultStyle.xml" <$> cacheGetResource app "UI/DefaultStyle.xml" True
   cursor :: SharedPtr Cursor <- newSharedObject context
-  uiElementSetStyleAuto style
+  uiElementSetStyleAuto cursor style
   uiSetCursor cursor
   -- Set starting position of the cursor at the rendering window center
   graphics :: Ptr Graphics <- fromJustTrace "Graphics" <$> getSubsystem app
@@ -178,7 +178,7 @@ createUI app = do
   font :: Ptr Font <- fromJustTrace "Anonymous Pro.ttf" <$> cacheGetResource cache "Fonts/Anonymous Pro.ttf" True
   textSetFont instructionText font 15
   -- The text has multiple rows. Center them in relation to each other
-  textSetTextAlignment instructionText HA'Center
+  textSetTextAlignment instructionText AlignmentHorizontalCenter
 
   -- Position the text relative to the screen center
   uiElementSetAlignment instructionText AlignmentHorizontalCenter AlignmentVerticalCenter
