@@ -14,6 +14,13 @@ module Graphics.Urho3D.UI.Cursor(
   , HasSystemDefined(..)
   , HasSystemCursor(..)
   , cursorContext
+  , cursorDefineShapeByName
+  , cursorDefineShape
+  , cursorSetShapeByName
+  , cursorSetShape
+  , cursorSetUseSystemShapes
+  , cursorGetShape
+  , cursorGetUseSystemShapes
   ) where
 
 import qualified Language.C.Inline as C
@@ -21,6 +28,7 @@ import qualified Language.C.Inline.Cpp as C
 
 import Data.Monoid
 import Foreign
+import Foreign.C
 import Graphics.Urho3D.UI.Internal.Cursor
 import System.IO.Unsafe (unsafePerformIO)
 import Text.RawString.QQ
@@ -135,3 +143,82 @@ instance Storable CursorShapeInfo where
     where
       _cursorShapeInfoSystemDefined' = fromBool _cursorShapeInfoSystemDefined
       _cursorShapeInfoSystemCursor' = fromIntegral _cursorShapeInfoSystemCursor
+
+-- | Define a shape.
+cursorDefineShapeByName :: (Parent Cursor a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to Cursor or ascentor
+  -> String -- ^ shape
+  -> Ptr Image -- ^ image
+  -> IntRect -- ^ image rect
+  -> IntVector2 -- ^ hot spot
+  -> m ()
+cursorDefineShapeByName p shape img imgrect hspot = liftIO $ withCString shape $ \shape' -> with imgrect $ \imgrect' -> with hspot $ \hspot' -> do
+  let ptr = parentPointer p
+  [C.exp| void { $(Cursor* ptr)->DefineShape(String($(const char* shape')), $(Image* img), *$(IntRect* imgrect'), *$(IntVector2* hspot')) } |]
+-- void DefineShape(const String& shape, Image* image, const IntRect& imageRect, const IntVector2& hotSpot);
+
+-- | Define a shape.
+cursorDefineShape :: (Parent Cursor a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to Cursor or ascentor
+  -> CursorShape -- ^ shape
+  -> Ptr Image -- ^ image
+  -> IntRect -- ^ image rect
+  -> IntVector2 -- ^ hot spot
+  -> m ()
+cursorDefineShape p shape img imgrect hspot = liftIO $ with imgrect $ \imgrect' -> with hspot $ \hspot' -> do
+  let ptr = parentPointer p
+      shape' = fromIntegral . fromEnum $ shape
+  [C.exp| void { $(Cursor* ptr)->DefineShape((CursorShape)$(int shape'), $(Image* img), *$(IntRect* imgrect'), *$(IntVector2* hspot')) } |]
+-- void DefineShape(CursorShape shape, Image* image, const IntRect& imageRect, const IntVector2& hotSpot);
+
+-- | Set current shape.
+cursorSetShapeByName :: (Parent Cursor a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to Cursor or ascentor
+  -> String -- ^ shape
+  -> m ()
+cursorSetShapeByName p shape = liftIO $ withCString shape $ \shape' -> do
+  let ptr = parentPointer p
+  [C.exp| void { $(Cursor* ptr)->SetShape(String($(const char* shape'))) } |]
+-- void SetShape(const String& shape);
+
+-- | Set current shape.
+cursorSetShape :: (Parent Cursor a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to Cursor or ascentor
+  -> CursorShape -- ^ shape
+  -> m ()
+cursorSetShape p shape = liftIO $ do
+  let ptr = parentPointer p
+      shape' = fromIntegral . fromEnum $ shape
+  [C.exp| void { $(Cursor* ptr)->SetShape((CursorShape)$(int shape')) } |]
+-- void SetShape(CursorShape shape);
+
+-- | Set whether to use system default shapes. Is only possible when the OS mouse cursor has been set visible from the Input subsystem.
+cursorSetUseSystemShapes :: (Parent Cursor a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to Cursor or ascentor
+  -> Bool -- ^ enable
+  -> m ()
+cursorSetUseSystemShapes p enable = liftIO $ do
+  let ptr = parentPointer p
+      enable' = fromBool enable
+  [C.exp| void { $(Cursor* ptr)->SetUseSystemShapes($(int enable') != 0) } |]
+-- void SetUseSystemShapes(bool enable);
+
+
+-- | Get current shape.
+cursorGetShape :: (Parent Cursor a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to Cursor or ascentor
+  -> m String
+cursorGetShape p = liftIO $ do
+  let ptr = parentPointer p
+  peekCString =<< [C.exp| const char* { $(Cursor* ptr)->GetShape().CString() } |]
+-- const String& GetShape() const { return shape_; }
+
+
+-- | Return whether is using system default shapes.
+cursorGetUseSystemShapes :: (Parent Cursor a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to Cursor or ascentor
+  -> m Bool
+cursorGetUseSystemShapes p = liftIO $ do
+  let ptr = parentPointer p
+  toBool <$> [C.exp| int { (int)$(Cursor* ptr)->GetUseSystemShapes() } |]
+-- bool GetUseSystemShapes() const { return useSystemShapes_; }

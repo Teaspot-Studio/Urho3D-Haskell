@@ -224,7 +224,7 @@ moveCamera app cameraNode t camData = do
 
     -- Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
     cursor <- uiCursor ui
-    isVisible <- cursorIsVisible cursor
+    isVisible <- uiElementIsVisible cursor
     (yaw, pitch) <- if isVisible then do
         mouseMove <- inputGetMouseMove input
         let yaw = camYaw camData + mouseSensitivity * fromIntegral (mouseMove ^. x)
