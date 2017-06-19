@@ -2,6 +2,8 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Graphics.Urho3D.Graphics.Texture(
     Texture
+  , SharedTexture
+  , WeakTexture
   , textureContext
   , textureLevels
   , textureWidth
@@ -15,19 +17,25 @@ module Graphics.Urho3D.Graphics.Texture(
 import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
+import Data.Monoid
+import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Graphics.Defs
 import Graphics.Urho3D.Graphics.Internal.Texture
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
-import Data.Monoid
 
-C.context (C.cppCtx <> textureCntx <> stringHashContext)
+C.context (C.cppCtx <> textureCntx <> stringHashContext <> sharedTexturePtrCntx <> weakTexturePtrCntx)
 C.include "<Urho3D/Graphics/Texture.h>"
 C.include "<iostream>"
 C.using "namespace Urho3D"
 
 textureContext :: C.Context
 textureContext = textureCntx
+  <> sharedTexturePtrCntx
+  <> weakTexturePtrCntx
+
+sharedPtr "Texture"
+sharedWeakPtr "Texture"
 
 textureLevels :: (Parent Texture a, Pointer p a, MonadIO m) => p -> m Int
 textureLevels ptr = liftIO $ do

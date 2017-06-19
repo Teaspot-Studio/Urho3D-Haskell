@@ -223,12 +223,17 @@ moveCamera app cameraNode t camData = do
     let mouseSensitivity = 0.1
 
     -- Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
-    mouseMove <- inputGetMouseMove input
-    let yaw = camYaw camData + mouseSensitivity * fromIntegral (mouseMove ^. x)
-    let pitch = clamp (-90) 90 $ camPitch camData + mouseSensitivity * fromIntegral (mouseMove ^. y)
+    cursor <- uiCursor ui
+    isVisible <- cursorIsVisible cursor
+    (yaw, pitch) <- if isVisible then do
+        mouseMove <- inputGetMouseMove input
+        let yaw = camYaw camData + mouseSensitivity * fromIntegral (mouseMove ^. x)
+        let pitch = clamp (-90) 90 $ camPitch camData + mouseSensitivity * fromIntegral (mouseMove ^. y)
 
-    -- Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
-    nodeSetRotation cameraNode $ quaternionFromEuler pitch yaw 0
+        -- Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
+        nodeSetRotation cameraNode $ quaternionFromEuler pitch yaw 0
+        pure (yaw, pitch)
+      else pure (camYaw camData, camPitch camData)
 
     -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     -- Use the Translate() function (default local space) to move relative to the node's orientation.
