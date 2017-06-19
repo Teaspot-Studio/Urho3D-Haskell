@@ -162,10 +162,11 @@ createUI app = do
 
   -- Create a Cursor UI element because we want to be able to hide and show it at will. When hidden, the mouse cursor will
   -- control the camera, and when visible, it will point the raycast target
-  style :: Ptr XMLFile <- fromJustTrace "DefaultStyle.xml" <$> cacheGetResource app "UI/DefaultStyle.xml" True
+  style :: Ptr XMLFile <- fromJustTrace "DefaultStyle.xml" <$> cacheGetResource cache "UI/DefaultStyle.xml" True
   cursor :: SharedPtr Cursor <- newSharedObject context
   uiElementSetStyleAuto cursor style
-  uiSetCursor cursor
+  uiSetCursor ui $ pointer cursor
+
   -- Set starting position of the cursor at the rendering window center
   graphics :: Ptr Graphics <- fromJustTrace "Graphics" <$> getSubsystem app
   w <- graphicsGetWidth graphics
