@@ -19,6 +19,7 @@ import Graphics.Urho3D.Graphics.Material as X
 import Graphics.Urho3D.Graphics.Model as X
 import Graphics.Urho3D.Graphics.ModelMorph as X
 import Graphics.Urho3D.Graphics.Octree as X
+import Graphics.Urho3D.Graphics.OctreeQuery as X
 import Graphics.Urho3D.Graphics.Renderer as X
 import Graphics.Urho3D.Graphics.RenderSurface as X
 import Graphics.Urho3D.Graphics.Skeleton as X

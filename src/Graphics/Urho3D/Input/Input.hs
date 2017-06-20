@@ -30,6 +30,11 @@ module Graphics.Urho3D.Input.Input(
   , toSDLController
   , fromSDLJoystick
   , fromSDLController
+  , mouseButtonLeft
+  , mouseButtonMiddle
+  , mouseButtonRight
+  , mouseButtonX1
+  , mouseButtonX2
   -- * Input API
   , inputContext
   , mousePoistionOffscreen

@@ -1,6 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Graphics.Urho3D.Graphics.Drawable(
     Drawable
+  , PODVectorDrawablePtr
   , VectorSourceBatch
   , SourceBatch(..)
   , HasDistance(..)
@@ -124,7 +126,10 @@ C.using "namespace Urho3D"
 
 C.verbatim "typedef Vector<SourceBatch> VectorSourceBatch;"
 C.verbatim "typedef PODVector<Light*> PODVectorLightPtr;"
+C.verbatim "typedef PODVector<Drawable*> PODVectorDrawablePtr;"
 C.verbatim "typedef SharedPtr<Material> SharedMaterial;"
+
+podVectorPtr "Drawable"
 
 drawableContext :: C.Context
 drawableContext = drawableCntx <> componentContext <> stringHashContext <> vectorSourceBatchCntx

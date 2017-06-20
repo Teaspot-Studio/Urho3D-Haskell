@@ -2,11 +2,11 @@ module Graphics.Urho3D.Input.Internal.Input(
     Input
   , MouseMode(..)
   , TouchState(..)
-  , touchedElement 
-  , touchID 
-  , touchPosition 
-  , touchLastPosition 
-  , touchDelta 
+  , touchedElement
+  , touchID
+  , touchPosition
+  , touchLastPosition
+  , touchDelta
   , touchPressure
   , inputCntx
   , JoystickState(..)
@@ -28,6 +28,11 @@ module Graphics.Urho3D.Input.Internal.Input(
   , toSDLController
   , fromSDLJoystick
   , fromSDLController
+  , mouseButtonLeft
+  , mouseButtonMiddle
+  , mouseButtonRight
+  , mouseButtonX1
+  , mouseButtonX2
   ) where
 
 import qualified Language.C.Inline as C
@@ -40,22 +45,22 @@ import Graphics.Urho3D.Math.Internal.Vector2
 import qualified Data.Map as Map
 import Control.Lens
 import Control.DeepSeq
-import GHC.Generics 
-import Foreign 
+import GHC.Generics
+import Foreign
 
-import qualified Data.Vector.Unboxed as VU 
-import qualified SDL.Raw.Types as SDL 
+import qualified Data.Vector.Unboxed as VU
+import qualified SDL.Raw.Types as SDL
 
 import Graphics.Urho3D.Graphics.Internal.Skeleton
 
-data Input 
+data Input
 
 -- | Input Mouse Modes.
 data MouseMode =
     MM'Absolute
   | MM'Relative
-  | MM'Wrap 
-  | MM'Free 
+  | MM'Wrap
+  | MM'Free
   | MM'Invalid
   deriving (Eq, Ord, Show, Enum, Bounded, Generic)
 
@@ -66,9 +71,9 @@ data TouchState = TouchState {
 -- | Last touched UI element from screen joystick.
   _touchedElement :: !(WeakPtr UIElement)
 -- | Touch (finger) ID.
-, _touchID :: !Int 
+, _touchID :: !Int
 -- | Position in screen coordinates.
-, _touchPosition :: !IntVector2 
+, _touchPosition :: !IntVector2
 -- | Last position in screen coordinates.
 , _touchLastPosition :: !IntVector2
 -- | Movement since last frame.
@@ -77,7 +82,7 @@ data TouchState = TouchState {
 , _touchPressure :: !Float
 } deriving Generic
 
-makeLenses ''TouchState 
+makeLenses ''TouchState
 
 -- | Input state for a joystick.
 data JoystickState = JoystickState {
@@ -90,12 +95,12 @@ data JoystickState = JoystickState {
 , _joystickStateButtonPress :: !(VU.Vector Bool) -- ^ Button pressed on this frame
 , _joystickStateAxes :: !(VU.Vector Float) -- ^ Axis poistion from -1 to 1.
 , _joystickStateHats :: !(VU.Vector Int) -- ^ POV hat bits
-} deriving Generic 
+} deriving Generic
 
 makeFields ''JoystickState
 
 instance NFData TouchState where
-  rnf TouchState{..} = 
+  rnf TouchState{..} =
     _touchedElement `seq`
     _touchID `deepseq`
     _touchPosition `deepseq`
@@ -107,10 +112,10 @@ data SDL_Joystick
 data SDL_GameController
 
 toSDLJoystick :: Ptr SDL_Joystick -> SDL.Joystick
-toSDLJoystick = castPtr 
+toSDLJoystick = castPtr
 
 toSDLController :: Ptr SDL_GameController -> SDL.GameController
-toSDLController = castPtr 
+toSDLController = castPtr
 
 fromSDLJoystick :: SDL.Joystick -> Ptr SDL_Joystick
 fromSDLJoystick = castPtr
@@ -118,7 +123,22 @@ fromSDLJoystick = castPtr
 fromSDLController :: SDL.GameController -> Ptr SDL_GameController
 fromSDLController = castPtr
 
-inputCntx :: C.Context 
+mouseButtonLeft :: Int
+mouseButtonLeft = fromIntegral [C.pure| int { MOUSEB_LEFT }|]
+
+mouseButtonMiddle :: Int
+mouseButtonMiddle = fromIntegral [C.pure| int { MOUSEB_MIDDLE }|]
+
+mouseButtonRight :: Int
+mouseButtonRight = fromIntegral [C.pure| int { MOUSEB_Right }|]
+
+mouseButtonX1 :: Int
+mouseButtonX1 = fromIntegral [C.pure| int { MOUSEB_X1 }|]
+
+mouseButtonX2 :: Int
+mouseButtonX2 = fromIntegral [C.pure| int { MOUSEB_X2 }|]
+
+inputCntx :: C.Context
 inputCntx = mempty {
     C.ctxTypesTable = Map.fromList [
       (C.TypeName "Input", [t| Input |])
@@ -128,4 +148,4 @@ inputCntx = mempty {
     , (C.TypeName "SDL_Joystick", [t| SDL_Joystick |])
     , (C.TypeName "SDL_GameController", [t| SDL_GameController |])
     ]
-  } 
+  }

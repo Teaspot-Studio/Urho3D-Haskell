@@ -249,6 +249,10 @@ moveCamera app cameraNode t camData = do
     -- Toggle debug geometry with space
     spacePressed <- inputGetKeyPress input KeySpace
 
+    -- Paint decal with the left mousebutton; cursor must be visible
+    isMouseBtn <- inputGetMouseButtonPress input mouseButtonLeft
+    when (isVisible && isMouseBtn) $ paintDecal app
+
     return camData {
         camYaw = yaw
       , camPitch = pitch
@@ -257,31 +261,46 @@ moveCamera app cameraNode t camData = do
   where
     mul (Vector3 a b c) v = Vector3 (a*v) (b*v) (c*v)
 
--- | Rotate lights and billboards
-animateScene :: SampleRef -> Float -> IO ()
-animateScene sr timeStep = do
-  sr <- readIORef sr
-  let scene = sr ^. sampleScene
-  lightNodes :: [Ptr Node] <- nodeGetChildrenWithComponent scene (Proxy @Light) False
-  billboardNodes :: [Ptr Node] <- nodeGetChildrenWithComponent scene (Proxy @BillboardSet) False
+paintDecal :: SharedPtr Application -> Ptr Node -> IO ()
+paintDecal app cameraNode = do
+  mres <- raycast 250
+  whenJust mres $ \(hitPos, hitDrawable) -> do
+    -- Check if target scene node already has a DecalSet component. If not, create now
+    targetNode <- drawableGetNode hitDrawable
+    mdecal :: Maybe (Ptr DecalSet) <- nodeGetComponent targetNode True
+    decal <- case mdecal of
+      Nothing -> do
+        cache :: Ptr ResourceCache <- fromJustTrace "ResourceCache" <$> getSubsystem app
+        decal :: Ptr DecalSet <- fromJustTrace "DecalSet" <$> nodeCreateComponent targetNode Nothing Nothing
+        decalMat :: Ptr Material <- fromJustTrace "UrhoDecal.xml" <$> cacheGetResource cache "Materials/UrhoDecal.xml" True
+        decalSetSetMaterial decal decalMat
+        pure decal
+      Just decal -> pure decal
 
-  let lightRotationSpeed = 20
-      billboardRotationSpeed = 50
+    -- Add a square decal to the decal set using the geometry of the drawable that was hit, orient it to face the camera,
+    -- use full texture UV's (0,0) to (1,1). Note that if we create several decals to a large object (such as the ground
+    -- plane) over a large area using just one DecalSet component, the decals will all be culled as one unit. If that is
+    -- undesirable, it may be necessary to create more than one DecalSet based on the distance
+    camRot <- nodeGetRotation cameraNode
+    decalSetAddDecal decal hitDrawable hitPos camRot 0.5 1.0 1.0 0 1
 
-  -- Rotate the lights around the world Y-axis
-  forM_ lightNodes $ \node ->
-    nodeRotate node (quaternionFromEuler 0 (lightRotationSpeed * timeStep) 0) TS'World
-
-  -- Rotate the individual billboards within the billboard sets, then recommit to make the changes visible
-  forM_ billboardNodes $ \node -> do
-    mc <- nodeGetComponent node False
-    whenJust mc $ \(bset :: Ptr BillboardSet) -> do
-      n <- billboardSetGetNumBillboards bset
-      forM_ [0 .. n-1] $ \i -> do
-        bb <- billboardSetGetBillboard bset i
-        billboardSetSetBillboard bset i $ bb
-          & rotation +~ billboardRotationSpeed * timeStep
-      billboardSetCommit bset
+raycast :: SharedPtr Application -> Ptr Node -> Float -> IO (Maybe (Vector3, Ptr Drawable))
+raycast app cameraNode maxDistance = do
+  ui :: Ptr UI <- fromJustTrace "UI" <$> getSubsystem app
+  pos <- uiGetCursorPosition ui
+  -- Check the cursor is visible and there is no UI element in front of the cursor
+  cursor <- uiCursor ui
+  isVisible <- uiElementIsVisible cursor
+  mres <- uiElementGetElementAt ui pos True
+  if not isVisible || isJust mres then pure Nothing
+    else do
+      graphics :: Ptr Graphics <- fromJustTrace "Graphics" <$> getSubsystem app
+      camera :: Ptr Camera <- fromJustTrace "Camera" <$> nodeGetComponent cameraNode True
+      width <- graphicsGetWidth graphics
+      height <- graphicsGetHeight graphics
+      cameraRay <- cameraGetScreenRay camera (fromIntegral (pos ^. x) / fromIntegral width) (fromIntegral (pos ^. y) / fromIntegral height)
+      -- Pick only geometry objects, not eg. zones or lights, only get the first (closest) hit
+      let query = RayOctreeQuery
 
 -- | Subscribe to application-wide logic update events.
 subscribeToEvents :: SampleRef -> Ptr Node -> IO ()
@@ -302,7 +321,6 @@ handleUpdate sr cameraNode camDataRef e = do
   camData <- readIORef camDataRef
   -- Move the camera and animate the scene, scale movement with time step
   writeIORef camDataRef =<< moveCamera app cameraNode t camData
-  animateScene sr t
 
 handlePostRenderUpdate :: SharedPtr Application -> IORef CameraData -> EventPostRenderUpdate -> IO ()
 handlePostRenderUpdate app camDataRef _ = do

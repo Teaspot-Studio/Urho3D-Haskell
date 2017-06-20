@@ -73,6 +73,7 @@ library
                        Graphics.Urho3D.Graphics.Model
                        Graphics.Urho3D.Graphics.ModelMorph
                        Graphics.Urho3D.Graphics.Octree
+                       Graphics.Urho3D.Graphics.OctreeQuery
                        Graphics.Urho3D.Graphics.Renderer
                        Graphics.Urho3D.Graphics.RenderSurface
                        Graphics.Urho3D.Graphics.Skeleton
@@ -173,6 +174,7 @@ library
                        Graphics.Urho3D.Graphics.Internal.ModelInstances
                        Graphics.Urho3D.Graphics.Internal.ModelMorph
                        Graphics.Urho3D.Graphics.Internal.Octree
+                       Graphics.Urho3D.Graphics.Internal.OctreeQuery
                        Graphics.Urho3D.Graphics.Internal.Renderer
                        Graphics.Urho3D.Graphics.Internal.RenderSurface
                        Graphics.Urho3D.Graphics.Internal.Skeleton
@@ -263,6 +265,7 @@ library
                        src/Graphics/Urho3D/Graphics/Model.cpp
                        src/Graphics/Urho3D/Graphics/ModelMorph.cpp
                        src/Graphics/Urho3D/Graphics/Octree.cpp
+                       src/Graphics/Urho3D/Graphics/OctreeQuery.cpp
                        src/Graphics/Urho3D/Graphics/Renderer.cpp
                        src/Graphics/Urho3D/Graphics/RenderSurface.cpp
                        src/Graphics/Urho3D/Graphics/Skeleton.cpp
@@ -625,9 +628,9 @@ executable urho3d-haskell-sample08
   default-language:    Haskell2010
 
   if flag(examples)
-    Buildable: False
+    Buildable: True
   else
-    Buildable: False
+    Buildable: True
 
 executable urho3d-haskell-sample34
   hs-source-dirs:      app/sample34, app/common
