@@ -300,7 +300,8 @@ raycast app cameraNode maxDistance = do
       height <- graphicsGetHeight graphics
       cameraRay <- cameraGetScreenRay camera (fromIntegral (pos ^. x) / fromIntegral width) (fromIntegral (pos ^. y) / fromIntegral height)
       -- Pick only geometry objects, not eg. zones or lights, only get the first (closest) hit
-      let query = RayOctreeQuery
+      withObject ()
+      query <- newObject
 
 -- | Subscribe to application-wide logic update events.
 subscribeToEvents :: SampleRef -> Ptr Node -> IO ()

@@ -28,11 +28,6 @@ module Graphics.Urho3D.Input.Internal.Input(
   , toSDLController
   , fromSDLJoystick
   , fromSDLController
-  , mouseButtonLeft
-  , mouseButtonMiddle
-  , mouseButtonRight
-  , mouseButtonX1
-  , mouseButtonX2
   ) where
 
 import qualified Language.C.Inline as C
@@ -122,21 +117,6 @@ fromSDLJoystick = castPtr
 
 fromSDLController :: SDL.GameController -> Ptr SDL_GameController
 fromSDLController = castPtr
-
-mouseButtonLeft :: Int
-mouseButtonLeft = fromIntegral [C.pure| int { MOUSEB_LEFT }|]
-
-mouseButtonMiddle :: Int
-mouseButtonMiddle = fromIntegral [C.pure| int { MOUSEB_MIDDLE }|]
-
-mouseButtonRight :: Int
-mouseButtonRight = fromIntegral [C.pure| int { MOUSEB_Right }|]
-
-mouseButtonX1 :: Int
-mouseButtonX1 = fromIntegral [C.pure| int { MOUSEB_X1 }|]
-
-mouseButtonX2 :: Int
-mouseButtonX2 = fromIntegral [C.pure| int { MOUSEB_X2 }|]
 
 inputCntx :: C.Context
 inputCntx = mempty {

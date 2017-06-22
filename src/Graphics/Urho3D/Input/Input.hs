@@ -778,3 +778,18 @@ inputIsMinimized :: (Parent Input a, Pointer p a, MonadIO m)
 inputIsMinimized p = liftIO $ do
   let ptr = parentPointer p
   toBool <$> [C.exp| int { (int) $(Input* ptr)->IsMinimized() } |]
+
+mouseButtonLeft :: Int
+mouseButtonLeft = fromIntegral [C.pure| int { MOUSEB_LEFT }|]
+
+mouseButtonMiddle :: Int
+mouseButtonMiddle = fromIntegral [C.pure| int { MOUSEB_MIDDLE }|]
+
+mouseButtonRight :: Int
+mouseButtonRight = fromIntegral [C.pure| int { MOUSEB_RIGHT }|]
+
+mouseButtonX1 :: Int
+mouseButtonX1 = fromIntegral [C.pure| int { MOUSEB_X1 }|]
+
+mouseButtonX2 :: Int
+mouseButtonX2 = fromIntegral [C.pure| int { MOUSEB_X2 }|]

@@ -63,6 +63,7 @@ library
                        Graphics.Urho3D.Graphics.BillboardSet
                        Graphics.Urho3D.Graphics.Camera
                        Graphics.Urho3D.Graphics.DebugRenderer
+                       Graphics.Urho3D.Graphics.DecalSet
                        Graphics.Urho3D.Graphics.Defs
                        Graphics.Urho3D.Graphics.Drawable
                        Graphics.Urho3D.Graphics.Geometry
@@ -163,6 +164,7 @@ library
                        Graphics.Urho3D.Graphics.Internal.BillboardSetInstances
                        Graphics.Urho3D.Graphics.Internal.Camera
                        Graphics.Urho3D.Graphics.Internal.DebugRenderer
+                       Graphics.Urho3D.Graphics.Internal.DecalSet
                        Graphics.Urho3D.Graphics.Internal.Defs
                        Graphics.Urho3D.Graphics.Internal.Drawable
                        Graphics.Urho3D.Graphics.Internal.Geometry
@@ -253,6 +255,7 @@ library
                        src/Graphics/Urho3D/Graphics/BillboardSet.cpp
                        src/Graphics/Urho3D/Graphics/Camera.cpp
                        src/Graphics/Urho3D/Graphics/DebugRenderer.cpp
+                       src/Graphics/Urho3D/Graphics/DecalSet.cpp
                        src/Graphics/Urho3D/Graphics/Defs.cpp
                        src/Graphics/Urho3D/Graphics/Drawable.cpp
                        src/Graphics/Urho3D/Graphics/Geometry.cpp
@@ -628,9 +631,9 @@ executable urho3d-haskell-sample08
   default-language:    Haskell2010
 
   if flag(examples)
-    Buildable: True
+    Buildable: False
   else
-    Buildable: True
+    Buildable: False
 
 executable urho3d-haskell-sample34
   hs-source-dirs:      app/sample34, app/common
