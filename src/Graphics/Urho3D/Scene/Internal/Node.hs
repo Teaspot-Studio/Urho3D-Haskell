@@ -20,7 +20,7 @@ import qualified Data.Map as Map
 data Node
 data VectorSharedNodePtr
 
-nodeCntx :: C.Context 
+nodeCntx :: C.Context
 nodeCntx = mempty {
     C.ctxTypesTable = Map.fromList [
       (C.TypeName "Node", [t| Node |])
@@ -28,6 +28,6 @@ nodeCntx = mempty {
     ]
   }
 
-sharedPtrImpl "Node" 
-sharedWeakPtrImpl "Node" 
+sharedPtrImpl "Node"
+sharedWeakPtrImpl "Node"
 podVectorPtrImpl "Node"

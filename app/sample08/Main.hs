@@ -35,7 +35,7 @@ import Control.Monad
 import Data.Bits
 import Data.IORef
 import Data.Proxy
-import Foreign
+import Foreign hiding (void)
 import Graphics.Urho3D
 import Sample
 
@@ -251,7 +251,7 @@ moveCamera app cameraNode t camData = do
 
     -- Paint decal with the left mousebutton; cursor must be visible
     isMouseBtn <- inputGetMouseButtonPress input mouseButtonLeft
-    when (isVisible && isMouseBtn) $ paintDecal app
+    when (isVisible && isMouseBtn) $ paintDecal app cameraNode
 
     return camData {
         camYaw = yaw
@@ -263,10 +263,10 @@ moveCamera app cameraNode t camData = do
 
 paintDecal :: SharedPtr Application -> Ptr Node -> IO ()
 paintDecal app cameraNode = do
-  mres <- raycast 250
-  whenJust mres $ \(hitPos, hitDrawable) -> do
+  mres <- raycast app cameraNode 250
+  void $ whenJust mres $ \(hitPos, hitDrawable) -> do
     -- Check if target scene node already has a DecalSet component. If not, create now
-    targetNode <- drawableGetNode hitDrawable
+    targetNode <- componentGetNode hitDrawable
     mdecal :: Maybe (Ptr DecalSet) <- nodeGetComponent targetNode True
     decal <- case mdecal of
       Nothing -> do
@@ -300,8 +300,9 @@ raycast app cameraNode maxDistance = do
       height <- graphicsGetHeight graphics
       cameraRay <- cameraGetScreenRay camera (fromIntegral (pos ^. x) / fromIntegral width) (fromIntegral (pos ^. y) / fromIntegral height)
       -- Pick only geometry objects, not eg. zones or lights, only get the first (closest) hit
-      withObject ()
-      query <- newObject
+      -- withObject ()
+      -- query <- newObject
+      undefined
 
 -- | Subscribe to application-wide logic update events.
 subscribeToEvents :: SampleRef -> Ptr Node -> IO ()

@@ -230,13 +230,6 @@ data TransformSpace =
   | TS'World
   deriving (Eq, Ord, Show, Bounded, Enum)
 
-class Parent Component a => NodeComponent a where
-  nodeComponentType :: Proxy a -> StringHash
-
-instance NodeComponent Component where
-  nodeComponentType _ = unsafePerformIO $ StringHash . fromIntegral <$> [C.exp|
-    unsigned int { Component::GetTypeStatic().Value() } |]
-
 instance Creatable (Ptr VectorSharedNodePtr) where
   type CreationOptions (Ptr VectorSharedNodePtr) = ()
 
