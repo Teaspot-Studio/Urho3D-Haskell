@@ -1,5 +1,8 @@
 module Graphics.Urho3D.Container.Vector(
-    podVectorPtr
+    vectorPtr
+  , vectorPtr'
+  , vectorPtrImpl
+  , podVectorPtr
   , podVectorPtr'
   , podVectorPtrImpl
   , simpleVector
@@ -22,6 +25,66 @@ import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Template
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
+
+-- | Makes Vector<T*> for given type
+-- Makes following symbols:
+-- instance Creatable VectorTPtr
+-- instance ReadableVector VectorTPtr
+-- instance WriteableVector VectorTPtr
+vectorPtr :: String -> DecsQ
+vectorPtr elemName = vectorPtr' elemName elemName
+
+-- | Same as 'vectorPtr', but you can provide different names for C-side and Haskell-side.
+vectorPtr' :: String -> String -> DecsQ
+vectorPtr' cElemName elemName = do
+  typedef <- C.verbatim $ "typedef " ++ vectorCpp ++ " " ++ vectorT ++ ";"
+  createable <- [d|
+    instance Creatable (Ptr $vectorType) where
+      type CreationOptions (Ptr $vectorType) = ()
+
+      newObject _ = liftIO $(quoteExp C.exp $ vectorT++"* {new "++vectorCpp++"()}")
+      deleteObject _ptr = liftIO $ $(quoteExp C.exp $ "void { delete $("++vectorT++"* _ptr)}")
+    |]
+  readable <- [d|
+    instance ReadableVector $vectorType where
+      type ReadVecElem $vectorType = Ptr $elemType
+
+      foreignVectorLength _ptr = liftIO $ fromIntegral <$> $(quoteExp C.exp $ "unsigned int {$("++vectorT++"* _ptr)->Size()}")
+      foreignVectorElement _ptr _i = liftIO $(quoteExp C.exp $ cElemName ++ "* {(*$("++vectorT++"* _ptr))[$(int _i')]}")
+        where _i' = fromIntegral _i
+    |]
+  writeable <- [d|
+    instance WriteableVector $vectorType where
+      type WriteVecElem $vectorType = Ptr $elemType
+
+      foreignVectorAppend _ptr _elem = liftIO $(quoteExp C.exp $ "void {$("++vectorT++"* _ptr)->Push($("++cElemName++"* _elem))}")
+    |]
+  return $ typedef ++ createable ++ readable ++ writeable
+  where
+    vectorType = conT $ mkName vectorT
+    elemType = conT $ mkName elemName
+    vectorT = "Vector" ++ elemName ++ "Ptr"
+    vectorCpp = "Vector<" ++ elemName ++ "*>"
+
+-- | Makes internal representation of Vector<T*> for given type
+-- Makes following symbols:
+-- data VectorTPtr
+-- vectorTPtrCntx :: C.Context
+vectorPtrImpl :: String -> DecsQ
+vectorPtrImpl elemName = sequence [
+    return $ DataD [] (mkName vectorT) [] Nothing [] []
+  , vectorTPtrCntx ^:: [t| C.Context |]
+  , vectorTPtrCntx ^= [e| mempty {
+        C.ctxTypesTable = Map.fromList [
+          (C.TypeName $cTType, $cntxTType)
+        ]
+    } |]
+  ]
+  where
+    vectorT = "Vector" ++ elemName ++ "Ptr"
+    vectorTPtrCntx = "vector" ++ elemName ++ "PtrCntx"
+    cTType = return $ LitE $ StringL vectorT
+    cntxTType = [e| return $ ConT $ mkName $cTType |]
 
 -- | Makes PODVector<T*> for given type
 -- Makes following symbols:

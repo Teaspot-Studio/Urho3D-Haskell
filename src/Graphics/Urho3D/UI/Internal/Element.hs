@@ -1,5 +1,5 @@
 module Graphics.Urho3D.UI.Internal.Element(
-    UIElement 
+    UIElement
   , uiElementCntx
   , sharedUIElementPtrCntx
   , SharedUIElement
@@ -7,6 +7,8 @@ module Graphics.Urho3D.UI.Internal.Element(
   , WeakUIElement
   , PODVectorUIElementPtr
   , podVectorUIElementPtrCntx
+  , VectorUIElementPtr
+  , vectorUIElementPtrCntx
   ) where
 
 import qualified Language.C.Inline as C
@@ -18,13 +20,14 @@ import qualified Data.Map as Map
 
 data UIElement
 
-uiElementCntx :: C.Context 
+uiElementCntx :: C.Context
 uiElementCntx = mempty {
     C.ctxTypesTable = Map.fromList [
       (C.TypeName "UIElement", [t| UIElement |])
     ]
-  } 
+  }
 
 sharedPtrImpl "UIElement"
 sharedWeakPtrImpl "UIElement"
 podVectorPtrImpl "UIElement"
+vectorPtrImpl "UIElement"

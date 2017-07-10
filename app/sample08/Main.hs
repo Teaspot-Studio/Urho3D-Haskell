@@ -34,6 +34,7 @@ import Control.Lens hiding (Context, element)
 import Control.Monad
 import Data.Bits
 import Data.IORef
+import Data.Maybe
 import Data.Proxy
 import Foreign hiding (void)
 import Graphics.Urho3D
@@ -291,7 +292,7 @@ raycast app cameraNode maxDistance = do
   -- Check the cursor is visible and there is no UI element in front of the cursor
   cursor <- uiCursor ui
   isVisible <- uiElementIsVisible cursor
-  mres <- uiElementGetElementAt ui pos True
+  mres <- uiGetElementAt ui pos True
   if not isVisible || isJust mres then pure Nothing
     else do
       graphics :: Ptr Graphics <- fromJustTrace "Graphics" <$> getSubsystem app

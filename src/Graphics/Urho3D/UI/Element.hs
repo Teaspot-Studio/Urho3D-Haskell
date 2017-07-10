@@ -4,6 +4,8 @@ module Graphics.Urho3D.UI.Element(
   , uiElementContext
   , SharedUIElement
   , WeakUIElement
+  , PODVectorUIElementPtr
+  , VectorUIElementPtr
   , UIElem(..)
 
   -- | Setters
@@ -185,12 +187,27 @@ import Foreign
 import Foreign.C.String
 import Data.Proxy
 
-C.context (C.cppCtx <> sharedUIElementPtrCntx  <> weakUIElementPtrCntx <> uiElementCntx <> stringHashContext <> vector2Context <> rectContext <> contextContext <> xmlFileContext <> xmlElementContext <> stringContext <> colorContext <> variantContext <> podVectorUIElementPtrCntx)
+C.context (C.cppCtx
+  <> sharedUIElementPtrCntx
+  <> weakUIElementPtrCntx
+  <> uiElementCntx
+  <> stringHashContext
+  <> vector2Context
+  <> rectContext
+  <> contextContext
+  <> xmlFileContext
+  <> xmlElementContext
+  <> stringContext
+  <> colorContext
+  <> variantContext
+  <> podVectorUIElementPtrCntx
+  <> vectorUIElementPtrCntx
+  )
 C.include "<Urho3D/UI/UIElement.h>"
 C.using "namespace Urho3D"
 
 uiElementContext :: C.Context
-uiElementContext = sharedUIElementPtrCntx <> weakUIElementPtrCntx <> uiElementCntx <> stringHashContext <> podVectorUIElementPtrCntx
+uiElementContext = sharedUIElementPtrCntx <> weakUIElementPtrCntx <> uiElementCntx <> stringHashContext <> podVectorUIElementPtrCntx <> vectorUIElementPtrCntx
 
 C.verbatim "typedef HashMap<StringHash, Variant> HashMapStringHashVariant;"
 
@@ -202,6 +219,7 @@ instance Creatable (Ptr UIElement) where
 
 sharedPtr "UIElement"
 sharedWeakPtr "UIElement"
+vectorPtr "UIElement"
 
 -- | Create and add a child element and return it.
 uiElementCreateChild :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
