@@ -283,7 +283,7 @@ paintDecal app cameraNode = do
     -- plane) over a large area using just one DecalSet component, the decals will all be culled as one unit. If that is
     -- undesirable, it may be necessary to create more than one DecalSet based on the distance
     camRot <- nodeGetRotation cameraNode
-    decalSetAddDecal decal hitDrawable hitPos camRot 0.5 1.0 1.0 0 1
+    decalSetAddDecal decal hitDrawable hitPos camRot 0.5 1.0 1.0 0 1 0 1 defaultSubGeometry
 
 raycast :: SharedPtr Application -> Ptr Node -> Float -> IO (Maybe (Vector3, Ptr Drawable))
 raycast app cameraNode maxDistance = do
