@@ -40,6 +40,8 @@ import Foreign hiding (void)
 import Graphics.Urho3D
 import Sample
 
+import qualified Data.Vector as V
+
 main :: IO ()
 main = withObject () $ \cntx ->
   newSample cntx "Billboards" joysticPatch (customStart cntx) >>= runSample
@@ -301,9 +303,15 @@ raycast app cameraNode maxDistance = do
       height <- graphicsGetHeight graphics
       cameraRay <- cameraGetScreenRay camera (fromIntegral (pos ^. x) / fromIntegral width) (fromIntegral (pos ^. y) / fromIntegral height)
       -- Pick only geometry objects, not eg. zones or lights, only get the first (closest) hit
-      -- withObject ()
-      -- query <- newObject
-      undefined
+      withObject (cameraRay, RayTriangle, maxDistance, drawableGeometry, defaultViewMask) $ \(query :: Ptr RayOctreeQuery) -> do
+        octree :: Ptr Octree <- fromJustTrace "Octree" <$> nodeGetComponent scene True
+        octreeRaycastSingle octree query
+        results <- rayOctreeQueryGetResult query
+        pure $ if V.null results then Nothing
+          else let RayQueryResult{..} = V.head results in Just (
+              _rayQueryResultPosition
+            , _rayQueryResultDrawable
+            )
 
 -- | Subscribe to application-wide logic update events.
 subscribeToEvents :: SampleRef -> Ptr Node -> IO ()

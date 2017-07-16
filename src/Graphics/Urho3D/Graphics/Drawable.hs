@@ -16,6 +16,19 @@ module Graphics.Urho3D.Graphics.Drawable(
   , HasTimeStep(..)
   , HasViewSize(..)
   , HasCamera(..)
+  -- * Mask values
+  , drawableGeometry
+  , drawableLight
+  , drawableZone
+  , drawableGeometry2D
+  , drawableAny
+  , defaultViewMask
+  , defaultLightMask
+  , defaultShadowMask
+  , defaultZoneMask
+  , maxVertexLights
+  , animationLodBaseScale
+  -- * Methods
   , drawableContext
   , drawableSetDrawDistance
   , drawableSetShadowDistance
@@ -205,6 +218,39 @@ instance Storable FrameInfo where
     _frameInfoCamera' = _frameInfoCamera
 
 simpleVector "SourceBatch"
+
+drawableGeometry :: Word8
+drawableGeometry = fromIntegral [C.pure| unsigned int {DRAWABLE_GEOMETRY} |]
+
+drawableLight :: Word8
+drawableLight = fromIntegral [C.pure| unsigned int {DRAWABLE_LIGHT} |]
+
+drawableZone :: Word8
+drawableZone = fromIntegral [C.pure| unsigned int {DRAWABLE_ZONE} |]
+
+drawableGeometry2D :: Word8
+drawableGeometry2D = fromIntegral [C.pure| unsigned int {DRAWABLE_GEOMETRY2D} |]
+
+drawableAny :: Word8
+drawableAny = fromIntegral [C.pure| unsigned int {DRAWABLE_ANY} |]
+
+defaultViewMask :: Word
+defaultViewMask = fromIntegral [C.pure| unsigned int {DEFAULT_VIEWMASK} |]
+
+defaultLightMask :: Word
+defaultLightMask = fromIntegral [C.pure| unsigned int {DEFAULT_LIGHTMASK} |]
+
+defaultShadowMask :: Word
+defaultShadowMask = fromIntegral [C.pure| unsigned int {DEFAULT_SHADOWMASK} |]
+
+defaultZoneMask :: Word
+defaultZoneMask = fromIntegral [C.pure| unsigned int {DEFAULT_ZONEMASK} |]
+
+maxVertexLights :: Word
+maxVertexLights = fromIntegral [C.pure| unsigned int {MAX_VERTEX_LIGHTS} |]
+
+animationLodBaseScale :: Float
+animationLodBaseScale = realToFrac [C.pure| float {ANIMATION_LOD_BASESCALE} |]
 
 -- | Set draw distance.
 drawableSetDrawDistance :: (Parent Drawable a, Pointer p a, MonadIO m)

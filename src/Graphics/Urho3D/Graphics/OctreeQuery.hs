@@ -18,8 +18,6 @@ module Graphics.Urho3D.Graphics.OctreeQuery(
   , HasDrawable(..)
   , HasNode(..)
   , HasSubObject(..)
-  , drawableAny
-  , defaultViewMask
   , octreeQueryContext
   , octreeQueryGetResult
   , octreeQueryGetDrawableFlags
@@ -108,14 +106,6 @@ public:
 
 octreeQueryContext :: C.Context
 octreeQueryContext = octreeQueryCntx
-
--- | Default drawable mask for octree query
-drawableAny :: Word8
-drawableAny = fromIntegral [C.pure| unsigned char { (unsigned char)DRAWABLE_ANY } |]
-
--- | Default view mask for octree query
-defaultViewMask :: Word
-defaultViewMask = fromIntegral [C.pure| unsigned int { (unsigned int)DEFAULT_VIEWMASK } |]
 
 -- | Get result vector
 octreeQueryGetResult :: (Parent OctreeQuery a, Pointer ptr a, MonadIO m)
