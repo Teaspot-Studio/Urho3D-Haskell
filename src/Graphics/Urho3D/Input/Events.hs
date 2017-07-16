@@ -1,5 +1,9 @@
 module Graphics.Urho3D.Input.Events(
-    EventKeyDown(..)
+    MouseButtonDown(..)
+  , MouseButtonUp(..)
+  , MouseMove(..)
+  , MouseWheel(..)
+  , EventKeyDown(..)
   , EventKeyUp(..)
   , EventTouchBegin(..)
   , Key(..)
@@ -19,6 +23,91 @@ import Data.Maybe
 C.context (C.cppCtx <> stringHashContext)
 C.include "<Urho3D/Input/InputEvents.h>"
 C.using "namespace Urho3D"
+
+-- | Fires when user press down keyboard key
+data MouseButtonDown = MouseButtonDown {
+  mouseButtonDownButton     :: !Int
+, mouseButtonDownButtons    :: !Int
+, mouseButtonDownQualifiers :: !Int
+} deriving (Show)
+
+instance Event MouseButtonDown where
+  eventID _ = [C.pure| const StringHash* {&E_MOUSEBUTTONDOWN} |]
+  loadEventData vmap = do
+    pbutton <- variantMapGet' vmap [C.pure| const StringHash* {&MouseButtonDown::P_BUTTON} |]
+    pbuttons <- variantMapGet' vmap [C.pure| const StringHash* {&MouseButtonDown::P_BUTTONS} |]
+    qualifiers <- variantMapGet' vmap [C.pure| const StringHash* {&MouseButtonDown::P_QUALIFIERS} |]
+    return $ MouseButtonDown {
+        mouseButtonDownButton = fromMaybe 0 pbutton
+      , mouseButtonDownButtons = fromMaybe 0 pbuttons
+      , mouseButtonDownQualifiers = fromMaybe 0 qualifiers
+      }
+
+-- | Fires when user press down keyboard key
+data MouseButtonUp = MouseButtonUp {
+  mouseButtonUpButton     :: !Int
+, mouseButtonUpButtons    :: !Int
+, mouseButtonUpQualifiers :: !Int
+} deriving (Show)
+
+instance Event MouseButtonUp where
+  eventID _ = [C.pure| const StringHash* {&E_MOUSEBUTTONUP} |]
+  loadEventData vmap = do
+    pbutton <- variantMapGet' vmap [C.pure| const StringHash* {&MouseButtonUp::P_BUTTON} |]
+    pbuttons <- variantMapGet' vmap [C.pure| const StringHash* {&MouseButtonUp::P_BUTTONS} |]
+    qualifiers <- variantMapGet' vmap [C.pure| const StringHash* {&MouseButtonUp::P_QUALIFIERS} |]
+    return $ MouseButtonUp {
+        mouseButtonUpButton = fromMaybe 0 pbutton
+      , mouseButtonUpButtons = fromMaybe 0 pbuttons
+      , mouseButtonUpQualifiers = fromMaybe 0 qualifiers
+      }
+
+-- | Fires when user press down keyboard key
+data MouseMove = MouseMove {
+  mouseMoveX          :: !Int
+, mouseMoveY          :: !Int
+, mouseMoveDX         :: !Int
+, mouseMoveDY         :: !Int
+, mouseMoveButtons    :: !Int
+, mouseMoveQualifiers :: !Int
+} deriving (Show)
+
+instance Event MouseMove where
+  eventID _ = [C.pure| const StringHash* {&E_MOUSEMOVE} |]
+  loadEventData vmap = do
+    px <- variantMapGet' vmap [C.pure| const StringHash* {&MouseMove::P_X} |]
+    py <- variantMapGet' vmap [C.pure| const StringHash* {&MouseMove::P_Y} |]
+    pdx <- variantMapGet' vmap [C.pure| const StringHash* {&MouseMove::P_DX} |]
+    pdy <- variantMapGet' vmap [C.pure| const StringHash* {&MouseMove::P_DY} |]
+    pbuttons <- variantMapGet' vmap [C.pure| const StringHash* {&MouseMove::P_BUTTONS} |]
+    qualifiers <- variantMapGet' vmap [C.pure| const StringHash* {&MouseMove::P_QUALIFIERS} |]
+    return $ MouseMove {
+        mouseMoveX = fromMaybe 0 px
+      , mouseMoveY = fromMaybe 0 py
+      , mouseMoveDX = fromMaybe 0 pdx
+      , mouseMoveDY = fromMaybe 0 pdy
+      , mouseMoveButtons = fromMaybe 0 pbuttons
+      , mouseMoveQualifiers = fromMaybe 0 qualifiers
+      }
+
+-- | Fires when user press down keyboard key
+data MouseWheel = MouseWheel {
+  mouseWheelWheel      :: !Int
+, mouseWheelButtons    :: !Int
+, mouseWheelQualifiers :: !Int
+} deriving (Show)
+
+instance Event MouseWheel where
+  eventID _ = [C.pure| const StringHash* {&E_MOUSEMOVE} |]
+  loadEventData vmap = do
+    pwheel <- variantMapGet' vmap [C.pure| const StringHash* {&MouseWheel::P_WHEEL} |]
+    pbuttons <- variantMapGet' vmap [C.pure| const StringHash* {&MouseWheel::P_BUTTONS} |]
+    pqualifiers <- variantMapGet' vmap [C.pure| const StringHash* {&MouseWheel::P_QUALIFIERS} |]
+    return $ MouseWheel {
+        mouseWheelWheel = fromMaybe 0 pwheel
+      , mouseWheelButtons = fromMaybe 0 pbuttons
+      , mouseWheelQualifiers = fromMaybe 0 pqualifiers
+      }
 
 -- | Fires when user press down keyboard key
 data EventKeyDown = EventKeyDown {
