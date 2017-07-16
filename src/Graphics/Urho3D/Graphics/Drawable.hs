@@ -104,7 +104,7 @@ import Graphics.Urho3D.Graphics.Camera
 import Graphics.Urho3D.Graphics.Geometry
 import Graphics.Urho3D.Graphics.Light
 import Graphics.Urho3D.Graphics.Material
-import Graphics.Urho3D.Graphics.Octree
+import Graphics.Urho3D.Graphics.Internal.Octree
 import Graphics.Urho3D.Graphics.Zone
 import Graphics.Urho3D.Math.BoundingBox
 import Graphics.Urho3D.Math.Matrix3x4
@@ -124,7 +124,7 @@ C.context (C.cppCtx
   <> objectContext
   <> boundingBoxContext
   <> zoneContext
-  <> octreeContext
+  <> octreeCntx
   <> lightContext
   <> cameraContext
   <> vector2Context

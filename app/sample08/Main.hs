@@ -169,6 +169,7 @@ createUI app = do
   cursor :: SharedPtr Cursor <- newSharedObject context
   uiElementSetStyleAuto cursor style
   uiSetCursor ui $ pointer cursor
+  uiElementSetVisible cursor True
 
   -- Set starting position of the cursor at the rendering window center
   graphics :: Ptr Graphics <- fromJustTrace "Graphics" <$> getSubsystem app
@@ -213,22 +214,24 @@ data CameraData = CameraData {
 -- | Read input and moves the camera.
 moveCamera :: SharedPtr Application -> Ptr Node -> Float -> CameraData -> IO CameraData
 moveCamera app cameraNode t camData = do
+  -- Right mouse button controls mouse cursor visibility: hide when pressed
   (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app
+  (input :: Ptr Input) <- fromJustTrace "Input" <$> getSubsystem app
+  cursor <- uiCursor ui
+  isRightPress <- inputGetMouseButtonDown input mouseButtonRight
+  uiElementSetVisible cursor $ not isRightPress
 
   -- Do not move if the UI has a focused element (the console)
   mFocusElem <- uiFocusElement ui
   whenNothing mFocusElem camData $ do
-    (input :: Ptr Input) <- fromJustTrace "Input" <$> getSubsystem app
-
     -- Movement speed as world units per second
     let moveSpeed = 20
     -- Mouse sensitivity as degrees per pixel
     let mouseSensitivity = 0.1
 
     -- Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
-    cursor <- uiCursor ui
     isVisible <- uiElementIsVisible cursor
-    (yaw, pitch) <- if isVisible then do
+    (yaw, pitch) <- if not isVisible then do
         mouseMove <- inputGetMouseMove input
         let yaw = camYaw camData + mouseSensitivity * fromIntegral (mouseMove ^. x)
         let pitch = clamp (-90) 90 $ camPitch camData + mouseSensitivity * fromIntegral (mouseMove ^. y)
@@ -285,7 +288,14 @@ paintDecal app cameraNode = do
     -- plane) over a large area using just one DecalSet component, the decals will all be culled as one unit. If that is
     -- undesirable, it may be necessary to create more than one DecalSet based on the distance
     camRot <- nodeGetRotation cameraNode
-    decalSetAddDecal decal hitDrawable hitPos camRot 0.5 1.0 1.0 0 1 0 1 defaultSubGeometry
+    let decSize = 0.5
+        aspect = 1.0
+        depth = 1.0
+        topLeft = 0
+        bottomRight = 1
+        timeToLive = 0
+        normalCutOff = 0.1
+    decalSetAddDecal decal hitDrawable hitPos camRot decSize aspect depth topLeft bottomRight timeToLive normalCutOff defaultSubGeometry
 
 raycast :: SharedPtr Application -> Ptr Node -> Float -> IO (Maybe (Vector3, Ptr Drawable))
 raycast app cameraNode maxDistance = do
@@ -304,6 +314,7 @@ raycast app cameraNode maxDistance = do
       cameraRay <- cameraGetScreenRay camera (fromIntegral (pos ^. x) / fromIntegral width) (fromIntegral (pos ^. y) / fromIntegral height)
       -- Pick only geometry objects, not eg. zones or lights, only get the first (closest) hit
       withObject (cameraRay, RayTriangle, maxDistance, drawableGeometry, defaultViewMask) $ \(query :: Ptr RayOctreeQuery) -> do
+        scene <- nodeGetScene cameraNode
         octree :: Ptr Octree <- fromJustTrace "Octree" <$> nodeGetComponent scene True
         octreeRaycastSingle octree query
         results <- rayOctreeQueryGetResult query

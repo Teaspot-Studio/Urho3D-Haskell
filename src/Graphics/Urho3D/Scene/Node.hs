@@ -167,7 +167,6 @@ import Graphics.Urho3D.Scene.Component
 import Graphics.Urho3D.Scene.Internal.Scene
 import Graphics.Urho3D.Scene.Internal.Node
 import Graphics.Urho3D.Network.Connection
-import System.IO.Unsafe (unsafePerformIO)
 
 C.context (C.cppCtx
   <> nodeCntx

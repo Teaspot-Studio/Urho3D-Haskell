@@ -37,7 +37,6 @@ import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Scene.Serializable
 import Graphics.Urho3D.Scene.Animatable
 import Graphics.Urho3D.Scene.Component
-import Graphics.Urho3D.Scene.Node
 import Graphics.Urho3D.Parent
 
 C.context (C.cppCtx <> logicComponentCntx <> sharedLogicComponentPtrCntx <> contextContext <> stringHashContext <> animatableContext <> componentContext <> serializableContext <> objectContext)

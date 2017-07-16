@@ -108,17 +108,20 @@ lerp lhs rhs t = realToFrac [C.pure| float {Lerp($(float lhs'), $(float rhs'), $
 
 class Clamp a where
   -- | Clamp a value to a range.
-  clamp :: a -> a -> a -> a
+  clamp :: a -- ^ min value
+    -> a -- ^ max value
+    -> a -- ^ value
+    -> a -- ^ clamped value
 
 instance Clamp Float where
-  clamp value minv maxv = realToFrac [C.pure| float {Clamp($(float value'), $(float min'), $(float max'))} |]
+  clamp minv maxv value = realToFrac [C.pure| float {Clamp($(float value'), $(float min'), $(float max'))} |]
     where
       value' = realToFrac value
       min' = realToFrac minv
       max' = realToFrac maxv
 
 instance Clamp Int where
-  clamp value minv maxv = fromIntegral [C.pure| int {Clamp($(int value'), $(int min'), $(int max'))} |]
+  clamp minv maxv value = fromIntegral [C.pure| int {Clamp($(int value'), $(int min'), $(int max'))} |]
     where
       value' = fromIntegral value
       min' = fromIntegral minv
