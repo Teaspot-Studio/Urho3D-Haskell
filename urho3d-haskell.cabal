@@ -138,6 +138,7 @@ library
                        Graphics.Urho3D.UI.Font
                        Graphics.Urho3D.UI.FontFace
                        Graphics.Urho3D.UI.LineEdit
+                       Graphics.Urho3D.UI.Menu
                        Graphics.Urho3D.UI.Sprite
                        Graphics.Urho3D.UI.Text
                        Graphics.Urho3D.UI.ToolTip
@@ -228,6 +229,7 @@ library
                        Graphics.Urho3D.UI.Internal.Font
                        Graphics.Urho3D.UI.Internal.FontFace
                        Graphics.Urho3D.UI.Internal.LineEdit
+                       Graphics.Urho3D.UI.Internal.Menu
                        Graphics.Urho3D.UI.Internal.Sprite
                        Graphics.Urho3D.UI.Internal.Text
                        Graphics.Urho3D.UI.Internal.ToolTip

@@ -11,6 +11,7 @@ import Graphics.Urho3D.UI.Events as X
 import Graphics.Urho3D.UI.Font as X
 import Graphics.Urho3D.UI.FontFace as X
 import Graphics.Urho3D.UI.LineEdit as X
+import Graphics.Urho3D.UI.Menu as X
 import Graphics.Urho3D.UI.Sprite as X
 import Graphics.Urho3D.UI.Text as X
 import Graphics.Urho3D.UI.ToolTip as X
