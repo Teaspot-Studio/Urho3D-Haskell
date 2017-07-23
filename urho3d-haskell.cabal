@@ -133,12 +133,17 @@ library
                        Graphics.Urho3D.UI.Button
                        Graphics.Urho3D.UI.CheckBox
                        Graphics.Urho3D.UI.Cursor
+                       Graphics.Urho3D.UI.DropDownList
                        Graphics.Urho3D.UI.Element
                        Graphics.Urho3D.UI.Events
                        Graphics.Urho3D.UI.Font
                        Graphics.Urho3D.UI.FontFace
                        Graphics.Urho3D.UI.LineEdit
+                       Graphics.Urho3D.UI.ListView
                        Graphics.Urho3D.UI.Menu
+                       Graphics.Urho3D.UI.ScrollBar
+                       Graphics.Urho3D.UI.ScrollView
+                       Graphics.Urho3D.UI.Slider
                        Graphics.Urho3D.UI.Sprite
                        Graphics.Urho3D.UI.Text
                        Graphics.Urho3D.UI.ToolTip
@@ -225,11 +230,16 @@ library
                        Graphics.Urho3D.UI.Internal.Button
                        Graphics.Urho3D.UI.Internal.CheckBox
                        Graphics.Urho3D.UI.Internal.Cursor
+                       Graphics.Urho3D.UI.Internal.DropDownList
                        Graphics.Urho3D.UI.Internal.Element
                        Graphics.Urho3D.UI.Internal.Font
                        Graphics.Urho3D.UI.Internal.FontFace
                        Graphics.Urho3D.UI.Internal.LineEdit
+                       Graphics.Urho3D.UI.Internal.ListView
                        Graphics.Urho3D.UI.Internal.Menu
+                       Graphics.Urho3D.UI.Internal.ScrollBar
+                       Graphics.Urho3D.UI.Internal.ScrollView
+                       Graphics.Urho3D.UI.Internal.Slider
                        Graphics.Urho3D.UI.Internal.Sprite
                        Graphics.Urho3D.UI.Internal.Text
                        Graphics.Urho3D.UI.Internal.ToolTip
@@ -322,11 +332,17 @@ library
                        src/Graphics/Urho3D/UI/Button.cpp
                        src/Graphics/Urho3D/UI/CheckBox.cpp
                        src/Graphics/Urho3D/UI/Cursor.cpp
+                       src/Graphics/Urho3D/UI/DropDownList.cpp
                        src/Graphics/Urho3D/UI/Element.cpp
                        src/Graphics/Urho3D/UI/Events.cpp
                        src/Graphics/Urho3D/UI/Font.cpp
                        src/Graphics/Urho3D/UI/FontFace.cpp
                        src/Graphics/Urho3D/UI/LineEdit.cpp
+                       src/Graphics/Urho3D/UI/ListView.cpp
+                       src/Graphics/Urho3D/UI/Menu.cpp
+                       src/Graphics/Urho3D/UI/ScrollBar.cpp
+                       src/Graphics/Urho3D/UI/ScrollView.cpp
+                       src/Graphics/Urho3D/UI/Slider.cpp
                        src/Graphics/Urho3D/UI/Sprite.cpp
                        src/Graphics/Urho3D/UI/Text.cpp
                        src/Graphics/Urho3D/UI/ToolTip.cpp

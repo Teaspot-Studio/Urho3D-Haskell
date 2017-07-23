@@ -7,6 +7,17 @@ module Graphics.Urho3D.UI.Element(
   , PODVectorUIElementPtr
   , VectorUIElementPtr
   , UIElem(..)
+  , Orientation(..)
+  , HorizontalAlignment(..)
+  , VerticalAlignment(..)
+  , Corner(..)
+  , FocusMode(..)
+  , LayoutMode(..)
+  , TraversalMode(..)
+  , ddDisabled
+  , ddSource
+  , ddTarget
+  , ddSourceAndTarget
 
   -- | Setters
   , uiElementSetName
@@ -27,13 +38,10 @@ module Graphics.Urho3D.UI.Element(
   , uiElementSetFixedSize'
   , uiElementSetFixedWidth
   , uiElementSetFixedHeight
-  , HorizontalAlignment(..)
-  , VerticalAlignment(..)
   , uiElementSetAlignment
   , uiElementSetHorizontalAlignment
   , uiElementSetVerticalAlignment
   , uiElementSetClipBorder
-  , Corner(..)
   , uiElementSetColor
   , uiElementSetCornerColor
   , uiElementSetPriority
@@ -51,7 +59,6 @@ module Graphics.Urho3D.UI.Element(
   , uiElementSetFocus
   , uiElementSetSelected
   , uiElementSetVisible
-  , FocusMode(..)
   , uiElementSetFocusMode
   , uiElementSetDragDropMode
   , uiElementSetStyle
@@ -60,7 +67,6 @@ module Graphics.Urho3D.UI.Element(
   , uiElementSetStyleAuto
   , uiElementSetStyleAutoDefault
   , uiElementSetDefaultStyle
-  , LayoutMode(..)
   , uiElementSetLayout
   , uiElementSetLayoutMode
   , uiElementSetLayoutSpacing
@@ -85,7 +91,6 @@ module Graphics.Urho3D.UI.Element(
   , uiElementSetParent
   , uiElementSetVar
   , uiElementSetInternal
-  , TraversalMode(..)
   , uiElementSetTraversalMode
   , uiElementSetElementEventSender
   , uiElementSetChildOffset
@@ -167,25 +172,26 @@ module Graphics.Urho3D.UI.Element(
 import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
-import Graphics.Urho3D.UI.Internal.Element
-import Graphics.Urho3D.Core.Context
-import Graphics.Urho3D.Core.Variant
+import Data.Monoid
+import Data.Proxy
+import Foreign
+import Foreign.C.String
+import GHC.Generics
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.Str
 import Graphics.Urho3D.Container.Vector
+import Graphics.Urho3D.Core.Context
+import Graphics.Urho3D.Core.Variant
+import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Color
+import Graphics.Urho3D.Math.Rect
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector2
-import Graphics.Urho3D.Math.Rect
-import Graphics.Urho3D.Creatable
-import Graphics.Urho3D.Resource.XMLFile
-import Graphics.Urho3D.Resource.XMLElement
 import Graphics.Urho3D.Monad
-import Data.Monoid
-import Foreign
-import Foreign.C.String
-import Data.Proxy
+import Graphics.Urho3D.Resource.XMLElement
+import Graphics.Urho3D.Resource.XMLFile
+import Graphics.Urho3D.UI.Internal.Element
 
 C.context (C.cppCtx
   <> sharedUIElementPtrCntx
@@ -220,6 +226,26 @@ instance Creatable (Ptr UIElement) where
 sharedPtr "UIElement"
 sharedWeakPtr "UIElement"
 vectorPtr "UIElement"
+
+-- | UI element orientation.
+data Orientation = OrientationHorizontal | OrientationVertical
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Generic)
+
+-- | Drag and drop disabled.
+ddDisabled :: Word
+ddDisabled = fromIntegral [C.pure| unsigned int {DD_DISABLED} |]
+
+-- | Drag and drop source flag.
+ddSource :: Word
+ddSource = fromIntegral [C.pure| unsigned int {DD_SOURCE} |]
+
+-- | Drag and drop target flag.
+ddTarget :: Word
+ddTarget = fromIntegral [C.pure| unsigned int {DD_TARGET} |]
+
+-- | Drag and drop source and target.
+ddSourceAndTarget :: Word
+ddSourceAndTarget = fromIntegral [C.pure| unsigned int {DD_SOURCE_AND_TARGET} |]
 
 -- | Create and add a child element and return it.
 uiElementCreateChild :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
@@ -402,13 +428,13 @@ data HorizontalAlignment =
     AlignmentLeft
   | AlignmentHorizontalCenter
   | AlignmentRight
-  deriving (Eq, Ord, Show, Enum)
+  deriving (Eq, Ord, Show, Read, Enum, Bounded, Generic)
 
 data VerticalAlignment =
     AlignmentTop
   | AlignmentVerticalCenter
   | AlignmentBottom
-  deriving (Eq, Ord, Show, Enum)
+  deriving (Eq, Ord, Show, Read, Enum, Bounded, Generic)
 
 -- | Changes element alignment behavior
 uiElementSetAlignment :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
@@ -620,7 +646,7 @@ data FocusMode =
   | ResetFocus -- ^ Resets focus when clicked.
   | Focusable -- ^ Is focusable.
   | Focusable'Defocusable -- ^ Is focusable and also defocusable by pressing ESC.
-  deriving (Eq, Ord, Enum, Bounded, Show)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Generic)
 
 -- | Set focus mode.
 uiElementSetFocusMode :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
@@ -646,7 +672,7 @@ data TraversalMode =
     BreadthFirst
   -- | Traverse thru each child and its children immediately after in sequence.
   | DepthFirst
-  deriving (Eq, Ord, Enum, Bounded, Show)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Generic)
 
 -- | Set traversal mode for rendering. The default traversal mode is TM_BREADTH_FIRST for non-root element. Root element should be set to TM_DEPTH_FIRST to avoid artifacts during rendering.
 uiElementSetTraversalMode :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
@@ -889,7 +915,7 @@ data LayoutMode =
   | LayoutHorizontal
     -- | Layout child elements vertically and resize them to fit. Resize element if necessary.
   | LayoutVertical
-  deriving (Eq, Ord, Show, Enum)
+  deriving (Eq, Ord, Show, Enum, Bounded, Read, Generic)
 
 -- | Set layout.
 uiElementSetLayout :: (Parent UIElement a, Pointer p a, MonadIO m)
@@ -957,7 +983,7 @@ data Corner =
   | CornerTopRight
   | CornerBottomLeft
   | CornerBottomRight
-  deriving (Eq, Ord, Show, Enum, Bounded)
+  deriving (Eq, Ord, Show, Enum, Bounded, Read, Generic)
 
 -- | Set color on all corners.
 uiElementSetCornerColor :: (Parent UIElement a, Pointer p a, MonadIO m)
