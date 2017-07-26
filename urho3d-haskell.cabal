@@ -145,6 +145,7 @@ library
                        Graphics.Urho3D.UI.ListView
                        Graphics.Urho3D.UI.Menu
                        Graphics.Urho3D.UI.MessageBox
+                       Graphics.Urho3D.UI.ProgressBar
                        Graphics.Urho3D.UI.ScrollBar
                        Graphics.Urho3D.UI.ScrollView
                        Graphics.Urho3D.UI.Slider
@@ -245,6 +246,7 @@ library
                        Graphics.Urho3D.UI.Internal.ListView
                        Graphics.Urho3D.UI.Internal.Menu
                        Graphics.Urho3D.UI.Internal.MessageBox
+                       Graphics.Urho3D.UI.Internal.ProgressBar
                        Graphics.Urho3D.UI.Internal.ScrollBar
                        Graphics.Urho3D.UI.Internal.ScrollView
                        Graphics.Urho3D.UI.Internal.Slider
@@ -352,6 +354,7 @@ library
                        src/Graphics/Urho3D/UI/ListView.cpp
                        src/Graphics/Urho3D/UI/Menu.cpp
                        src/Graphics/Urho3D/UI/MessageBox.cpp
+                       src/Graphics/Urho3D/UI/ProgressBar.cpp
                        src/Graphics/Urho3D/UI/ScrollBar.cpp
                        src/Graphics/Urho3D/UI/ScrollView.cpp
                        src/Graphics/Urho3D/UI/Slider.cpp
