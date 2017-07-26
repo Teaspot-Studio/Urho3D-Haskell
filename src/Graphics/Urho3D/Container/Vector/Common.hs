@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# OPTIONS_GHC -ddump-splices #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Graphics.Urho3D.Container.Vector.Common(
     PODVectorWord8
   , PODVectorWord
@@ -11,6 +11,7 @@ module Graphics.Urho3D.Container.Vector.Common(
   , PODVectorVertexElement
   , VectorPODVectorWord
   , VectorPODVectorMatrix3x4
+  , VectorString
   , SharedArrayWord8
   , vectorContext
   ) where
@@ -21,8 +22,10 @@ import qualified Language.C.Inline.Cpp as C
 import Data.Monoid
 import Data.Vector (Vector)
 import Foreign
+import Foreign.C.String
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Container.Str
 import Graphics.Urho3D.Container.Vector
 import Graphics.Urho3D.Container.Vector.Internal.Common
 import Graphics.Urho3D.Creatable
@@ -32,7 +35,15 @@ import Graphics.Urho3D.Graphics.Internal.BillboardSetInstances()
 import Graphics.Urho3D.Math.Matrix3x4
 import Graphics.Urho3D.Monad
 
-C.context (C.cppCtx <> vectorCntx <> matrix3x4Context <> billboardSetCntx <> sharedArrayWord8PtrCntx <> podVectorVertexElementCntx <> graphDefsContext)
+C.context (C.cppCtx
+  <> vectorCntx
+  <> matrix3x4Context
+  <> billboardSetCntx
+  <> sharedArrayWord8PtrCntx
+  <> podVectorVertexElementCntx
+  <> vectorStringCntx
+  <> graphDefsContext
+  <> stringContext)
 C.include "<Urho3D/Container/Vector.h>"
 C.include "<Urho3D/Container/ArrayPtr.h>"
 C.include "<Urho3D/Math/Matrix3x4.h>"
@@ -41,7 +52,10 @@ C.include "<Urho3D/Graphics/GraphicsDefs.h>"
 C.using "namespace Urho3D"
 
 vectorContext :: C.Context
-vectorContext = vectorCntx <> sharedArrayWord8PtrCntx <> podVectorVertexElementCntx
+vectorContext = vectorCntx
+  <> sharedArrayWord8PtrCntx
+  <> podVectorVertexElementCntx
+  <> vectorStringCntx
 
 C.verbatim "typedef PODVector<unsigned char> PODVectorWord8;"
 C.verbatim "typedef PODVector<unsigned> PODVectorWord;"
@@ -52,6 +66,7 @@ C.verbatim "typedef PODVector<int> PODVectorInt;"
 C.verbatim "typedef PODVector<Billboard> PODVectorBillboard;"
 C.verbatim "typedef Vector<PODVector<unsigned> > VectorPODVectorWord;"
 C.verbatim "typedef Vector<PODVector<Matrix3x4> > VectorPODVectorMatrix3x4;"
+C.verbatim "typedef Vector<String> VectorString;"
 
 instance Creatable (Ptr PODVectorWord8) where
   type CreationOptions (Ptr PODVectorWord8) = ()
@@ -114,7 +129,7 @@ instance ReadableVector PODVectorMatrix3x4 where
 instance WriteableVector PODVectorMatrix3x4 where
   type WriteVecElem PODVectorMatrix3x4 = Matrix3x4
 
-  foreignVectorAppend ptr mtx = liftIO $ with mtx $ \mtx' -> do
+  foreignVectorAppend ptr mtx = liftIO $ with mtx $ \mtx' ->
     [C.exp| void {$(PODVectorMatrix3x4* ptr)->Push(*$(Matrix3x4* mtx'))} |]
 
 
@@ -202,7 +217,7 @@ instance ReadableVector PODVectorBillboard where
 instance WriteableVector PODVectorBillboard where
   type WriteVecElem PODVectorBillboard = Billboard
 
-  foreignVectorAppend ptr w = liftIO $ with w $ \w' -> do
+  foreignVectorAppend ptr w = liftIO $ with w $ \w' ->
     [C.exp| void {$(PODVectorBillboard* ptr)->Push(*$(Billboard* w'))} |]
 
 
@@ -223,7 +238,7 @@ instance ReadableVector VectorPODVectorWord where
 instance WriteableVector VectorPODVectorWord where
   type WriteVecElem VectorPODVectorWord = Vector Word
 
-  foreignVectorAppend ptr v = liftIO $ withForeignVector () v $ \v' -> do
+  foreignVectorAppend ptr v = liftIO $ withForeignVector () v $ \v' ->
     [C.exp| void {$(VectorPODVectorWord* ptr)->Push(*$(PODVectorWord* v'))} |]
 
 
@@ -244,8 +259,28 @@ instance ReadableVector VectorPODVectorMatrix3x4 where
 instance WriteableVector VectorPODVectorMatrix3x4 where
   type WriteVecElem VectorPODVectorMatrix3x4 = Ptr PODVectorMatrix3x4
 
-  foreignVectorAppend ptr vptr = liftIO $ do
+  foreignVectorAppend ptr vptr = liftIO $
     [C.exp| void {$(VectorPODVectorMatrix3x4* ptr)->Push(*$(PODVectorMatrix3x4* vptr))} |]
+
+instance Creatable (Ptr VectorString) where
+  type CreationOptions (Ptr VectorString) = ()
+
+  newObject _ = liftIO [C.exp| VectorString* { new VectorString() } |]
+  deleteObject ptr = liftIO [C.exp| void { delete $(VectorString* ptr)} |]
+
+instance ReadableVector VectorString where
+  type ReadVecElem VectorString = String
+
+  foreignVectorLength ptr = liftIO $ fromIntegral <$> [C.exp| int {$(VectorString* ptr)->Size()} |]
+  foreignVectorElement ptr i = liftIO $ do
+    let i' = fromIntegral i
+    peekCString =<< [C.exp| const char* { (*$(VectorString* ptr))[$(unsigned int i')].CString() } |]
+
+instance WriteableVector VectorString where
+  type WriteVecElem VectorString = String
+
+  foreignVectorAppend ptr str = liftIO $ withCString str $ \str' ->
+    [C.exp| void {$(VectorString* ptr)->Push(String($(const char* str')))} |]
 
 sharedArrayPtr "unsigned char" "Word8"
 

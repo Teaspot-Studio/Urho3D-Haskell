@@ -9,9 +9,11 @@ module Graphics.Urho3D.Container.Vector.Internal.Common(
   , PODVectorWord
   , VectorPODVectorWord
   , VectorPODVectorMatrix3x4
+  , VectorString
   , SharedArrayWord8
   , sharedArrayWord8PtrCntx
   , podVectorVertexElementCntx
+  , vectorStringCntx
   , vectorCntx
   ) where
 
@@ -51,3 +53,4 @@ vectorCntx = mempty {
 
 sharedArrayPtrImpl "Word8"
 simplePODVectorImpl "VertexElement"
+simpleVectorImpl "String"

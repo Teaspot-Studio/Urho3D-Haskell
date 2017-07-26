@@ -136,6 +136,7 @@ library
                        Graphics.Urho3D.UI.DropDownList
                        Graphics.Urho3D.UI.Element
                        Graphics.Urho3D.UI.Events
+                       Graphics.Urho3D.UI.FileSelector
                        Graphics.Urho3D.UI.Font
                        Graphics.Urho3D.UI.FontFace
                        Graphics.Urho3D.UI.LineEdit
@@ -232,6 +233,7 @@ library
                        Graphics.Urho3D.UI.Internal.Cursor
                        Graphics.Urho3D.UI.Internal.DropDownList
                        Graphics.Urho3D.UI.Internal.Element
+                       Graphics.Urho3D.UI.Internal.FileSelector
                        Graphics.Urho3D.UI.Internal.Font
                        Graphics.Urho3D.UI.Internal.FontFace
                        Graphics.Urho3D.UI.Internal.LineEdit
@@ -335,6 +337,7 @@ library
                        src/Graphics/Urho3D/UI/DropDownList.cpp
                        src/Graphics/Urho3D/UI/Element.cpp
                        src/Graphics/Urho3D/UI/Events.cpp
+                       src/Graphics/Urho3D/UI/FileSelector.cpp
                        src/Graphics/Urho3D/UI/Font.cpp
                        src/Graphics/Urho3D/UI/FontFace.cpp
                        src/Graphics/Urho3D/UI/LineEdit.cpp
