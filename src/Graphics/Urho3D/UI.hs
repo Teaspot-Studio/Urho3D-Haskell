@@ -15,6 +15,7 @@ import Graphics.Urho3D.UI.FontFace as X
 import Graphics.Urho3D.UI.LineEdit as X
 import Graphics.Urho3D.UI.ListView as X
 import Graphics.Urho3D.UI.Menu as X
+import Graphics.Urho3D.UI.MessageBox as X
 import Graphics.Urho3D.UI.ScrollBar as X
 import Graphics.Urho3D.UI.ScrollView as X
 import Graphics.Urho3D.UI.Slider as X
