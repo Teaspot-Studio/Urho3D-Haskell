@@ -3,6 +3,8 @@ module Graphics.Urho3D.UI.ToolTip(
     ToolTip
   , toolTipContext
   , SharedToolTip
+  , toolTipSetDelay
+  , toolTipGetDelay
   ) where
 
 import qualified Language.C.Inline as C
@@ -44,3 +46,23 @@ instance UIElem ToolTip where
     unsigned int { ToolTip::GetTypeStatic().Value() } |]
 
 sharedPtr "ToolTip"
+
+-- | Set the delay in seconds until the tooltip shows once hovering. Set zero to use the default from the UI subsystem.
+-- void SetDelay(float delay);
+toolTipSetDelay :: (Parent ToolTip a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'ToolTip' or ascentor
+  -> Float
+  -> m ()
+toolTipSetDelay p v = liftIO $ do
+  let ptr = parentPointer p
+      v' = realToFrac v
+  [C.exp| void { $(ToolTip* ptr)->SetDelay($(float v')) } |]
+
+-- | Return the delay in seconds until the tooltip shows once hovering.
+-- float GetDelay() const { return delay_; }
+toolTipGetDelay :: (Parent ToolTip a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'ToolTip' or ascentor
+  -> m Float
+toolTipGetDelay p = liftIO $ do
+  let ptr = parentPointer p
+  realToFrac <$> [C.exp| float { $(ToolTip* ptr)->GetDelay() } |]
