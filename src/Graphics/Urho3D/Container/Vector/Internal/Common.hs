@@ -15,6 +15,7 @@ module Graphics.Urho3D.Container.Vector.Internal.Common(
   , podVectorVertexElementCntx
   , vectorStringCntx
   , vectorCntx
+  , commonVectorTypeDefs
   ) where
 
 import qualified Language.C.Inline as C
@@ -54,3 +55,18 @@ vectorCntx = mempty {
 sharedArrayPtrImpl "Word8"
 simplePODVectorImpl "VertexElement"
 simpleVectorImpl "String"
+
+-- | Define common vector types in scope
+commonVectorTypeDefs :: String
+commonVectorTypeDefs = unlines [
+    "typedef PODVector<unsigned char> PODVectorWord8;"
+  , "typedef PODVector<unsigned> PODVectorWord;"
+  , "typedef PODVector<Matrix3x4> PODVectorMatrix3x4;"
+  , "typedef PODVector<bool> PODVectorBool;"
+  , "typedef PODVector<float> PODVectorFloat;"
+  , "typedef PODVector<int> PODVectorInt;"
+  , "typedef PODVector<Billboard> PODVectorBillboard;"
+  , "typedef Vector<PODVector<unsigned> > VectorPODVectorWord;"
+  , "typedef Vector<PODVector<Matrix3x4> > VectorPODVectorMatrix3x4;"
+  , "typedef Vector<String> VectorString;"
+  ]

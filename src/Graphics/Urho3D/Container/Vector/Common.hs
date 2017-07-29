@@ -14,6 +14,7 @@ module Graphics.Urho3D.Container.Vector.Common(
   , VectorString
   , SharedArrayWord8
   , vectorContext
+  , commonVectorTypeDefs
   ) where
 
 import qualified Language.C.Inline as C
@@ -57,16 +58,7 @@ vectorContext = vectorCntx
   <> podVectorVertexElementCntx
   <> vectorStringCntx
 
-C.verbatim "typedef PODVector<unsigned char> PODVectorWord8;"
-C.verbatim "typedef PODVector<unsigned> PODVectorWord;"
-C.verbatim "typedef PODVector<Matrix3x4> PODVectorMatrix3x4;"
-C.verbatim "typedef PODVector<bool> PODVectorBool;"
-C.verbatim "typedef PODVector<float> PODVectorFloat;"
-C.verbatim "typedef PODVector<int> PODVectorInt;"
-C.verbatim "typedef PODVector<Billboard> PODVectorBillboard;"
-C.verbatim "typedef Vector<PODVector<unsigned> > VectorPODVectorWord;"
-C.verbatim "typedef Vector<PODVector<Matrix3x4> > VectorPODVectorMatrix3x4;"
-C.verbatim "typedef Vector<String> VectorString;"
+C.verbatim commonVectorTypeDefs
 
 instance Creatable (Ptr PODVectorWord8) where
   type CreationOptions (Ptr PODVectorWord8) = ()
