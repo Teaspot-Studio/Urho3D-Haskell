@@ -154,6 +154,7 @@ library
                        Graphics.Urho3D.UI.Text3D
                        Graphics.Urho3D.UI.ToolTip
                        Graphics.Urho3D.UI.UI
+                       Graphics.Urho3D.UI.UIBatch
                        Graphics.Urho3D.UI.Window
 
   other-modules:       Graphics.Urho3D.Container.Internal.Str
@@ -256,6 +257,7 @@ library
                        Graphics.Urho3D.UI.Internal.Text3D
                        Graphics.Urho3D.UI.Internal.ToolTip
                        Graphics.Urho3D.UI.Internal.UI
+                       Graphics.Urho3D.UI.Internal.UIBatch
                        Graphics.Urho3D.UI.Internal.Window
 
   c-sources:           src/Graphics/Urho3D/Container/Str.cpp
@@ -365,6 +367,7 @@ library
                        src/Graphics/Urho3D/UI/Text3D.cpp
                        src/Graphics/Urho3D/UI/ToolTip.cpp
                        src/Graphics/Urho3D/UI/UI.cpp
+                       src/Graphics/Urho3D/UI/UIBatch.cpp
                        src/Graphics/Urho3D/UI/Window.cpp
 
   build-depends:        base

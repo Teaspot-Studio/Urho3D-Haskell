@@ -1,5 +1,6 @@
 module Graphics.Urho3D.UI.Internal.UIBatch(
     UIBatch(..)
+  , PODVectorUIBatch
   , HasElement(..)
   , HasBlendMode(..)
   , HasScissor(..)
@@ -47,9 +48,13 @@ data UIBatch = UIBatch {
 } deriving (Show, Generic)
 makeFields ''UIBatch
 
+-- | Vector of 'UIBatch'
+data PODVectorUIBatch
+
 uiBatchCntx :: C.Context
 uiBatchCntx = mempty {
     C.ctxTypesTable = Map.fromList [
       (C.TypeName "UIBatch", [t| UIBatch |])
+    , (C.TypeName "PODVectorUIBatch", [t| PODVectorUIBatch |])
     ]
   }
