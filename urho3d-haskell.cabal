@@ -151,6 +151,7 @@ library
                        Graphics.Urho3D.UI.Slider
                        Graphics.Urho3D.UI.Sprite
                        Graphics.Urho3D.UI.Text
+                       Graphics.Urho3D.UI.Text3D
                        Graphics.Urho3D.UI.ToolTip
                        Graphics.Urho3D.UI.UI
                        Graphics.Urho3D.UI.Window
@@ -252,6 +253,7 @@ library
                        Graphics.Urho3D.UI.Internal.Slider
                        Graphics.Urho3D.UI.Internal.Sprite
                        Graphics.Urho3D.UI.Internal.Text
+                       Graphics.Urho3D.UI.Internal.Text3D
                        Graphics.Urho3D.UI.Internal.ToolTip
                        Graphics.Urho3D.UI.Internal.UI
                        Graphics.Urho3D.UI.Internal.Window
@@ -360,6 +362,7 @@ library
                        src/Graphics/Urho3D/UI/Slider.cpp
                        src/Graphics/Urho3D/UI/Sprite.cpp
                        src/Graphics/Urho3D/UI/Text.cpp
+                       src/Graphics/Urho3D/UI/Text3D.cpp
                        src/Graphics/Urho3D/UI/ToolTip.cpp
                        src/Graphics/Urho3D/UI/UI.cpp
                        src/Graphics/Urho3D/UI/Window.cpp
