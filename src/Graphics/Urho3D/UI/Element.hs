@@ -14,6 +14,8 @@ module Graphics.Urho3D.UI.Element(
   , WeakHUIElement
   , PODVectorHUIElementPtr
   , VectorHUIElementPtr
+  , OnHoverCallback
+  , huiElementSetOnHoverCallback
   -- * Types and constants
   , UIElem(..)
   , Orientation(..)
@@ -203,9 +205,10 @@ import Graphics.Urho3D.Resource.XMLElement
 import Graphics.Urho3D.Resource.XMLFile
 import Graphics.Urho3D.Scene.Animatable
 import Graphics.Urho3D.Scene.Serializable
+import Graphics.Urho3D.UI.Internal.Cursor
 import Graphics.Urho3D.UI.Internal.Element
 
-C.context (C.cppCtx
+C.context (C.cppCtx <> C.funConstCtx
   <> sharedUIElementPtrCntx
   <> weakUIElementPtrCntx
   <> sharedHUIElementPtrCntx
@@ -227,6 +230,7 @@ C.context (C.cppCtx
   <> animatableContext
   <> serializableContext
   <> objectContext
+  <> cursorCntx
   )
 C.include "<Urho3D/UI/UIElement.h>"
 C.include "Element.h"
@@ -289,6 +293,27 @@ ddTarget = fromIntegral [C.pure| unsigned int {DD_TARGET} |]
 -- | Drag and drop source and target.
 ddSourceAndTarget :: Word
 ddSourceAndTarget = fromIntegral [C.pure| unsigned int {DD_SOURCE_AND_TARGET} |]
+
+-- | Callback function for mouse hover event
+type OnHoverCallback = IntVector2 -- ^ position
+  -> IntVector2 -- ^ screen position
+  -> Int -- ^ buttons
+  -> Int -- ^ qualifiers
+  -> Ptr Cursor -- ^ cursor
+  -> IO ()
+
+-- | Setup callback on 'OnHover' event
+huiElementSetOnHoverCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnHoverCallback
+  -> m ()
+huiElementSetOnHoverCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' posp spp btns q c = do
+        pos <- peek posp
+        sp <- peek spp
+        f pos sp (fromIntegral btns) (fromIntegral q) c
+  [C.exp| void { $(HUIElement* ptr)->SetOnHoverCallback($funConst:(void (*f')(const IntVector2*, const IntVector2*, int, int, Cursor*))) } |]
 
 -- | Create and add a child element and return it.
 uiElementCreateChild :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
