@@ -16,6 +16,38 @@ module Graphics.Urho3D.UI.Element(
   , VectorHUIElementPtr
   , OnHoverCallback
   , huiElementSetOnHoverCallback
+  , OnClickBeginCallback
+  , huiElementSetOnClickBeginCallback
+  , OnClickEndCallback
+  , huiElementSetOnClickEndCallback
+  , OnDoubleClickCallback
+  , huiElementSetOnDoubleClickCallback
+  , OnDragBeginCallback
+  , huiElementSetOnDragBeginCallback
+  , OnDragMoveCallback
+  , huiElementSetOnDragMoveCallback
+  , OnDragEndCallback
+  , huiElementSetOnDragEndCallback
+  , OnDragCancelCallback
+  , huiElementSetOnDragCancelCallback
+  , OnDragDropTestCallback
+  , huiElementSetOnDragDropTestCallback
+  , OnDragDropFinishCallback
+  , huiElementSetOnDragDropFinishCallback
+  , OnWheelCallback
+  , huiElementSetOnWheelCallback
+  , OnKeyCallback
+  , huiElementSetOnKeyCallback
+  , OnTextInputCallback
+  , huiElementSetOnTextInputCallback
+  , OnResizeCallback
+  , huiElementSetOnResizeCallback
+  , OnPositionSetCallback
+  , huiElementSetOnPositionSetCallback
+  , OnSetEditableCallback
+  , huiElementSetOnSetEditableCallback
+  , OnIndentSetCallback
+  , huiElementSetOnIndentSetCallback
   -- * Types and constants
   , UIElem(..)
   , Orientation(..)
@@ -181,6 +213,7 @@ module Graphics.Urho3D.UI.Element(
 
 import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
+import qualified Data.Text as T
 
 import Data.Monoid
 import Data.Proxy
@@ -314,6 +347,291 @@ huiElementSetOnHoverCallback p f = liftIO $ do
         sp <- peek spp
         f pos sp (fromIntegral btns) (fromIntegral q) c
   [C.exp| void { $(HUIElement* ptr)->SetOnHoverCallback($funConst:(void (*f')(const IntVector2*, const IntVector2*, int, int, Cursor*))) } |]
+
+-- | Callback function for react to mouse click begin.
+type OnClickBeginCallback = IntVector2 -- ^ position
+  -> IntVector2 -- ^ screen position
+  -> Int -- ^ button
+  -> Int -- ^ buttons
+  -> Int -- ^ qualifiers
+  -> Ptr Cursor -- ^ cursor
+  -> IO ()
+
+-- | Setup callback on 'OnClickBegin' event
+huiElementSetOnClickBeginCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnClickBeginCallback
+  -> m ()
+huiElementSetOnClickBeginCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' posp spp btn btns q c = do
+        pos <- peek posp
+        sp <- peek spp
+        f pos sp (fromIntegral btn) (fromIntegral btns) (fromIntegral q) c
+  [C.exp| void { $(HUIElement* ptr)->SetOnClickBeginCallback($funConst:(void (*f')(const IntVector2*, const IntVector2*, int, int, int, Cursor*))) } |]
+
+-- | Callback function for mouse hover event
+type OnClickEndCallback = IntVector2 -- ^ position
+  -> IntVector2 -- ^ screen position
+  -> Int -- ^ button
+  -> Int -- ^ buttons
+  -> Int -- ^ qualifiers
+  -> Ptr Cursor -- ^ cursor
+  -> Ptr UIElement -- ^ begin element
+  -> IO ()
+
+-- | Setup callback on 'OnClickEnd' event
+huiElementSetOnClickEndCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnClickEndCallback
+  -> m ()
+huiElementSetOnClickEndCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' posp spp btn btns q c e = do
+        pos <- peek posp
+        sp <- peek spp
+        f pos sp (fromIntegral btn) (fromIntegral btns) (fromIntegral q) c e
+  [C.exp| void { $(HUIElement* ptr)->SetOnClickEndCallback($funConst:(void (*f')(const IntVector2*, const IntVector2*, int, int, int, Cursor*, UIElement*))) } |]
+
+-- | Callback function for react to mouse double click.
+type OnDoubleClickCallback = IntVector2 -- ^ position
+  -> IntVector2 -- ^ screen position
+  -> Int -- ^ button
+  -> Int -- ^ buttons
+  -> Int -- ^ qualifiers
+  -> Ptr Cursor -- ^ cursor
+  -> IO ()
+
+-- | Setup callback on 'OnDoubleClick' event
+huiElementSetOnDoubleClickCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnDoubleClickCallback
+  -> m ()
+huiElementSetOnDoubleClickCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' posp spp btn btns q c = do
+        pos <- peek posp
+        sp <- peek spp
+        f pos sp (fromIntegral btn) (fromIntegral btns) (fromIntegral q) c
+  [C.exp| void { $(HUIElement* ptr)->SetOnDoubleClickCallback($funConst:(void (*f')(const IntVector2*, const IntVector2*, int, int, int, Cursor*))) } |]
+
+-- | Callback function for react to mouse drag begin.
+type OnDragBeginCallback = IntVector2 -- ^ position
+  -> IntVector2 -- ^ screen position
+  -> Int -- ^ buttons
+  -> Int -- ^ qualifiers
+  -> Ptr Cursor -- ^ cursor
+  -> IO ()
+
+-- | Setup callback on 'OnDragBegin' event
+huiElementSetOnDragBeginCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnDragBeginCallback
+  -> m ()
+huiElementSetOnDragBeginCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' posp spp btns q c = do
+        pos <- peek posp
+        sp <- peek spp
+        f pos sp (fromIntegral btns) (fromIntegral q) c
+  [C.exp| void { $(HUIElement* ptr)->SetOnDragBeginCallback($funConst:(void (*f')(const IntVector2*, const IntVector2*, int, int, Cursor*))) } |]
+
+-- | Callback function for react to mouse drag motion.
+type OnDragMoveCallback = IntVector2 -- ^ position
+  -> IntVector2 -- ^ screen position
+  -> IntVector2 -- ^ delta position
+  -> Int -- ^ buttons
+  -> Int -- ^ qualifiers
+  -> Ptr Cursor -- ^ cursor
+  -> IO ()
+
+-- | Setup callback on 'OnDragMove' event
+huiElementSetOnDragMoveCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnDragMoveCallback
+  -> m ()
+huiElementSetOnDragMoveCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' posp spp dpp btns q c = do
+        pos <- peek posp
+        sp <- peek spp
+        dp <- peek dpp
+        f pos sp dp (fromIntegral btns) (fromIntegral q) c
+  [C.exp| void { $(HUIElement* ptr)->SetOnDragMoveCallback($funConst:(void (*f')(const IntVector2*, const IntVector2*, const IntVector2*, int, int, Cursor*))) } |]
+
+-- | Callback function for react to mouse drag end.
+type OnDragEndCallback = IntVector2 -- ^ position
+  -> IntVector2 -- ^ screen position
+  -> Int -- ^ drag buttons
+  -> Int -- ^ release button
+  -> Ptr Cursor -- ^ cursor
+  -> IO ()
+
+-- | Setup callback on 'OnDragEnd' event
+huiElementSetOnDragEndCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnDragEndCallback
+  -> m ()
+huiElementSetOnDragEndCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' posp spp btns q c = do
+        pos <- peek posp
+        sp <- peek spp
+        f pos sp (fromIntegral btns) (fromIntegral q) c
+  [C.exp| void { $(HUIElement* ptr)->SetOnDragEndCallback($funConst:(void (*f')(const IntVector2*, const IntVector2*, int, int, Cursor*))) } |]
+
+-- | Callback function for react to a mouse drag cancel event (ie, when an extra button is pressed).
+type OnDragCancelCallback = IntVector2 -- ^ position
+  -> IntVector2 -- ^ screen position
+  -> Int -- ^ drag buttons
+  -> Int -- ^ cancel button
+  -> Ptr Cursor -- ^ cursor
+  -> IO ()
+
+-- | Setup callback on 'OnDragCancel' event
+huiElementSetOnDragCancelCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnDragCancelCallback
+  -> m ()
+huiElementSetOnDragCancelCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' posp spp btns q c = do
+        pos <- peek posp
+        sp <- peek spp
+        f pos sp (fromIntegral btns) (fromIntegral q) c
+  [C.exp| void { $(HUIElement* ptr)->SetOnDragCancelCallback($funConst:(void (*f')(const IntVector2*, const IntVector2*, int, int, Cursor*))) } |]
+
+-- | Callback function for react to drag and drop test. Return true to signal that the drop is acceptable.
+type OnDragDropTestCallback = Ptr UIElement -- ^ source
+  -> IO Bool
+
+-- | Setup callback on 'OnDragDropTest' event
+huiElementSetOnDragDropTestCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnDragDropTestCallback
+  -> m ()
+huiElementSetOnDragDropTestCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' s = fromBool <$> f s
+  [C.exp| void { $(HUIElement* ptr)->SetOnDragDropTestCallback($funConst:(int (*f')(UIElement*))) } |]
+
+-- | Callback function for react to drag and drop finish. Return true to signal that the drop was accepted.
+type OnDragDropFinishCallback = Ptr UIElement -- ^ source
+  -> IO Bool
+
+-- | Setup callback on 'OnDragDropFinish' event
+huiElementSetOnDragDropFinishCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnDragDropFinishCallback
+  -> m ()
+huiElementSetOnDragDropFinishCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' s = fromBool <$> f s
+  [C.exp| void { $(HUIElement* ptr)->SetOnDragDropFinishCallback($funConst:(int (*f')(UIElement*))) } |]
+
+-- | Callback function for react to mouse wheel.
+type OnWheelCallback = Int -- ^ delta
+  -> Int -- ^ buttons
+  -> Int -- ^ qualifiers
+  -> IO ()
+
+-- | Setup callback on 'OnWheel' event
+huiElementSetOnWheelCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnWheelCallback
+  -> m ()
+huiElementSetOnWheelCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' v1 v2 v3 = f (fromIntegral v1) (fromIntegral v2) (fromIntegral v3)
+  [C.exp| void { $(HUIElement* ptr)->SetOnWheelCallback($funConst:(void (*f')(int, int, int))) } |]
+
+-- | Callback function for react to a key press.
+type OnKeyCallback = Int -- ^ key
+  -> Int -- ^ buttons
+  -> Int -- ^ qualifiers
+  -> IO ()
+
+-- | Setup callback on 'OnKey' event
+huiElementSetOnKeyCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnKeyCallback
+  -> m ()
+huiElementSetOnKeyCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' v1 v2 v3 = f (fromIntegral v1) (fromIntegral v2) (fromIntegral v3)
+  [C.exp| void { $(HUIElement* ptr)->SetOnKeyCallback($funConst:(void (*f')(int, int, int))) } |]
+
+-- | Callback function for react to text input event.
+type OnTextInputCallback = T.Text -- ^ text
+  -> IO ()
+
+-- | Setup callback on 'OnTextInput' event
+huiElementSetOnTextInputCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnTextInputCallback
+  -> m ()
+huiElementSetOnTextInputCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' v1 = f =<< loadConstUrhoText v1
+  [C.exp| void { $(HUIElement* ptr)->SetOnTextInputCallback($funConst:(void (*f')(const String*))) } |]
+
+-- | Callback function for react to resize.
+type OnResizeCallback = IntVector2 -- ^ new size
+  -> IntVector2 -- ^ delta
+  -> IO ()
+
+-- | Setup callback on 'OnResize' event
+huiElementSetOnResizeCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnResizeCallback
+  -> m ()
+huiElementSetOnResizeCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' v1 v2 = do
+        v1' <- peek v1
+        v2' <- peek v2
+        f v1' v2'
+  [C.exp| void { $(HUIElement* ptr)->SetOnResizeCallback($funConst:(void (*f')(const IntVector2*, const IntVector2*))) } |]
+
+-- | Callback function for react to position change.
+type OnPositionSetCallback = IntVector2 -- ^ new position
+  -> IO ()
+
+-- | Setup callback on 'OnPositionSet' event
+huiElementSetOnPositionSetCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnPositionSetCallback
+  -> m ()
+huiElementSetOnPositionSetCallback p f = liftIO $ do
+  let ptr = parentPointer p
+      f' v1 = do
+        v1' <- peek v1
+        f v1'
+  [C.exp| void { $(HUIElement* ptr)->SetOnPositionSetCallback($funConst:(void (*f')(const IntVector2*))) } |]
+
+-- | Callback function for react to editable status change.
+type OnSetEditableCallback = IO ()
+
+-- | Setup callback on 'OnSetEditable' event
+huiElementSetOnSetEditableCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnSetEditableCallback
+  -> m ()
+huiElementSetOnSetEditableCallback p f = liftIO $ do
+  let ptr = parentPointer p
+  [C.exp| void { $(HUIElement* ptr)->SetOnSetEditableCallback($funConst:(void (*f)())) } |]
+
+-- | Callback function for react to indent change.
+type OnIndentSetCallback = IO ()
+
+-- | Setup callback on 'OnIndentSet' event
+huiElementSetOnIndentSetCallback :: (Parent HUIElement a, Pointer ptr a, MonadIO m)
+  => ptr -- ^ Pointer to 'HUIElement' or ancestor
+  -> OnIndentSetCallback
+  -> m ()
+huiElementSetOnIndentSetCallback p f = liftIO $ do
+  let ptr = parentPointer p
+  [C.exp| void { $(HUIElement* ptr)->SetOnIndentSetCallback($funConst:(void (*f)())) } |]
 
 -- | Create and add a child element and return it.
 uiElementCreateChild :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
