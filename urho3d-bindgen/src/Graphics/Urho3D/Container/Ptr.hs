@@ -8,7 +8,6 @@ module Graphics.Urho3D.Container.Ptr(
   , withSharedPtr
   , peekWeakPtr
   , withWeakPtr
-  , sharedWeakPtrImpl
   , peekSharedArrayPtr
   , withSharedArrayPtr
   , modifySharedArray
