@@ -26,4 +26,5 @@ import Graphics.Urho3D.UI.Text3D as X
 import Graphics.Urho3D.UI.ToolTip as X
 import Graphics.Urho3D.UI.UI as X
 import Graphics.Urho3D.UI.UIBatch as X
+import Graphics.Urho3D.UI.View3D as X
 import Graphics.Urho3D.UI.Window as X
