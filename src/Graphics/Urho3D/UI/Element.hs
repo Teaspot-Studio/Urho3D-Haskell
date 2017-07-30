@@ -1,11 +1,20 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Graphics.Urho3D.UI.Element(
+  -- * UIElement
     UIElement
   , uiElementContext
   , SharedUIElement
   , WeakUIElement
   , PODVectorUIElementPtr
   , VectorUIElementPtr
+  -- * HUIElement
+  , HUIElement
+  , SharedHUIElement
+  , WeakHUIElement
+  , PODVectorHUIElementPtr
+  , VectorHUIElementPtr
+  -- * Types and constants
   , UIElem(..)
   , Orientation(..)
   , HorizontalAlignment(..)
@@ -18,8 +27,7 @@ module Graphics.Urho3D.UI.Element(
   , ddSource
   , ddTarget
   , ddSourceAndTarget
-
-  -- | Setters
+  -- * Setters
   , uiElementSetName
   , uiElementSetPosition
   , uiElementSetSize
@@ -182,6 +190,7 @@ import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.Str
 import Graphics.Urho3D.Container.Vector
 import Graphics.Urho3D.Core.Context
+import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Core.Variant
 import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Math.Color
@@ -189,13 +198,18 @@ import Graphics.Urho3D.Math.Rect
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Math.Vector2
 import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
 import Graphics.Urho3D.Resource.XMLElement
 import Graphics.Urho3D.Resource.XMLFile
+import Graphics.Urho3D.Scene.Animatable
+import Graphics.Urho3D.Scene.Serializable
 import Graphics.Urho3D.UI.Internal.Element
 
 C.context (C.cppCtx
   <> sharedUIElementPtrCntx
   <> weakUIElementPtrCntx
+  <> sharedHUIElementPtrCntx
+  <> weakHUIElementPtrCntx
   <> uiElementCntx
   <> stringHashContext
   <> vector2Context
@@ -208,12 +222,27 @@ C.context (C.cppCtx
   <> variantContext
   <> podVectorUIElementPtrCntx
   <> vectorUIElementPtrCntx
+  <> podVectorHUIElementPtrCntx
+  <> vectorHUIElementPtrCntx
+  <> animatableContext
+  <> serializableContext
+  <> objectContext
   )
 C.include "<Urho3D/UI/UIElement.h>"
+C.include "Element.h"
 C.using "namespace Urho3D"
 
 uiElementContext :: C.Context
-uiElementContext = sharedUIElementPtrCntx <> weakUIElementPtrCntx <> uiElementCntx <> stringHashContext <> podVectorUIElementPtrCntx <> vectorUIElementPtrCntx
+uiElementContext = sharedUIElementPtrCntx
+  <> weakUIElementPtrCntx
+  <> uiElementCntx
+  <> stringHashContext
+  <> podVectorUIElementPtrCntx
+  <> vectorUIElementPtrCntx
+  <> sharedHUIElementPtrCntx
+  <> weakHUIElementPtrCntx
+  <> podVectorHUIElementPtrCntx
+  <> vectorHUIElementPtrCntx
 
 C.verbatim "typedef HashMap<StringHash, Variant> HashMapStringHashVariant;"
 
@@ -226,6 +255,20 @@ instance Creatable (Ptr UIElement) where
 sharedPtr "UIElement"
 sharedWeakPtr "UIElement"
 vectorPtr "UIElement"
+
+deriveParents [''Object, ''Serializable, ''Animatable] ''UIElement
+
+instance Creatable (Ptr HUIElement) where
+  type CreationOptions (Ptr HUIElement) = Ptr Context
+
+  newObject ptr = liftIO $ [C.exp| HUIElement* { new HUIElement($(Context* ptr)) } |]
+  deleteObject ptr = liftIO $ [C.exp| void { delete $(HUIElement* ptr) } |]
+
+sharedPtr "HUIElement"
+sharedWeakPtr "HUIElement"
+vectorPtr "HUIElement"
+
+deriveParents [''Object, ''Serializable, ''Animatable, ''UIElement] ''HUIElement
 
 -- | UI element orientation.
 data Orientation = OrientationHorizontal | OrientationVertical
