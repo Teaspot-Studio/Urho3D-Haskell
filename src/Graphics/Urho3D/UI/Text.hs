@@ -136,15 +136,15 @@ instance Storable CharLocation where
   sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(CharLocation) } |]
   alignment _ = fromIntegral $ [C.pure| int { (int)Traits<CharLocation>::AlignmentOf } |]
   peek ptr = do
-    _charLocationPosition <- peek =<< [C.exp| IntVector2* { &$(CharLocation* ptr)->position_ } |]
-    _charLocationSize <- peek =<< [C.exp| IntVector2* { &$(CharLocation* ptr)->size_ } |]
+    _charLocationPosition <- peek =<< [C.exp| Vector2* { &$(CharLocation* ptr)->position_ } |]
+    _charLocationSize <- peek =<< [C.exp| Vector2* { &$(CharLocation* ptr)->size_ } |]
     return CharLocation {..}
   poke ptr CharLocation {..} =
     with _charLocationPosition $ \_charLocationPosition' ->
     with _charLocationSize $ \_charLocationSize' ->
     [C.block| void {
-      $(CharLocation* ptr)->position_ = *$(IntVector2* _charLocationPosition');
-      $(CharLocation* ptr)->size_ = *$(IntVector2* _charLocationSize');
+      $(CharLocation* ptr)->position_ = *$(Vector2* _charLocationPosition');
+      $(CharLocation* ptr)->size_ = *$(Vector2* _charLocationSize');
     } |]
 
 instance Storable GlyphLocation where
@@ -502,12 +502,12 @@ textGetRowWidth p i = liftIO $ do
 textGetCharPosition :: (Parent Text a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Text object
   -> Word -- ^ index
-  -> m IntVector2
+  -> m Vector2
 textGetCharPosition p i = liftIO $ alloca $ \resptr -> do
   let ptr = parentPointer p
       i' = fromIntegral i
   [C.block| void {
-    *$(IntVector2* resptr) = $(Text* ptr)->GetCharPosition($(unsigned int i'));
+    *$(Vector2* resptr) = $(Text* ptr)->GetCharPosition($(unsigned int i'));
   } |]
   peek resptr
 
@@ -515,12 +515,12 @@ textGetCharPosition p i = liftIO $ alloca $ \resptr -> do
 textGetCharSize :: (Parent Text a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Text object
   -> Word -- ^ index
-  -> m IntVector2
+  -> m Vector2
 textGetCharSize p i = liftIO $ alloca $ \resptr -> do
   let ptr = parentPointer p
       i' = fromIntegral i
   [C.block| void {
-    *$(IntVector2* resptr) = $(Text* ptr)->GetCharSize($(unsigned int i'));
+    *$(Vector2* resptr) = $(Text* ptr)->GetCharSize($(unsigned int i'));
   } |]
   peek resptr
 

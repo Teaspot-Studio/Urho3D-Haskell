@@ -37,7 +37,7 @@ mkFuncN name ps bodyQ = do
 
 mkNewType :: String -> TypeQ -> DecQ
 mkNewType tname t =
-  newtypeD (return []) (mkName tname) [] Nothing (recC (mkName tname) [varBangType (mkName $ "un"++tname) $ bangType (bang noSourceUnpackedness noSourceStrictness) t]) (return [])
+  newtypeD (return []) (mkName tname) [] Nothing (recC (mkName tname) [varBangType (mkName $ "un"++tname) $ bangType (bang noSourceUnpackedness noSourceStrictness) t]) []
 
 mkFunc1Con :: String -> String -> String -> (Name -> Q Exp) -> Q Dec
 mkFunc1Con name con par bodyQ = do

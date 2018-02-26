@@ -45,7 +45,7 @@ instance Creatable (Ptr UrhoString) where
 instance Creatable (Ptr UrhoWString) where
   type CreationOptions (Ptr UrhoWString) = T.Text
 
-  newObject s = liftIO $ textAsPtrW32 s $ \s' -> [C.exp| WString* { new WString($(const wchar_t* s')) } |]
+  newObject s = liftIO $ textAsPtrW32 s $ \s' -> [C.exp| WString* { new WString(String($(const wchar_t* s'))) } |]
   deleteObject ptr = liftIO $ [C.exp| void { delete $(WString* ptr) } |]
 
 instance Creatable (Ptr StringVector) where
@@ -84,7 +84,7 @@ instance ReadableVector WStringVector where
 instance WriteableVector WStringVector where
   type WriteVecElem WStringVector = T.Text
   foreignVectorAppend ptr s = liftIO $ textAsPtrW32 s $ \s' ->
-    [C.exp| void { $(WStringVector* ptr)->Push(WString($(const wchar_t* s'))) } |]
+    [C.exp| void { $(WStringVector* ptr)->Push(WString(String($(const wchar_t* s')))) } |]
 
 -- | Loads given Urho3D::String into Haskell Stirng AND deletes the Urho string after creation
 loadUrhoString :: (MonadMask m, MonadIO m) => Ptr UrhoString -> m String

@@ -13,14 +13,15 @@ import Data.Monoid
 import GHC.Generics
 import Graphics.Urho3D.Interface.AST.Lexer
 import Text.Megaparsec
-import Text.Megaparsec.Prim
+import Text.Megaparsec.Char
+import Data.Text (Text)
 
 -- | C++ type
 data CppType =
     CppPodType CppPodType -- ^ Bultin types
   | CppPointer CppType -- ^ Pointer to a type
   | CppUserType {
-      cppTypeName :: String
+      cppTypeName :: Text
     }
   deriving (Eq, Show, Generic)
 
@@ -59,17 +60,17 @@ data CppInt = CppInt (Maybe Signess) (Maybe Longness)
 instance NFData CppInt
 
 -- | Parse type signess
-signess :: (MonadParsec e s m, Token s ~ Char) => m Signess
+signess :: (MonadParsec e s m, Token s ~ Char, Tokens s ~ Text) => m Signess
 signess = (cppSymbol "signed" >> return Signed)
   <|> (cppSymbol "unsigned" >> return Unsigned)
 
 -- | Parse int length modifier
-longness :: (MonadParsec e s m, Token s ~ Char) => m Longness
+longness :: (MonadParsec e s m, Token s ~ Char, Tokens s ~ Text) => m Longness
 longness = (cppSymbol "short" >> return Short)
   <|> (cppSymbol "long" >> return Long)
 
 -- | Parsing a C++ type
-cppType :: forall e s m . (MonadParsec e s m, Token s ~ Char)
+cppType :: forall e s m . (MonadParsec e s m, Token s ~ Char, Tokens s ~ Text)
   => m CppType
 cppType = do
   t <- parseBultin <|> parseUserType

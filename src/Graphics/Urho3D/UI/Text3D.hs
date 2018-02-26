@@ -578,15 +578,15 @@ text3DGetRowWidth p i = liftIO $  do
   fromIntegral <$> [C.exp| int {$(Text3D* ptr)->GetRowWidth($(unsigned int i'))} |]
 
 -- | Return position of character by index relative to the text element origin.
--- IntVector2 GetCharPosition(unsigned index);
+-- Vector2 GetCharPosition(unsigned index);
 text3DGetCharPosition :: (Parent Text3D a, Pointer ptr a, MonadIO m)
   => ptr -- ^ Pointer to text3D or ascentor
   -> Word -- ^ index
-  -> m IntVector2
+  -> m Vector2
 text3DGetCharPosition p i = liftIO $ alloca $ \vptr -> do
   let ptr = parentPointer p
       i' = fromIntegral i
-  [C.exp| void {*$(IntVector2* vptr) = $(Text3D* ptr)->GetCharPosition($(unsigned int i'))} |]
+  [C.exp| void {*$(Vector2* vptr) = $(Text3D* ptr)->GetCharPosition($(unsigned int i'))} |]
   peek vptr
 
 -- | Return size of character by index.
@@ -594,11 +594,11 @@ text3DGetCharPosition p i = liftIO $ alloca $ \vptr -> do
 text3DGetCharSize :: (Parent Text3D a, Pointer ptr a, MonadIO m)
   => ptr -- ^ Pointer to text3D or ascentor
   -> Word -- ^ index
-  -> m IntVector2
+  -> m Vector2
 text3DGetCharSize p i = liftIO $ alloca $ \vptr -> do
   let ptr = parentPointer p
       i' = fromIntegral i
-  [C.exp| void {*$(IntVector2* vptr) = $(Text3D* ptr)->GetCharSize($(unsigned int i'))} |]
+  [C.exp| void {*$(Vector2* vptr) = $(Text3D* ptr)->GetCharSize($(unsigned int i'))} |]
   peek vptr
 
 -- | Return corner color.

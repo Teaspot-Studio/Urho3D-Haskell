@@ -27,8 +27,8 @@ data Text
 
 -- | Cached character location and size within text. Used for queries related to text editing.
 data CharLocation = CharLocation {
-  _charLocationPosition :: {-# UNPACK #-} !IntVector2 -- ^ Position.
-, _charLocationSize     :: {-# UNPACK #-} !IntVector2 -- ^ Size
+  _charLocationPosition :: {-# UNPACK #-} !Vector2 -- ^ Position.
+, _charLocationSize     :: {-# UNPACK #-} !Vector2 -- ^ Size
 } deriving (Eq, Show, Generic)
 
 makeFields ''CharLocation
