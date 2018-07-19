@@ -18,3 +18,6 @@ extra-lib-dirs:
 extra-include-dirs:
 - /usr/include
 - /usr/include/Urho3D/ThirdParty
+
+nix:
+  shell-file: shell.nix
