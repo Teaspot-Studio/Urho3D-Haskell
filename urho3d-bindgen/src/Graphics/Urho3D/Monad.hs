@@ -21,7 +21,6 @@ module Graphics.Urho3D.Monad(
   -- | Foreign utils
   , textAsPtrW32
   , textFromPtrW32
-  , BitSet(..)
   ) where
 
 import qualified Data.Text as T
@@ -135,17 +134,3 @@ maybeNull :: Pointer p a => b -> (p -> b) -> p -> b
 maybeNull b f ptr
   | isNull ptr = b
   | otherwise = f ptr
-
--- | Converting enums to bitset and vice-versa
-class BitSet a where
-  toByteBitset :: [a] -> Word8
-  fromByteBitset :: Word8 -> [a]
-
--- | Assumes that enum instance uses only powers of two
-instance Enum a => BitSet a where
-  toByteBitset = sum . fmap (fromIntegral . fromEnum)
-  fromByteBitset w = catMaybes $ extractBit <$> [0 .. 7]
-    where
-    extractBit i = if testBit w i
-      then Just . toEnum $ 2^i
-      else Nothing

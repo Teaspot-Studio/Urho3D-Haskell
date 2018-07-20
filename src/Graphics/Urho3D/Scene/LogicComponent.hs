@@ -3,7 +3,8 @@ module Graphics.Urho3D.Scene.LogicComponent(
     LogicComponent
   , logicComponentContext
   , SharedLogicComponent
-  , EventMask(..)
+  , UpdateEvent(..)
+  , UpdateEventFlags
   , logicComponentOnSetEnabled
   , logicComponentStart
   , logicComponentDelayedStart
@@ -27,6 +28,7 @@ import Graphics.Urho3D.Scene.Internal.LogicComponent
 import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Container.FlagSet
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
 import Data.Monoid
@@ -67,27 +69,29 @@ instance NodeComponent LogicComponent where
     unsigned int { LogicComponent::GetTypeStatic().Value() } |]
 
 -- | Data used in 'logicComponentSetUpdateEventMask' for optimizing even handling
-data EventMask =
-    EM'UseUpdate -- ^ Bitmask for using the scene update event.
-  | EM'UsePostUpdate -- ^ Bitmask for using the scene post-update event.
-  | EM'UseFixedUpdate -- ^ Bitmask for using the physics update event.
-  | EM'UseFixedPostUpdate -- ^ Bitmask for using the physics post-update event.
+data UpdateEvent =
+    UpdateEventUseUpdate -- ^ Bitmask for using the scene update event.
+  | UpdateEventUsePostUpdate -- ^ Bitmask for using the scene post-update event.
+  | UpdateEventUseFixedUpdate -- ^ Bitmask for using the physics update event.
+  | UpdateEventUseFixedPostUpdate -- ^ Bitmask for using the physics post-update event.
   deriving (Generic, Show, Eq, Ord)
 
-instance NFData EventMask
+instance NFData UpdateEvent
 
-instance Enum EventMask where
+instance Enum UpdateEvent where
   fromEnum e = case e of
-    EM'UseUpdate -> 0x01
-    EM'UsePostUpdate -> 0x02
-    EM'UseFixedUpdate -> 0x04
-    EM'UseFixedPostUpdate -> 0x08
+    UpdateEventUseUpdate -> 0x01
+    UpdateEventUsePostUpdate -> 0x02
+    UpdateEventUseFixedUpdate -> 0x04
+    UpdateEventUseFixedPostUpdate -> 0x08
   toEnum i = case i of
-    0x01 -> EM'UseUpdate
-    0x02 -> EM'UsePostUpdate
-    0x04 -> EM'UseFixedUpdate
-    0x08 -> EM'UseFixedPostUpdate
-    _ -> EM'UseFixedPostUpdate
+    0x01 -> UpdateEventUseUpdate
+    0x02 -> UpdateEventUsePostUpdate
+    0x04 -> UpdateEventUseFixedUpdate
+    0x08 -> UpdateEventUseFixedPostUpdate
+    _ -> UpdateEventUseFixedPostUpdate
+
+type UpdateEventFlags = FlagSet Word32 UpdateEvent
 
 -- | Handle enabled/disabled state change. Changes update event subscription.
 logicComponentOnSetEnabled :: (Parent LogicComponent a, Pointer p a, MonadIO m)
@@ -164,20 +168,20 @@ logicComponentFixedPostUpdate p t = liftIO $ do
 -- | Set what update events should be subscribed to. Use this for optimization: by default all are in use. Note that this is not an attribute and is not saved or network-serialized, therefore it should always be called eg. in the subclass constructor.
 logicComponentSetUpdateEventMask :: (Parent LogicComponent a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to logic component
-  -> [EventMask] -- ^ Flags of events that are enabled
+  -> UpdateEventFlags -- ^ Flags of events that are enabled
   -> m ()
 logicComponentSetUpdateEventMask p es = liftIO $ do
   let ptr = parentPointer p
-      w = fromIntegral $ toByteBitset es
-  [C.exp| void { $(LogicComponent* ptr)->SetUpdateEventMask($(unsigned char w)) } |]
+      w = fromIntegral $ unFlagSet es
+  [C.exp| void { $(LogicComponent* ptr)->SetUpdateEventMask((UpdateEventFlags)$(unsigned int w)) } |]
 
 -- | Return what update events are subscribed to.
 logicComponentGetUpdateEventMask :: (Parent LogicComponent a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to logic component
-  -> m [EventMask]
+  -> m UpdateEventFlags
 logicComponentGetUpdateEventMask p = liftIO $ do
   let ptr = parentPointer p
-  fromByteBitset . fromIntegral <$> [C.exp| unsigned char { $(LogicComponent* ptr)->GetUpdateEventMask() } |]
+  FlagSet . fromIntegral <$> [C.exp| unsigned int { (unsigned)$(LogicComponent* ptr)->GetUpdateEventMask() } |]
 
 -- | Return whether the DelayedStart() function has been called.
 logicComponentIsDelayedStartCalled :: (Parent LogicComponent a, Pointer p a, MonadIO m)

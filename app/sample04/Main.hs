@@ -79,7 +79,7 @@ createScene app = do
    plane mesh with a "stone" material. Note that naming the scene nodes is optional. Scale the scene node larger
    (100 x 100 world units)
   -}
-  planeNode <- nodeCreateChild scene "Plane" CM'Replicated 0
+  planeNode <- nodeCreateChild scene "Plane" CMReplicated 0
   nodeSetScale planeNode (Vector3 100 1 100)
   (planeObject :: Ptr StaticModel) <- fromJustTrace "Plane StaticModel" <$> nodeCreateComponent planeNode Nothing Nothing
   (planeModel :: Ptr Model) <- fromJustTrace "Plane.mdl" <$> cacheGetResource cache "Models/Plane.mdl" True
@@ -92,7 +92,7 @@ createScene app = do
    light direction; we will use the SetDirection() function which calculates the orientation from a forward direction vector.
    The light will use default settings (white light, no shadows)
   -}
-  lightNode <- nodeCreateChild scene "DirectionalLight" CM'Replicated 0
+  lightNode <- nodeCreateChild scene "DirectionalLight" CMReplicated 0
   nodeSetDirection lightNode (Vector3 0.6 (-1.0) 0.8)
   (light :: Ptr Light) <- fromJustTrace "Light" <$> nodeCreateComponent lightNode Nothing Nothing
   lightSetLightType light LT'Directional
@@ -107,7 +107,7 @@ createScene app = do
   -}
   let numObjects = 200
   _ <- replicateM numObjects $ do
-    mushroomNode <- nodeCreateChild scene "Mushroom" CM'Replicated 0
+    mushroomNode <- nodeCreateChild scene "Mushroom" CMReplicated 0
     [r1, r2] <- replicateM 2 (randomUp 90)
     nodeSetPosition mushroomNode $ Vector3 (r1 - 45) 0 (r2 - 45)
     r3 <- randomUp 360
@@ -125,7 +125,7 @@ createScene app = do
     Create a scene node for the camera, which we will move around
     The camera will use default settings (1000 far clip distance, 45 degrees FOV, set aspect ratio automatically)
   -}
-  cameraNode <- nodeCreateChild scene "Camera" CM'Replicated 0
+  cameraNode <- nodeCreateChild scene "Camera" CMReplicated 0
   (_ :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
 
   -- Set an initial position for the camera scene node above the plane
@@ -197,13 +197,13 @@ moveCamera app cameraNode t camData = do
     -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     -- Use the Translate() function (default local space) to move relative to the node's orientation.
     whenM (inputGetKeyDown input KeyW) $
-      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyS) $
-      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyA) $
-      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyD) $
-      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TSLocal
 
     return camData {
         camYaw = yaw

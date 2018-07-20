@@ -76,7 +76,7 @@ createScene app moverType = do
   (_ :: Ptr DebugRenderer) <- fromJustTrace "DebugRenderer" <$> nodeCreateComponent scene Nothing Nothing
 
   -- Create scene node & StaticModel component for showing a static plane
-  planeNode <- nodeCreateChild scene "Plane" CM'Replicated 0
+  planeNode <- nodeCreateChild scene "Plane" CMReplicated 0
   nodeSetScale planeNode (Vector3 100 1 100)
   (planeObject :: Ptr StaticModel) <- fromJustTrace "Plane StaticModel" <$> nodeCreateComponent planeNode Nothing Nothing
   (planeModel :: Ptr Model) <- fromJustTrace "Plane.mdl" <$> cacheGetResource cache "Models/Plane.mdl" True
@@ -85,7 +85,7 @@ createScene app moverType = do
   staticModelSetMaterial planeObject planeMaterial
 
   -- Create a Zone component for ambient lighting & fog control
-  zoneNode <- nodeCreateChild scene "Zone" CM'Replicated 0
+  zoneNode <- nodeCreateChild scene "Zone" CMReplicated 0
   (zone :: Ptr Zone) <- fromJustTrace "Zone" <$> nodeCreateComponent zoneNode Nothing Nothing
   -- Set same volume as the Octree, set a close bluish fog and some ambient light
   zoneSetBoundingBox zone $ BoundingBox (-1000) 1000
@@ -99,7 +99,7 @@ createScene app moverType = do
    light direction; we will use the SetDirection() function which calculates the orientation from a forward direction vector.
    The light will use default settings (white light, no shadows)
   -}
-  lightNode <- nodeCreateChild scene "DirectionalLight" CM'Replicated 0
+  lightNode <- nodeCreateChild scene "DirectionalLight" CMReplicated 0
   nodeSetDirection lightNode (Vector3 0.6 (-1.0) 0.8)
   (light :: Ptr Light) <- fromJustTrace "Light" <$> nodeCreateComponent lightNode Nothing Nothing
   lightSetLightType light LT'Directional
@@ -116,7 +116,7 @@ createScene app moverType = do
 
   _ <- replicateM numModels $ do
 
-    modelNode <- nodeCreateChild scene "Jill" CM'Replicated 0
+    modelNode <- nodeCreateChild scene "Jill" CMReplicated 0
     [r1, r2] <- replicateM 2 (randomUp 90)
     nodeSetPosition modelNode $ Vector3 (r1 - 45) 0 (r2 - 45)
     r3 <- randomUp 360
@@ -148,7 +148,7 @@ createScene app moverType = do
 
   -- Create the camera. Let the starting position be at the world origin. As the fog limits maximum visible distance, we can
   -- bring the far clip plane closer for more effective culling of distant objects
-  cameraNode <- nodeCreateChild scene "Camera" CM'Replicated 0
+  cameraNode <- nodeCreateChild scene "Camera" CMReplicated 0
   (cam :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
   cameraSetFarClip cam 300
 
@@ -222,13 +222,13 @@ moveCamera app cameraNode t camData = do
     -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     -- Use the Translate() function (default local space) to move relative to the node's orientation.
     whenM (inputGetKeyDown input KeyW) $
-      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyS) $
-      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyA) $
-      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyD) $
-      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TSLocal
 
     -- Toggle debug geometry with space
     spacePressed <- inputGetKeyPress input KeySpace

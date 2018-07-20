@@ -25,7 +25,7 @@ make
 sudo make install
 ```
 
-Urho3D commit the bindings are tested with: `b65423cc6e13d9cef8142394e0b882544a138fc3`
+Urho3D commit the bindings are tested with: `b0f2b5a94f567465bfb1f88427e5e2924552a2bb`
 
 Also you need to adjust paths at the end of `stack.yml`:
 

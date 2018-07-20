@@ -73,7 +73,7 @@ createScene app = do
   (_ :: Ptr DebugRenderer) <- fromJustTrace "DebugRenderer" <$> nodeCreateComponent scene Nothing Nothing
 
   -- Create a Zone component for ambient lighting & fog control
-  zoneNode <- nodeCreateChild scene "Zone" CM'Replicated 0
+  zoneNode <- nodeCreateChild scene "Zone" CMReplicated 0
   (zone :: Ptr Zone) <- fromJustTrace "Zone" <$> nodeCreateComponent zoneNode Nothing Nothing
   -- Set same volume as the Octree, set a close bluish fog and some ambient light
   zoneSetBoundingBox zone $ BoundingBox (-1000) 1000
@@ -82,7 +82,7 @@ createScene app = do
   zoneSetFogEnd zone 300
 
   -- Create a directional light without shadows
-  lightNode <- nodeCreateChild scene "DirectionalLight" CM'Replicated 0
+  lightNode <- nodeCreateChild scene "DirectionalLight" CMReplicated 0
   nodeSetDirection lightNode (Vector3 0.5 (-1.0) 0.5)
   (light :: Ptr Light) <- fromJustTrace "Light" <$> nodeCreateComponent lightNode Nothing Nothing
   lightSetLightType light LT'Directional
@@ -91,7 +91,7 @@ createScene app = do
 
   -- Create a "floor" consisting of several tiles
   forM [(x, y)| x <- [-5 .. 5], y <- [-5 .. 5]] $ \(x :: Int, y :: Int) -> do
-    floorNode <- nodeCreateChild scene "FloorTile" CM'Replicated 0
+    floorNode <- nodeCreateChild scene "FloorTile" CMReplicated 0
     nodeSetPosition floorNode $ Vector3 (fromIntegral x * 20.5) (-0.5) (fromIntegral y * 20.5)
     nodeSetScale floorNode $ Vector3 20 1 20
     (floorObject :: Ptr StaticModel) <- fromJustTrace "Tile model" <$> nodeCreateComponent floorNode Nothing Nothing
@@ -106,12 +106,12 @@ createScene app = do
 
   _ <- replicateM numMushroomGroups $ do
     -- First create a scene node for the group. The individual mushrooms nodes will be created as children
-    (groupNode :: Ptr Node) <- nodeCreateChild scene "MushroomGroup" CM'Replicated 0
+    (groupNode :: Ptr Node) <- nodeCreateChild scene "MushroomGroup" CMReplicated 0
     [r1, r2] <- replicateM 2 (randomUp 190)
     nodeSetPosition groupNode $ Vector3 (r1 - 95) 0 (r2 - 95)
 
     replicateM numMushrooms $ do
-      (mushroomNode :: Ptr Node) <- nodeCreateChild groupNode "Mushroom" CM'Replicated 0
+      (mushroomNode :: Ptr Node) <- nodeCreateChild groupNode "Mushroom" CMReplicated 0
       [r3, r4] <- replicateM 2 (randomUp 25)
       [r5, r6] <- replicateM 2 random
       nodeSetPosition mushroomNode $ Vector3 (r3 - 12.5) 0 (r4 - 12.5)
@@ -131,7 +131,7 @@ createScene app = do
       numBillboards = 10
 
   _ <- replicateM numBillboards $ do
-    (smokeNode :: Ptr Node) <- nodeCreateChild scene "Smoke" CM'Replicated 0
+    (smokeNode :: Ptr Node) <- nodeCreateChild scene "Smoke" CMReplicated 0
     [sr1, sr2] <- replicateM 2 (randomUp 200)
     sr3 <- randomUp 20
     nodeSetPosition smokeNode $ Vector3 (sr1 - 100) sr3 (sr2 - 100)
@@ -161,7 +161,7 @@ createScene app = do
   -- Create shadow casting spotlights
   let numLights = 9 :: Int
   _ <- forM [0 .. numLights] $ \i -> do
-    (lightNode :: Ptr Node) <- nodeCreateChild scene "SpotLight" CM'Replicated 0
+    (lightNode :: Ptr Node) <- nodeCreateChild scene "SpotLight" CMReplicated 0
     (light :: Ptr Light) <- fromJustTrace "SpotLight" <$> nodeCreateComponent lightNode Nothing Nothing
 
     let angle = 0 :: Float
@@ -195,7 +195,7 @@ createScene app = do
 
   -- Create the camera. Let the starting position be at the world origin. As the fog limits maximum visible distance, we can
   -- bring the far clip plane closer for more effective culling of distant objects
-  cameraNode <- nodeCreateChild scene "Camera" CM'Replicated 0
+  cameraNode <- nodeCreateChild scene "Camera" CMReplicated 0
   (cam :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
   cameraSetFarClip cam 300
 
@@ -269,13 +269,13 @@ moveCamera app cameraNode t camData = do
     -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     -- Use the Translate() function (default local space) to move relative to the node's orientation.
     whenM (inputGetKeyDown input KeyW) $
-      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyS) $
-      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyA) $
-      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyD) $
-      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TSLocal
 
     -- Toggle debug geometry with space
     spacePressed <- inputGetKeyPress input KeySpace
@@ -301,7 +301,7 @@ animateScene sr timeStep = do
 
   -- Rotate the lights around the world Y-axis
   forM_ lightNodes $ \node ->
-    nodeRotate node (quaternionFromEuler 0 (lightRotationSpeed * timeStep) 0) TS'World
+    nodeRotate node (quaternionFromEuler 0 (lightRotationSpeed * timeStep) 0) TSWorld
 
   -- Rotate the individual billboards within the billboard sets, then recommit to make the changes visible
   forM_ billboardNodes $ \node -> do

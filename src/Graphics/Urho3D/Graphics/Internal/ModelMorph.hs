@@ -18,6 +18,7 @@ import qualified Language.C.Types as C
 
 import qualified Data.Map as Map
 import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Graphics.Internal.Defs
 import Graphics.Urho3D.Graphics.Internal.Skeleton
 import Control.Lens
 import GHC.Generics
@@ -27,7 +28,7 @@ import Data.Word
 
 -- | Vertex buffer morph data.
 data VertexBufferMorph = VertexBufferMorph {
-  _vertexBufferMorphElementMask        :: {-# UNPACK #-} !Word -- ^ Vertex elements
+  _vertexBufferMorphElementMask        :: {-# UNPACK #-} !VertexMaskFlags -- ^ Vertex elements
 , _vertexBufferMorphElementVertexCount :: {-# UNPACK #-} !Word -- ^ Number of vertices
 , _vertexBufferMorphElementDataSize    :: {-# UNPACK #-} !Word -- ^ Morphed vertices data size as bytes.
 , _vertexBufferMorphMorphData          :: {-# UNPACK #-} !(SharedArrayPtr Word8) -- ^ Morphed vertices. Stored packed as <index, data> pairs.

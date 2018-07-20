@@ -30,11 +30,6 @@ module Graphics.Urho3D.Input.Input(
   , toSDLController
   , fromSDLJoystick
   , fromSDLController
-  , mouseButtonLeft
-  , mouseButtonMiddle
-  , mouseButtonRight
-  , mouseButtonX1
-  , mouseButtonX2
   -- * Input API
   , inputContext
   , mousePoistionOffscreen
@@ -100,25 +95,26 @@ module Graphics.Urho3D.Input.Input(
 import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
-import Graphics.Urho3D.Input.Internal.Input
-import Graphics.Urho3D.Core.Object
-import Graphics.Urho3D.Container.ForeignVector
-import Graphics.Urho3D.Container.Vector.Common
-import Graphics.Urho3D.Container.Ptr
-import Graphics.Urho3D.Resource.XMLFile
-import Graphics.Urho3D.Math.Vector2
-import Graphics.Urho3D.UI.Element
-import Graphics.Urho3D.Monad
-import Graphics.Urho3D.Parent
-import Graphics.Urho3D.IO.Deserializer
-import Graphics.Urho3D.IO.Serializer
+import Control.Lens
 import Data.Monoid
 import Foreign
 import Foreign.C.String
-import Text.RawString.QQ
-import Control.Lens
+import Graphics.Urho3D.Container.FlagSet
+import Graphics.Urho3D.Container.ForeignVector
+import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Container.Vector.Common
+import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Input.InputConstants
+import Graphics.Urho3D.Input.Internal.Input
+import Graphics.Urho3D.IO.Deserializer
+import Graphics.Urho3D.IO.Serializer
+import Graphics.Urho3D.Math.Vector2
+import Graphics.Urho3D.Monad
+import Graphics.Urho3D.Parent
+import Graphics.Urho3D.Resource.XMLFile
+import Graphics.Urho3D.UI.Element
 import System.IO.Unsafe (unsafePerformIO)
-import Graphics.Urho3D.Input.Events
+import Text.RawString.QQ
 
 C.context (C.cppCtx
   <> inputCntx
@@ -449,17 +445,17 @@ inputGetKeyFromName :: (Parent Input a, Pointer p a, MonadIO m)
   -> m Key
 inputGetKeyFromName p n = liftIO $ withCString n $ \n' -> do
   let ptr = parentPointer p
-  fromUrhoKey . fromIntegral <$> [C.exp| int { $(Input* ptr)->GetKeyFromName(String($(const char* n'))) } |]
+  toEnum . fromIntegral <$> [C.exp| int { $(Input* ptr)->GetKeyFromName(String($(const char* n'))) } |]
 
 -- | Return keycode from scancode.
 inputGetKeyFromScancode :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> Int -- ^ scancode
+  -> Scancode -- ^ scancode
   -> m Key
 inputGetKeyFromScancode p sc = liftIO $ do
   let ptr = parentPointer p
-      sc' = fromIntegral sc
-  fromUrhoKey . fromIntegral <$> [C.exp| int { $(Input* ptr)->GetKeyFromScancode($(int sc')) } |]
+      sc' = fromIntegral . fromEnum $ sc
+  toEnum . fromIntegral <$> [C.exp| int { $(Input* ptr)->GetKeyFromScancode((Scancode)$(int sc')) } |]
 
 -- | Return name of key from keycode.
 inputGetKeyName :: (Parent Input a, Pointer p a, MonadIO m)
@@ -468,37 +464,37 @@ inputGetKeyName :: (Parent Input a, Pointer p a, MonadIO m)
   -> m String
 inputGetKeyName p k = liftIO $ do
   let ptr = parentPointer p
-      k' = fromIntegral . toUrhoKey $ k
-  peekCString =<< [C.exp| const char* { $(Input* ptr)->GetKeyName($(int k')).CString() } |]
+      k' = fromIntegral . fromEnum $ k
+  peekCString =<< [C.exp| const char* { $(Input* ptr)->GetKeyName((Key)$(int k')).CString() } |]
 
 -- | Return scancode from keycode.
 inputGetScancodeFromKey :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
   -> Key -- ^ key
-  -> m Int
+  -> m Scancode
 inputGetScancodeFromKey p k = liftIO $ do
   let ptr = parentPointer p
-      k' = fromIntegral . toUrhoKey $ k
-  fromIntegral <$> [C.exp| int { $(Input* ptr)->GetScancodeFromKey($(int k')) } |]
+      k' = fromIntegral . fromEnum $ k
+  toEnum . fromIntegral <$> [C.exp| int { (int)$(Input* ptr)->GetScancodeFromKey((Key)$(int k')) } |]
 
 -- | Return scancode from key name.
 inputGetScancodeFromName :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
   -> String -- ^ name
-  -> m Int
+  -> m Scancode
 inputGetScancodeFromName p n = liftIO $ withCString n $ \n' -> do
   let ptr = parentPointer p
-  fromIntegral <$> [C.exp| int { $(Input* ptr)->GetScancodeFromName(String($(const char* n'))) } |]
+  toEnum . fromIntegral <$> [C.exp| int { (int)$(Input* ptr)->GetScancodeFromName(String($(const char* n'))) } |]
 
 -- | Return name of key from scancode.
 inputGetScancodeName :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> Int -- ^ scancode
+  -> Scancode -- ^ scancode
   -> m String
 inputGetScancodeName p sc = liftIO $ do
   let ptr = parentPointer p
-      sc' = fromIntegral sc
-  peekCString =<< [C.exp| const char* { $(Input* ptr)->GetScancodeName($(int sc')).CString() } |]
+      sc' = fromIntegral . fromEnum $ sc
+  peekCString =<< [C.exp| const char* { $(Input* ptr)->GetScancodeName((Scancode)$(int sc')).CString() } |]
 
 -- | Check if a key is held down.
 inputGetKeyDown :: (Parent Input a, Pointer p a, MonadIO m)
@@ -507,8 +503,8 @@ inputGetKeyDown :: (Parent Input a, Pointer p a, MonadIO m)
   -> m Bool
 inputGetKeyDown p k = liftIO $ do
   let ptr = parentPointer p
-      ki = fromIntegral . toUrhoKey $ k
-  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetKeyDown($(int ki)) } |]
+      ki = fromIntegral . fromEnum $ k
+  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetKeyDown((Key)$(int ki)) } |]
 
 -- | Check if a key has been pressed on this frame.
 inputGetKeyPress :: (Parent Input a, Pointer p a, MonadIO m)
@@ -517,76 +513,76 @@ inputGetKeyPress :: (Parent Input a, Pointer p a, MonadIO m)
   -> m Bool
 inputGetKeyPress p k = liftIO $ do
   let ptr = parentPointer p
-      k' = fromIntegral . toUrhoKey $ k
-  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetKeyPress($(int k')) } |]
+      k' = fromIntegral . fromEnum $ k
+  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetKeyPress((Key)$(int k')) } |]
 
 -- | Check if a key is held down by scancode.
 inputGetScancodeDown :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> Int -- ^ scancode
+  -> Scancode -- ^ scancode
   -> m Bool
 inputGetScancodeDown p sc = liftIO $ do
   let ptr = parentPointer p
-      sc' = fromIntegral sc
-  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetScancodeDown($(int sc')) } |]
+      sc' = fromIntegral . fromEnum $ sc
+  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetScancodeDown((Scancode)$(int sc')) } |]
 
 -- | Check if a key has been pressed on this frame by scancode.
 inputGetScancodePress :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> Int -- ^ scancode
+  -> Scancode -- ^ scancode
   -> m Bool
 inputGetScancodePress p sc = liftIO $ do
   let ptr = parentPointer p
-      sc' = fromIntegral sc
-  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetScancodePress($(int sc')) } |]
+      sc' = fromIntegral . fromEnum $ sc
+  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetScancodePress((Scancode)$(int sc')) } |]
 
 -- |  Check if a mouse button is held down.
 inputGetMouseButtonDown :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> Int -- ^ button
+  -> MouseButton -- ^ button
   -> m Bool
 inputGetMouseButtonDown p b = liftIO $ do
   let ptr = parentPointer p
-      b' = fromIntegral b
-  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetMouseButtonDown($(int b')) } |]
+      b' = fromIntegral . fromEnum $ b
+  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetMouseButtonDown((MouseButton)$(int b')) } |]
 
 -- | Check if a mouse button has been pressed on this frame.
 inputGetMouseButtonPress :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> Int -- ^ button
+  -> MouseButton -- ^ button
   -> m Bool
 inputGetMouseButtonPress p b = liftIO $ do
   let ptr = parentPointer p
-      b' = fromIntegral b
-  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetMouseButtonPress($(int b')) } |]
+      b' = fromIntegral . fromEnum $ b
+  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetMouseButtonPress((MouseButton)$(int b')) } |]
 
 -- | Check if a qualifier key is held down.
 inputGetQualifierDown :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> Int -- ^ qualifier
+  -> Qualifier -- ^ qualifier
   -> m Bool
 inputGetQualifierDown p q = liftIO $ do
   let ptr = parentPointer p
-      q' = fromIntegral q
-  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetQualifierDown($(int q')) } |]
+      q' = fromIntegral . fromEnum $ q
+  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetQualifierDown((Qualifier)$(int q')) } |]
 
 -- | Check if a qualifier key has been pressed on this frame.
 inputGetQualifierPress :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> Int -- ^ qualifier
+  -> Qualifier -- ^ qualifier
   -> m Bool
 inputGetQualifierPress p q = liftIO $ do
   let ptr = parentPointer p
-      q' = fromIntegral q
-  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetQualifierPress($(int q')) } |]
+      q' = fromIntegral . fromEnum $ q
+  toBool <$> [C.exp| int { (int)$(Input* ptr)->GetQualifierPress((Qualifier)$(int q')) } |]
 
 -- | Return the currently held down qualifiers.
 inputGetQualifiers :: (Parent Input a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to Input or ascentor
-  -> m Int
+  -> m QualifierFlags
 inputGetQualifiers p = liftIO $ do
   let ptr = parentPointer p
-  fromIntegral <$> [C.exp| int { $(Input* ptr)->GetQualifiers() } |]
+  FlagSet . fromIntegral <$> [C.exp| unsigned int { (unsigned)$(Input* ptr)->GetQualifiers() } |]
 
 -- | Return mouse position within window. Should only be used with a visible mouse cursor.
 inputGetMousePosition :: (Parent Input a, Pointer p a, MonadIO m)
@@ -778,18 +774,3 @@ inputIsMinimized :: (Parent Input a, Pointer p a, MonadIO m)
 inputIsMinimized p = liftIO $ do
   let ptr = parentPointer p
   toBool <$> [C.exp| int { (int) $(Input* ptr)->IsMinimized() } |]
-
-mouseButtonLeft :: Int
-mouseButtonLeft = fromIntegral [C.pure| int { MOUSEB_LEFT }|]
-
-mouseButtonMiddle :: Int
-mouseButtonMiddle = fromIntegral [C.pure| int { MOUSEB_MIDDLE }|]
-
-mouseButtonRight :: Int
-mouseButtonRight = fromIntegral [C.pure| int { MOUSEB_RIGHT }|]
-
-mouseButtonX1 :: Int
-mouseButtonX1 = fromIntegral [C.pure| int { MOUSEB_X1 }|]
-
-mouseButtonX2 :: Int
-mouseButtonX2 = fromIntegral [C.pure| int { MOUSEB_X2 }|]

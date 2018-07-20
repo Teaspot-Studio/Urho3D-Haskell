@@ -80,7 +80,7 @@ createScene app = do
   (_ :: Ptr DebugRenderer) <- fromJustTrace "DebugRenderer" <$> nodeCreateComponent scene Nothing Nothing
 
   -- Create scene node & StaticModel component for showing a static plane
-  planeNode <- nodeCreateChild scene "Plane" CM'Local 0
+  planeNode <- nodeCreateChild scene "Plane" CMLocal 0
   nodeSetScale planeNode $ Vector3 100 1 100
   planeObject :: Ptr StaticModel <- fromJustTrace "Plane" <$> nodeCreateComponent planeNode Nothing Nothing
   planeModel :: Ptr Model <- fromJustTrace "Plane.mdl" <$> cacheGetResource cache "Models/Plane.mdl" True
@@ -89,7 +89,7 @@ createScene app = do
   staticModelSetMaterial planeObject planeMaterial
 
   -- Create a Zone component for ambient lighting & fog control
-  zoneNode <- nodeCreateChild scene "Zone" CM'Local 0
+  zoneNode <- nodeCreateChild scene "Zone" CMLocal 0
   (zone :: Ptr Zone) <- fromJustTrace "Zone" <$> nodeCreateComponent zoneNode Nothing Nothing
   -- Set same volume as the Octree, set a close bluish fog and some ambient light
   zoneSetBoundingBox zone $ BoundingBox (-1000) 1000
@@ -99,7 +99,7 @@ createScene app = do
   zoneSetFogEnd zone 300
 
   -- Create a directional light without shadows
-  lightNode <- nodeCreateChild scene "DirectionalLight" CM'Replicated 0
+  lightNode <- nodeCreateChild scene "DirectionalLight" CMReplicated 0
   nodeSetDirection lightNode (Vector3 0.6 (-1.0) 0.8)
   (light :: Ptr Light) <- fromJustTrace "Light" <$> nodeCreateComponent lightNode Nothing Nothing
   lightSetLightType light LT'Directional
@@ -112,7 +112,7 @@ createScene app = do
   let numMushrooms = 240
 
   replicateM_ numMushrooms $ do
-    mushroomNode :: Ptr Node <- nodeCreateChild scene "Mushroom" CM'Local 0
+    mushroomNode :: Ptr Node <- nodeCreateChild scene "Mushroom" CMLocal 0
     r1 <- randomUp 90
     r2 <- randomUp 90
     nodeSetPosition mushroomNode $ Vector3 (r1 - 45) 0 (r2 - 45)
@@ -130,7 +130,7 @@ createScene app = do
   -- rendering to a low-resolution depth-only buffer to test the objects in the view frustum for visibility
   let numBoxes = 20
   replicateM_ numBoxes $ do
-    boxNode <- nodeCreateChild scene "Box" CM'Local 0
+    boxNode <- nodeCreateChild scene "Box" CMLocal 0
     r1 <- randomUp 10
     let size = 1 + r1
     r2 <- randomUp 80
@@ -146,7 +146,7 @@ createScene app = do
     when (size > 3) $ drawableSetOccluder boxObject True
 
   -- Create the camera. Limit far clip distance to match the fog
-  cameraNode <- nodeCreateChild scene "Camera" CM'Local 0
+  cameraNode <- nodeCreateChild scene "Camera" CMLocal 0
   (cam :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
   cameraSetFarClip cam 300
 
@@ -218,7 +218,7 @@ moveCamera app cameraNode t camData = do
   (ui :: Ptr UI) <- fromJustTrace "UI" <$> getSubsystem app
   (input :: Ptr Input) <- fromJustTrace "Input" <$> getSubsystem app
   cursor <- uiCursor ui
-  isRightPress <- inputGetMouseButtonDown input mouseButtonRight
+  isRightPress <- inputGetMouseButtonDown input MouseButtonRight
   uiElementSetVisible cursor $ not isRightPress
 
   -- Do not move if the UI has a focused element (the console)
@@ -244,19 +244,19 @@ moveCamera app cameraNode t camData = do
     -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     -- Use the Translate() function (default local space) to move relative to the node's orientation.
     whenM (inputGetKeyDown input KeyW) $
-      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyS) $
-      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyA) $
-      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyD) $
-      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TSLocal
 
     -- Toggle debug geometry with space
     spacePressed <- inputGetKeyPress input KeySpace
 
     -- Paint decal with the left mousebutton; cursor must be visible
-    isMouseBtn <- inputGetMouseButtonPress input mouseButtonLeft
+    isMouseBtn <- inputGetMouseButtonPress input MouseButtonLeft
     when (isVisible && isMouseBtn) $ paintDecal app cameraNode
 
     return camData {

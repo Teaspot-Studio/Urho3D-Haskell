@@ -1,6 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Graphics.Animation(
     Animation
+  , AnimationChannel(..)
+  , AnimationChannelFlags
   , AnimationKeyFrame(..)
   , HasTime(..)
   , HasPosition(..)
@@ -45,10 +47,11 @@ import qualified Language.C.Inline as C
 import qualified Language.C.Inline.Cpp as C
 
 import Graphics.Urho3D.Graphics.Internal.Animation
-import Graphics.Urho3D.Container.Ptr
-import Graphics.Urho3D.Container.Vector
+import Graphics.Urho3D.Container.FlagSet
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.HashMap
+import Graphics.Urho3D.Container.Ptr
+import Graphics.Urho3D.Container.Vector
 import Graphics.Urho3D.Creatable
 import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Monad
@@ -147,21 +150,22 @@ instance Storable AnimationTrack where
   alignment _ = fromIntegral $ [C.pure| int { (int)Traits<AnimationTrack>::AlignmentOf } |]
   peek ptr = do
     _animationTrackName <- peekCString =<< [C.exp| const char* {$(AnimationTrack* ptr)->name_.CString()} |]
-    _animationTrackChannelMask <- fromIntegral <$> [C.exp| unsigned char {$(AnimationTrack* ptr)->channelMask_} |]
+    _animationTrackNameHash <- peek =<< [C.exp| StringHash* {&$(AnimationTrack* ptr)->nameHash_} |]
+    _animationTrackChannelMask <- FlagSet . fromIntegral <$> [C.exp| unsigned char {(unsigned char)$(AnimationTrack* ptr)->channelMask_} |]
     _animationTrackKeyFrames <- peekForeignVectorAs =<< [C.exp| VectorAnimationKeyFrame* {&$(AnimationTrack* ptr)->keyFrames_} |]
     return AnimationTrack {..}
   poke ptr (AnimationTrack {..}) =
     withCString _animationTrackName $ \_animationTrackName' ->
-      withObject _animationTrackName $ \_animationTrackHashName' ->
+      with _animationTrackNameHash $ \_animationTrackHashName' ->
         withForeignVector () _animationTrackKeyFrames $ \_animationTrackKeyFrames' ->
         [C.block| void {
           $(AnimationTrack* ptr)->name_ = String($(const char* _animationTrackName'));
           $(AnimationTrack* ptr)->nameHash_ = *$(StringHash* _animationTrackHashName');
-          $(AnimationTrack* ptr)->channelMask_ = $(unsigned char _animationTrackChannelMask');
+          $(AnimationTrack* ptr)->channelMask_ = AnimationChannelFlags($(unsigned char _animationTrackChannelMask'));
           $(AnimationTrack* ptr)->keyFrames_ = VectorAnimationKeyFrame(*$(VectorAnimationKeyFrame* _animationTrackKeyFrames'));
         } |]
     where
-    _animationTrackChannelMask' = fromIntegral _animationTrackChannelMask
+    _animationTrackChannelMask' = fromIntegral . unFlagSet $ _animationTrackChannelMask
 
 instance (Typeable a, VariantStorable a) => Storable (AnimationTriggerPoint a) where
   sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(AnimationTriggerPoint) } |]

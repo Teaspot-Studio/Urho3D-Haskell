@@ -57,6 +57,8 @@ module Graphics.Urho3D.UI.Element(
   , FocusMode(..)
   , LayoutMode(..)
   , TraversalMode(..)
+  , DragAndDropMode(..)
+  , DragAndDropModeFlags
   , ddDisabled
   , ddSource
   , ddTarget
@@ -220,6 +222,7 @@ import Data.Proxy
 import Foreign
 import Foreign.C.String
 import GHC.Generics
+import Graphics.Urho3D.Container.FlagSet
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.Str
@@ -1043,14 +1046,38 @@ uiElementSetFocusMode p b = liftIO $ do
       b' = fromIntegral $ fromEnum b
   [C.exp| void { $(UIElement* ptr)->SetFocusMode((FocusMode)$(int b')) } |]
 
+data DragAndDropMode =
+    DDDisabled -- ^ Drag and drop disabled.
+  | DDSource -- ^ Drag and drop source flag.
+  | DDTarget -- ^ Drag and drop target flag.
+  | DDSourceAndTarget -- ^ Drag and drop source and target.
+  deriving (Eq, Ord, Show, Read, Bounded, Generic)
+
+instance Enum DragAndDropMode where
+  fromEnum i = case i of
+    DDDisabled -> 0
+    DDSource -> 1
+    DDTarget -> 2
+    DDSourceAndTarget -> 3
+  {-# INLINE fromEnum #-}
+  toEnum i = case i of
+    0 -> DDDisabled
+    1 -> DDSource
+    2 -> DDTarget
+    3 -> DDSourceAndTarget
+    _ -> DDDisabled
+  {-# INLINE toEnum #-}
+
+type DragAndDropModeFlags = FlagSet Word32 DragAndDropMode
+
 -- | Set drag and drop flags.
 uiElementSetDragDropMode :: (Parent UIElement a, Pointer p a, MonadIO m) => p -- ^ Pointer to UI element
-  -> Int -- ^ mode (TODO: add typed enum)
+  -> DragAndDropMode -- ^ mode
   -> m ()
 uiElementSetDragDropMode ptr p = liftIO $ do
   let ptr' = parentPointer ptr
-      p' = fromIntegral p
-  [C.exp| void { $(UIElement* ptr')->SetDragDropMode($(int p')) } |]
+      p' = fromIntegral . fromEnum $ p
+  [C.exp| void { $(UIElement* ptr')->SetDragDropMode((DragAndDropMode)$(int p')) } |]
 
 -- | Traversal mode for rendering.
 data TraversalMode =

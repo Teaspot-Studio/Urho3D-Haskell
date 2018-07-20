@@ -83,9 +83,10 @@ module Graphics.Urho3D.Graphics.Defs(
   , pspMetallic
   , dotScale
   , FaceCameraMode(..)
-  , Quality(..)
   , ShadowQuality(..)
-  , Mask(..)
+  , MaterialQuality(..)
+  , VertexMask(..)
+  , VertexMaskFlags
   , maxRenderTargets
   , maxVertexStreams
   , maxConstantRegisters

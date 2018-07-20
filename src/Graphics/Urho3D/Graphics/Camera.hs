@@ -1,6 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Graphics.Urho3D.Graphics.Camera(
     Camera
+  , ViewOverride(..)
+  , ViewOverrideFlags
   , cameraContext
   , cameraSetNearClip
   , cameraSetFarClip
@@ -71,6 +73,7 @@ import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Scene.Node
 import System.IO.Unsafe (unsafePerformIO)
 
+import Graphics.Urho3D.Container.FlagSet
 import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Graphics.Defs
 import Graphics.Urho3D.Math.Frustum
@@ -221,15 +224,15 @@ cameraSetViewMask p v = liftIO $ do
   [C.exp| void {$(Camera* ptr)->SetViewMask($(unsigned int v'))} |]
 
 -- | Set view override flags.
--- void SetViewOverrideFlags(unsigned flags);
+-- void SetViewOverrideFlags(ViewOverrideFlags flags);
 cameraSetViewOverrideFlags :: (Parent Camera a, Pointer p a, MonadIO m)
   => p -- ^ Camera pointer or child
-  -> Word -- ^ flags
+  -> ViewOverrideFlags -- ^ flags
   -> m ()
 cameraSetViewOverrideFlags p v = liftIO $ do
   let ptr = parentPointer p
-      v' = fromIntegral v
-  [C.exp| void {$(Camera* ptr)->SetViewOverrideFlags($(unsigned int v'))} |]
+      v' = fromIntegral . unFlagSet $ v
+  [C.exp| void {$(Camera* ptr)->SetViewOverrideFlags(ViewOverrideFlags($(unsigned int v')))} |]
 
 -- | Set orthographic mode enabled/disabled.
 -- void SetOrthographic(bool enable);
@@ -394,10 +397,10 @@ cameraGetViewMask p = liftIO $ do
 -- | Return view override flags.
 -- unsigned GetViewOverrideFlags() const { return viewOverrideFlags_; }
 cameraGetViewOverrideFlags :: (Parent Camera a, Pointer p a, MonadIO m) => p -- ^ Camera pointer or child
-  -> m Word
+  -> m ViewOverrideFlags
 cameraGetViewOverrideFlags p = liftIO $ do
   let ptr = parentPointer p
-  fromIntegral <$> [C.exp| unsigned int {$(Camera* ptr)->GetViewOverrideFlags()} |]
+  FlagSet . fromIntegral <$> [C.exp| unsigned int {(unsigned int)$(Camera* ptr)->GetViewOverrideFlags()} |]
 
 -- | Return fill mode.
 -- FillMode GetFillMode() const { return fillMode_; }

@@ -19,6 +19,7 @@ import qualified Language.C.Inline.Cpp as C
 import Data.Monoid
 import Foreign
 import Foreign.C.String
+import Graphics.Urho3D.Container.FlagSet
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Container.Vector.Common
@@ -58,7 +59,7 @@ instance Storable VertexBufferMorph where
   sizeOf _ = fromIntegral $ [C.pure| int { (int)sizeof(VertexBufferMorph) } |]
   alignment _ = fromIntegral $ [C.pure| int { (int)Traits<VertexBufferMorph>::AlignmentOf } |]
   peek ptr = do
-    elMask <- fromIntegral <$> [C.exp| unsigned int { $(VertexBufferMorph* ptr)->elementMask_ } |]
+    elMask <- FlagSet . fromIntegral <$> [C.exp| unsigned int { (unsigned int)$(VertexBufferMorph* ptr)->elementMask_ } |]
     vertCount <- fromIntegral <$> [C.exp| unsigned int { $(VertexBufferMorph* ptr)->vertexCount_ } |]
     dSize <- fromIntegral <$> [C.exp| unsigned int { $(VertexBufferMorph* ptr)->dataSize_ } |]
     mData <- peekVector $ fromIntegral dSize
@@ -68,13 +69,13 @@ instance Storable VertexBufferMorph where
 
   poke ptr (VertexBufferMorph elMask vertCount dSize mData) = withSharedArrayPtr mData $ \_ mData' -> do
     [C.block| void {
-      $(VertexBufferMorph* ptr)->elementMask_ = $(unsigned int elMask');
+      $(VertexBufferMorph* ptr)->elementMask_ = VertexMaskFlags($(unsigned int elMask'));
       $(VertexBufferMorph* ptr)->vertexCount_ = $(unsigned int vertCount');
       $(VertexBufferMorph* ptr)->dataSize_ = $(unsigned int dSize');
       $(VertexBufferMorph* ptr)->morphData_ = *$(SharedArrayWord8* mData');
     } |]
     where
-    elMask' = fromIntegral elMask
+    elMask' = fromIntegral . unFlagSet $ elMask
     vertCount' = fromIntegral vertCount
     dSize' = fromIntegral dSize
 

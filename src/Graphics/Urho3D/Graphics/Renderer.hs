@@ -71,35 +71,35 @@ rendererSetViewport p w pv = liftIO $ do
 
 -- | Return texture quality level.
 rendererGetTextureQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child
-  -> m Quality
+  -> m MaterialQuality
 rendererGetTextureQuality p = liftIO $ do
   let ptr = parentPointer p
   toEnum . fromIntegral <$> [C.exp| int { $(Renderer* ptr)->GetTextureQuality() } |]
 
 -- | Sets texture quality level
 rendererSetTextureQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child
-  -> Quality -- ^ Quality level
+  -> MaterialQuality -- ^ Quality level
   -> m ()
 rendererSetTextureQuality p q = liftIO $ do
   let ptr = parentPointer p
       e = fromIntegral $ fromEnum q
-  [C.exp| void {$(Renderer* ptr)->SetTextureQuality($(int e))} |]
+  [C.exp| void {$(Renderer* ptr)->SetTextureQuality((MaterialQuality)$(int e))} |]
 
 -- | Return material quality level.
 rendererGetMaterialQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child
-  -> m Quality
+  -> m MaterialQuality
 rendererGetMaterialQuality p = liftIO $ do
   let ptr = parentPointer p
-  toEnum . fromIntegral <$> [C.exp| int { $(Renderer* ptr)->GetMaterialQuality() } |]
+  toEnum . fromIntegral <$> [C.exp| int { (int)$(Renderer* ptr)->GetMaterialQuality() } |]
 
 -- | Sets texture quality level
 rendererSetMaterialQuality :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child
-  -> Quality -- ^ Quality level
+  -> MaterialQuality -- ^ Quality level
   -> m ()
 rendererSetMaterialQuality p q = liftIO $ do
   let ptr = parentPointer p
       e = fromIntegral $ fromEnum q
-  [C.exp| void {$(Renderer* ptr)->SetMaterialQuality($(int e))} |]
+  [C.exp| void {$(Renderer* ptr)->SetMaterialQuality((MaterialQuality)$(int e))} |]
 
 -- | Is specular lighting on?
 rendererGetSpecularLighting :: (Parent Renderer a, Pointer p a, MonadIO m) => p -- ^ Pointer to renderer or child

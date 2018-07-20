@@ -89,13 +89,13 @@ moverDef = defaultCustomLogicComponent {
       -- Component state is passed via reference
       MoverState {..} <- readIORef ref
 
-      nodeTranslate compNode (vec3Forward * vec3 (moverSpeed * t)) TS'Local
+      nodeTranslate compNode (vec3Forward * vec3 (moverSpeed * t)) TSLocal
 
       -- If in risk of going outside the plane, rotate the model right
       pos <- nodeGetPosition compNode
       when ((pos ^. x < moverBounds ^. minVector ^. x) || (pos ^. x > moverBounds ^. maxVector ^. x) ||
             (pos ^. z < moverBounds ^. minVector ^. z) || (pos ^. z > moverBounds ^. maxVector ^. z)) $
-        nodeYaw compNode (moverRotateSpeed * t) TS'Local
+        nodeYaw compNode (moverRotateSpeed * t) TSLocal
 
       -- Get the model's first (only) animation state and advance its time. Note the convenience accessor to other components
       -- in the same scene node

@@ -77,7 +77,7 @@ createScene app rotatorType = do
   -- Create a Zone component into a child scene node. The Zone controls ambient lighting and fog settings. Like the Octree,
   -- it also defines its volume with a bounding box, but can be rotated (so it does not need to be aligned to the world X, Y
   -- and Z axes.) Drawable objects "pick up" the zone they belong to and use it when rendering; several zones can exist
-  zoneNode <- nodeCreateChild scene "Zone" CM'Replicated 0
+  zoneNode <- nodeCreateChild scene "Zone" CMReplicated 0
   (zone :: Ptr Zone) <- fromJustTrace "Zone" <$> nodeCreateComponent zoneNode Nothing Nothing
   -- Set same volume as the Octree, set a close bluish fog and some ambient light
   zoneSetBoundingBox zone $ BoundingBox (-1000) 1000
@@ -89,7 +89,7 @@ createScene app rotatorType = do
   -- Create randomly positioned and oriented box StaticModels in the scene
   let numObjects = 2000
   _ <- replicateM numObjects $ do
-    boxNode <- nodeCreateChild scene "Box" CM'Replicated 0
+    boxNode <- nodeCreateChild scene "Box" CMReplicated 0
     [r1, r2, r3] <- replicateM 3 (randomUp 200)
     nodeSetPosition boxNode $ Vector3 (r1 - 100) (r2 - 100) (r3 - 100)
     -- Orient using random pitch, yaw and roll Euler angles
@@ -113,7 +113,7 @@ createScene app rotatorType = do
 
   -- Create the camera. Let the starting position be at the world origin. As the fog limits maximum visible distance, we can
   -- bring the far clip plane closer for more effective culling of distant objects
-  cameraNode <- nodeCreateChild scene "Camera" CM'Replicated 0
+  cameraNode <- nodeCreateChild scene "Camera" CMReplicated 0
   (cam :: Ptr Camera) <- fromJustTrace "Camera component" <$> nodeCreateComponent cameraNode Nothing Nothing
   cameraSetFarClip cam 100
 
@@ -188,13 +188,13 @@ moveCamera app cameraNode t camData = do
     -- Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     -- Use the Translate() function (default local space) to move relative to the node's orientation.
     whenM (inputGetKeyDown input KeyW) $
-      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Forward `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyS) $
-      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Back `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyA) $
-      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Left `mul` (moveSpeed * t)) TSLocal
     whenM (inputGetKeyDown input KeyD) $
-      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TS'Local
+      nodeTranslate cameraNode (vec3Right `mul` (moveSpeed * t)) TSLocal
 
     return camData {
         camYaw = yaw

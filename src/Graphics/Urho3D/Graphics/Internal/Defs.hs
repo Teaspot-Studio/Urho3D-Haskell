@@ -9,6 +9,7 @@ import Control.DeepSeq
 import Control.Lens
 import Data.Word
 import GHC.Generics
+import Graphics.Urho3D.Container.FlagSet
 
 -- | Primitive type
 data PrimitiveType =
@@ -122,28 +123,28 @@ instance NFData LegacyVertexElement
 
 -- | Arbitrary vertex declaration element datatypes.
 data VertexElementType =
-    Type'Int
-  | Type'Float
-  | Type'Vector2
-  | Type'Vector3
-  | Type'Vector4
-  | Type'Ubyte4
-  | Type'Ubyte4Norm
+    TypeInt
+  | TypeFloat
+  | TypeVector2
+  | TypeVector3
+  | TypeVector4
+  | TypeUbyte4
+  | TypeUbyte4Norm
   deriving (Eq, Ord, Show, Enum, Bounded, Generic)
 
 instance NFData VertexElementType
 
 -- | Arbitrary vertex declaration element semantics.
 data VertexElementSemantic =
-    SEM'Position
-  | SEM'Normal
-  | SEM'Binormal
-  | SEM'Tangent
-  | SEM'TexCoord
-  | SEM'Color
-  | SEM'BlendWeights
-  | SEM'BlendIndices
-  | SEM'ObjectIndex
+    SEMPosition
+  | SEMNormal
+  | SEMBinormal
+  | SEMTangent
+  | SEMTexCoord
+  | SEMColor
+  | SEMBlendWeights
+  | SEMBlendIndices
+  | SEMObjectIndex
   deriving (Eq, Ord, Show, Enum, Bounded, Generic)
 
 instance NFData VertexElementSemantic
@@ -244,24 +245,24 @@ instance NFData ShaderParameterGroup
 
 -- | Texture units
 data TextureUnit =
-    TU'Diffuse
-  | TU'AlbedoBuffer
-  | TU'Normal
-  | TU'NormalBuffer
-  | TU'Specular
-  | TU'Emissive
-  | TU'Environment
-  | TU'VolumeMap
-  | TU'Custom1
-  | TU'Custom2
-  | TU'LightRamp
-  | TU'LightShape
-  | TU'ShadowMap
-  | TU'FaceSelect
-  | TU'InDirection
-  | TU'DepthBuffer
-  | TU'LightBuffer
-  | TU'Zone
+    TUDiffuse
+  | TUAlbedoBuffer
+  | TUNormal
+  | TUNormalBuffer
+  | TUSpecular
+  | TUEmissive
+  | TUEnvironment
+  | TUVolumeMap
+  | TUCustom1
+  | TUCustom2
+  | TULightRamp
+  | TULightShape
+  | TUShadowMap
+  | TUFaceSelect
+  | TUInDirection
+  | TUDepthBuffer
+  | TULightBuffer
+  | TUZone
   deriving (Eq, Ord, Show, Bounded, Generic)
 
 instance NFData TextureUnit
@@ -274,109 +275,115 @@ maxTextureUnits = 16
 
 instance Enum TextureUnit where
   toEnum i = case i of
-    0 -> TU'Diffuse
-    1 -> TU'Normal
-    2 -> TU'Specular
-    3 -> TU'Emissive
-    4 -> TU'Environment
-    5 -> TU'VolumeMap
-    6 -> TU'Custom1
-    7 -> TU'Custom2
-    8 -> TU'LightRamp
-    9 -> TU'LightShape
-    10 -> TU'ShadowMap
-    11 -> TU'FaceSelect
-    12 -> TU'InDirection
-    13 -> TU'DepthBuffer
-    14 -> TU'LightBuffer
-    15 -> TU'Zone
-    _ -> TU'Diffuse
+    0 -> TUDiffuse
+    1 -> TUNormal
+    2 -> TUSpecular
+    3 -> TUEmissive
+    4 -> TUEnvironment
+    5 -> TUVolumeMap
+    6 -> TUCustom1
+    7 -> TUCustom2
+    8 -> TULightRamp
+    9 -> TULightShape
+    10 -> TUShadowMap
+    11 -> TUFaceSelect
+    12 -> TUInDirection
+    13 -> TUDepthBuffer
+    14 -> TULightBuffer
+    15 -> TUZone
+    _ -> TUDiffuse
+  {-# INLINE fromEnum #-}
 
   fromEnum e = case e of
-    TU'Diffuse -> 0
-    TU'AlbedoBuffer -> 0
-    TU'Normal -> 1
-    TU'NormalBuffer -> 1
-    TU'Specular -> 2
-    TU'Emissive -> 3
-    TU'Environment -> 4
-    TU'VolumeMap -> 5
-    TU'Custom1 -> 6
-    TU'Custom2 -> 7
-    TU'LightRamp -> 8
-    TU'LightShape -> 9
-    TU'ShadowMap -> 10
-    TU'FaceSelect -> 11
-    TU'InDirection -> 12
-    TU'DepthBuffer -> 13
-    TU'LightBuffer -> 14
-    TU'Zone -> 15
+    TUDiffuse -> 0
+    TUAlbedoBuffer -> 0
+    TUNormal -> 1
+    TUNormalBuffer -> 1
+    TUSpecular -> 2
+    TUEmissive -> 3
+    TUEnvironment -> 4
+    TUVolumeMap -> 5
+    TUCustom1 -> 6
+    TUCustom2 -> 7
+    TULightRamp -> 8
+    TULightShape -> 9
+    TUShadowMap -> 10
+    TUFaceSelect -> 11
+    TUInDirection -> 12
+    TUDepthBuffer -> 13
+    TULightBuffer -> 14
+    TUZone -> 15
+  {-# INLINE toEnum #-}
 
 -- | Billboard camera facing modes
 data FaceCameraMode =
-    FC'None
-  | FC'RotateXYZ
-  | FC'RotateY
-  | FC'LookAtXYZ
-  | FC'LookAtY
-  | FC'Direction
+    FCNone
+  | FCRotateXYZ
+  | FCRotateY
+  | FCLookAtXYZ
+  | FCLookAtY
+  | FCDirection
   deriving (Eq, Ord, Show, Enum, Bounded, Generic)
 
 instance NFData FaceCameraMode
 
-data Quality =
-    Quality'Low
-  | Quality'Medium
-  | Quality'High
-  | Quality'Max
-  deriving (Eq, Ord, Show, Bounded, Generic)
-
-instance NFData Quality
-
-instance Enum Quality where
-  fromEnum q = case q of
-    Quality'Low -> 0
-    Quality'Medium -> 1
-    Quality'High -> 2
-    Quality'Max -> 15
-
-  toEnum i = case i of
-    0 -> Quality'Low
-    1 -> Quality'Medium
-    2 -> Quality'High
-    15 -> Quality'Max
-    _ -> Quality'Low
-
 data ShadowQuality =
-    ShadowQuality'Simple16Bit
-  | ShadowQuality'Simple24Bit
-  | ShadowQuality'PCF16Bit
-  | ShadowQuality'PCF24Bit
-  | ShadowQuality'VSM
-  | ShadowQuality'BlurVSM
+    ShadowQualitySimple16Bit
+  | ShadowQualitySimple24Bit
+  | ShadowQualityPCF16Bit
+  | ShadowQualityPCF24Bit
+  | ShadowQualityVSM
+  | ShadowQualityBlurVSM
   deriving (Eq, Ord, Show, Bounded, Generic)
 
 instance NFData ShadowQuality
 
 instance Enum ShadowQuality where
   fromEnum q = case q of
-    ShadowQuality'Simple16Bit -> 0
-    ShadowQuality'Simple24Bit -> 1
-    ShadowQuality'PCF16Bit -> 2
-    ShadowQuality'PCF24Bit -> 3
-    ShadowQuality'VSM -> 4
-    ShadowQuality'BlurVSM -> 5
+    ShadowQualitySimple16Bit -> 0
+    ShadowQualitySimple24Bit -> 1
+    ShadowQualityPCF16Bit -> 2
+    ShadowQualityPCF24Bit -> 3
+    ShadowQualityVSM -> 4
+    ShadowQualityBlurVSM -> 5
+  {-# INLINE fromEnum #-}
 
   toEnum i = case i of
-    0 -> ShadowQuality'Simple16Bit
-    1 -> ShadowQuality'Simple24Bit
-    2 -> ShadowQuality'PCF16Bit
-    3 -> ShadowQuality'PCF24Bit
-    4 -> ShadowQuality'VSM
-    5 -> ShadowQuality'BlurVSM
-    _ -> ShadowQuality'Simple16Bit
+    0 -> ShadowQualitySimple16Bit
+    1 -> ShadowQualitySimple24Bit
+    2 -> ShadowQualityPCF16Bit
+    3 -> ShadowQualityPCF24Bit
+    4 -> ShadowQualityVSM
+    5 -> ShadowQualityBlurVSM
+    _ -> ShadowQualitySimple16Bit
+  {-# INLINE toEnum #-}
 
-data Mask =
+data MaterialQuality =
+    MaterialQualityLow
+  | MaterialQualityMedium
+  | MaterialQualityHigh
+  | MaterialQualityMax
+  deriving (Eq, Ord, Show, Read, Bounded, Generic)
+
+instance NFData MaterialQuality
+
+instance Enum MaterialQuality where
+  fromEnum v = case v of
+    MaterialQualityLow    -> 0
+    MaterialQualityMedium -> 1
+    MaterialQualityHigh   -> 2
+    MaterialQualityMax    -> 15
+  {-# INLINE fromEnum #-}
+
+  toEnum v = case v of
+    0  -> MaterialQualityLow
+    1  -> MaterialQualityMedium
+    2  -> MaterialQualityHigh
+    15 -> MaterialQualityMax
+    _  -> MaterialQualityMax
+  {-# INLINE toEnum #-}
+
+data VertexMask =
     MaskNone
   | MaskPosition
   | MaskNormal
@@ -395,9 +402,11 @@ data Mask =
   | MaskNoElement
   deriving (Eq, Ord, Show, Bounded, Generic)
 
-instance NFData Mask
+type VertexMaskFlags = FlagSet Word32 VertexMask
 
-instance Enum Mask where
+instance NFData VertexMask
+
+instance Enum VertexMask where
   fromEnum q = case q of
     MaskNone -> 0x0
     MaskPosition -> 0x1

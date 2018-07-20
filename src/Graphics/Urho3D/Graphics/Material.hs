@@ -3,6 +3,7 @@
 module Graphics.Urho3D.Graphics.Material(
     Material
   , SharedMaterial
+  , MaterialQuality(..)
   , materialContext
   , materialSetFillMode
   , materialSetNumTechniques
@@ -81,15 +82,15 @@ materialSetTechnique :: (Parent Material a, Pointer p a, MonadIO m)
   => p -- ^ Pointer to material or acenstor
   -> Word -- ^ index
   -> Ptr Technique -- ^ tech
-  -> Word -- ^ quality level (default 0)
+  -> MaterialQuality -- ^ quality level (default 0)
   -> Float -- ^ lod distance (default 0.0)
   -> m ()
 materialSetTechnique p i tech qualityLevel lodDistance = liftIO $ do
   let ptr = parentPointer p
       i' = fromIntegral i
-      qualityLevel' = fromIntegral qualityLevel
+      qualityLevel' = fromIntegral . fromEnum $ qualityLevel
       lodDistance' = realToFrac lodDistance
-  [C.exp| void { $(Material* ptr)->SetTechnique($(unsigned int i'), $(Technique* tech), $(unsigned int qualityLevel'), $(float lodDistance')) } |]
+  [C.exp| void { $(Material* ptr)->SetTechnique($(unsigned int i'), $(Technique* tech), (MaterialQuality)$(unsigned int qualityLevel'), $(float lodDistance')) } |]
 
 -- | Set additional vertex shader defines. Separate multiple defines with spaces. Setting defines at the material level causes technique(s) to be cloned as necessary.
 materialSetVertexShaderDefines :: (Parent Material a, Pointer p a, MonadIO m)

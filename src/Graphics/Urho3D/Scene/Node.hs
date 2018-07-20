@@ -218,15 +218,15 @@ podVectorPtr "Node"
 
 -- | Component and child node creation mode for networking.
 data CreateMode =
-    CM'Replicated
-  | CM'Local
+    CMReplicated
+  | CMLocal
   deriving (Eq, Ord, Show, Bounded, Enum)
 
 -- | Transform space for translations and rotations.
 data TransformSpace =
-    TS'Local
-  | TS'Parent
-  | TS'World
+    TSLocal
+  | TSParent
+  | TSWorld
   deriving (Eq, Ord, Show, Bounded, Enum)
 
 instance Creatable (Ptr VectorSharedNodePtr) where
@@ -705,7 +705,7 @@ nodeLookAt p target up space = liftIO $ with target $ \t -> with up $ \u -> do
 nodeLookAtSimple :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> Vector3 -- ^ target
   -> m Bool
-nodeLookAtSimple p target = nodeLookAt p target vec3Up TS'World
+nodeLookAtSimple p target = nodeLookAt p target vec3Up TSWorld
 
 -- | Modify scale in parent space uniformly.
 nodeScaleUniform :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
@@ -797,7 +797,7 @@ nodeCreateChild p name mode i = liftIO $ withCString name $ \name' -> do
 -- | Create a child scene node
 nodeCreateChildSimple :: (Parent Node a, Pointer p a, MonadIO m) => p -- ^ Node pointer or child
   -> m (Ptr Node)
-nodeCreateChildSimple p = nodeCreateChild p "" CM'Replicated 0
+nodeCreateChildSimple p = nodeCreateChild p "" CMReplicated 0
 
 -- | Add a child scene node at a specific index. If index is not explicitly specified or is greater than current children size, append the new child at the end.
 nodeAddChild :: (Parent Node a, Pointer p a, Parent Node child, Pointer pChild child, MonadIO m) => p -- ^ Node pointer or child

@@ -22,6 +22,7 @@ import Graphics.Urho3D.Core.Context
 import Graphics.Urho3D.Core.CustomFactory
 import Graphics.Urho3D.Core.TypeInfo
 import Graphics.Urho3D.Core.Object
+import Graphics.Urho3D.Container.FlagSet
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Math.StringHash
 import Graphics.Urho3D.Monad
@@ -240,11 +241,11 @@ newCustomLogicComponent ptr a CustomLogicComponentSetup {..} = liftIO $ do
   prepareFunc :: IORef a -> Maybe (IORef a -> Ptr Node -> Float -> IO ()) -> Ptr Node -> C.CFloat -> IO ()
   prepareFunc ref = maybe (const . const $ return ()) (\f node t -> f ref node $ realToFrac t)
 
-  emask = catMaybes $ [
-      const EM'UseUpdate <$> componentUpdate
-    , const EM'UsePostUpdate <$> componentPostUpdate
-    , const EM'UseFixedUpdate <$> componentFixedUpdate
-    , const EM'UseFixedPostUpdate <$> componentFixedPostUpdate
+  emask = flagsFromList . catMaybes $ [
+      const UpdateEventUseUpdate <$> componentUpdate
+    , const UpdateEventUsePostUpdate <$> componentPostUpdate
+    , const UpdateEventUseFixedUpdate <$> componentFixedUpdate
+    , const UpdateEventUseFixedPostUpdate <$> componentFixedPostUpdate
     ]
 
 deleteCustomLogicComponent :: MonadIO m => Ptr CustomLogicComponent -> m ()

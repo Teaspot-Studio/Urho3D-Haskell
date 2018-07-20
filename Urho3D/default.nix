@@ -12,6 +12,7 @@ stdenv.mkDerivation rec {
     fetchSubmodules = true;
   };
 
+  setupHook = ./setup-hook.sh;
   nativeBuildInputs = [ pkgconfig cmake ];
   buildInputs = [
     alsaLib

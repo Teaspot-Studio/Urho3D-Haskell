@@ -56,5 +56,5 @@ rotatorDef = defaultCustomLogicComponent {
       -- rotation quaternion from Euler angles, scale rotation speed with the scene update time step
       let Vector3 vx vy vz = rotSpeed
           q = quaternionFromEuler (vx*t) (vy*t) (vz*t)
-      nodeRotate compNode q TS'Local
+      nodeRotate compNode q TSLocal
   }
