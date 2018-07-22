@@ -58,10 +58,12 @@ newSample :: Ptr Context
   -> IO SampleRef
 newSample context sname joystickPatch customStart = do
   sampleRef <- newIORef undefined
-  app <- newSharedObject (context
-    , sampleSetup sampleRef
-    , sampleStart sampleRef >> customStart sampleRef
-    , sampleStop sampleRef)
+  app <- newSharedObject ApplicationCreate {
+      appCreateContext = context
+    , appCreateSetup = const $ sampleSetup sampleRef
+    , appCreateStart = const $ sampleStart sampleRef >> customStart sampleRef
+    , appCreateStop = const $ sampleStop sampleRef
+    }
   let s = Sample {
     _sampleApplication = app
   , _sampleName = sname
