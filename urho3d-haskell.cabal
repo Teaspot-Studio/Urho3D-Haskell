@@ -77,6 +77,7 @@ library
                        Graphics.Urho3D.Graphics.Octree
                        Graphics.Urho3D.Graphics.OctreeQuery
                        Graphics.Urho3D.Graphics.Renderer
+                       Graphics.Urho3D.Graphics.RenderPath
                        Graphics.Urho3D.Graphics.RenderSurface
                        Graphics.Urho3D.Graphics.Skeleton
                        Graphics.Urho3D.Graphics.StaticModel
@@ -85,6 +86,7 @@ library
                        Graphics.Urho3D.Graphics.Texture2D
                        Graphics.Urho3D.Graphics.Texture2DArray
                        Graphics.Urho3D.Graphics.VertexBuffer
+                       Graphics.Urho3D.Graphics.View
                        Graphics.Urho3D.Graphics.Viewport
                        Graphics.Urho3D.Graphics.Zone
                        Graphics.Urho3D.Input
@@ -194,6 +196,7 @@ library
                        Graphics.Urho3D.Graphics.Internal.Octree
                        Graphics.Urho3D.Graphics.Internal.OctreeQuery
                        Graphics.Urho3D.Graphics.Internal.Renderer
+                       Graphics.Urho3D.Graphics.Internal.RenderPath
                        Graphics.Urho3D.Graphics.Internal.RenderSurface
                        Graphics.Urho3D.Graphics.Internal.Skeleton
                        Graphics.Urho3D.Graphics.Internal.StaticModel
@@ -202,6 +205,7 @@ library
                        Graphics.Urho3D.Graphics.Internal.Texture2D
                        Graphics.Urho3D.Graphics.Internal.Texture2DArray
                        Graphics.Urho3D.Graphics.Internal.VertexBuffer
+                       Graphics.Urho3D.Graphics.Internal.View
                        Graphics.Urho3D.Graphics.Internal.Viewport
                        Graphics.Urho3D.Graphics.Internal.Zone
                        Graphics.Urho3D.Input.Internal.Input
@@ -300,6 +304,7 @@ library
                        src/Graphics/Urho3D/Graphics/Octree.cpp
                        src/Graphics/Urho3D/Graphics/OctreeQuery.cpp
                        src/Graphics/Urho3D/Graphics/Renderer.cpp
+                       src/Graphics/Urho3D/Graphics/RenderPath.cpp
                        src/Graphics/Urho3D/Graphics/RenderSurface.cpp
                        src/Graphics/Urho3D/Graphics/Skeleton.cpp
                        src/Graphics/Urho3D/Graphics/StaticModel.cpp
@@ -308,6 +313,7 @@ library
                        src/Graphics/Urho3D/Graphics/Texture2D.cpp
                        src/Graphics/Urho3D/Graphics/Texture2DArray.cpp
                        src/Graphics/Urho3D/Graphics/VertexBuffer.cpp
+                       src/Graphics/Urho3D/Graphics/View.cpp
                        src/Graphics/Urho3D/Graphics/Viewport.cpp
                        src/Graphics/Urho3D/Graphics/Zone.cpp
                        src/Graphics/Urho3D/Input/Events.cpp
