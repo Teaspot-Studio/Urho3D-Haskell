@@ -25,22 +25,34 @@ import Foreign.C.String
 import Graphics.Urho3D.Container.ForeignVector
 import Graphics.Urho3D.Container.Ptr
 import Graphics.Urho3D.Core.Context
+import Graphics.Urho3D.Core.Object
 import Graphics.Urho3D.Monad
 import Graphics.Urho3D.Network.Connection
 import Graphics.Urho3D.Network.Internal.Network
+import Graphics.Urho3D.Parent
 import Graphics.Urho3D.Scene.Scene
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Unsafe as BS
 
-C.context (C.cppCtx <> networkCntx <> contextContext <> sceneContext <> connectionContext)
+C.context (C.cppCtx
+  <> networkCntx
+  <> contextContext
+  <> sceneContext
+  <> connectionContext
+  <> objectContext)
 C.include "<Urho3D/Network/Network.h>"
 C.using "namespace Urho3D"
 
 networkContext :: C.Context
-networkContext = networkCntx
+networkContext = networkCntx <> objectContext
 
 C.verbatim "typedef Vector<SharedPtr<Connection> > VectorSharedPtrConnection;"
+
+deriveParent ''Object ''Network
+
+instance Subsystem Network where
+  getSubsystemImpl ptr = [C.exp| Network* { $(Object* ptr)->GetSubsystem<Network>() } |]
 
 -- | Connect to a server using UDP protocol. Return true if connection process successfully started.
 -- bool Connect(const String& address, unsigned short port, Scene* scene, const VariantMap& identity = Variant::emptyVariantMap);
