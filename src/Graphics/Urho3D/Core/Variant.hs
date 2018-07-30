@@ -51,6 +51,9 @@ import Graphics.Urho3D.Math.Vector3
 import Graphics.Urho3D.Math.Vector4
 import Graphics.Urho3D.Monad
 
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Unsafe as BS
+
 C.context (C.cppCtx
   <> C.funConstCtx
   <> variantCntx
@@ -271,6 +274,26 @@ instance VariantStorable Matrix4 where
       VariantMatrix4 -> do
         v <- peek =<< [C.exp| const Matrix4* { &$(Variant* ptr)->GetMatrix4() } |]
         return $ Just v
+      _ -> return Nothing
+
+instance VariantStorable BS.ByteString where
+  setVariant v ptr = liftIO $ BS.unsafeUseAsCStringLen v $ \(vptr, l) -> do
+    let l' = fromIntegral l
+        vptr' = castPtr vptr
+    [C.exp| void { *$(Variant* ptr) = PODVector<unsigned char>($(const unsigned char* vptr'), $(unsigned int l')) } |]
+  getVariant ptr = liftIO $ do
+    t <- variantType ptr
+    case t of
+      VariantBuffer -> alloca $ \vptr -> alloca $ \lptr -> do
+        [C.exp| void {
+          const PODVector<unsigned char>& v = $(Variant* ptr)->GetBuffer();
+          *$(unsigned char** vptr) = v.Buffer();
+          *$(unsigned int* lptr) = v.Size();
+        } |]
+        vptr' <- peek vptr
+        l <- fromIntegral <$> peek lptr
+        bs <- BS.packCStringLen (castPtr vptr', l)
+        return $ Just bs
       _ -> return Nothing
 
 -- | Creates new Variant with specified value inside

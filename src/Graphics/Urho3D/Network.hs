@@ -3,3 +3,5 @@ module Graphics.Urho3D.Network(
   ) where
 
 import Graphics.Urho3D.Network.Connection as X
+import Graphics.Urho3D.Network.Events as X
+import Graphics.Urho3D.Network.Network as X
