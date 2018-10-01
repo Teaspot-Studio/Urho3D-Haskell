@@ -21,7 +21,7 @@ in with pkgs; haskell.lib.buildStackProject {
   name = "Urho3D-Haskell";
   nativeBuildInputs = [ git pkgconfig ];
   buildInputs = [ SDL2.dev Urho3D ];
-  extraArgs = "--extra-lib-dirs=${Urho3D}/lib/Urho3D --extra-include-dirs=${Urho3D}/include/Urho3D/ThirdParty";
+  extraArgs = ["--extra-lib-dirs=${Urho3D}/lib/Urho3D --extra-include-dirs=${Urho3D}/include/Urho3D/ThirdParty"];
   hardeningDisable = [ "bindnow" ];
   shellHook = ''
     export hardeningDisable=bindnow
